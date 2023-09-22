@@ -74,8 +74,7 @@ bool rstOverride = false;
 // 9  - AppleJuice Advertisement
 
 bool isSwitching = true;
-//int current_proc = 0;
-int current_proc = 1; // Temp. override since we're disabling the clock for the time being
+int current_proc = 0; // Start in Clock Mode
 
 void switcher_button_proc() {
   if (rstOverride == false) {
@@ -115,7 +114,7 @@ void screen_dim_proc() {
 
 /// MAIN MENU ///
 MENU mmenu[] = {
-//  { "clock", 0}, // disabled for now
+  { "clock", 0},
   { "TV B-GONE", 5},
   { "AppleJuice", 8},
   { "settings", 2},
@@ -155,6 +154,7 @@ void mmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
+  { "set clock time", 3},
   { "set dim time", 4},
   { "battery info", 6},
   { "rotation", 7},
@@ -493,6 +493,77 @@ void clock_loop() {
   delay(250);
 }
 
+/// TIMESET ///
+void timeset_drawmenu(int nums) {
+  M5.Lcd.setRotation(rotation);
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  // scrolling menu
+  if (cursor > 5) {
+    for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(i);
+    }
+  } else {
+    for (
+      int i = 0 ; i < nums ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(i);
+    }
+  }
+}
+
+void timeset_setup() {
+  rstOverride = true;
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  M5.Lcd.println("SET HOUR");
+  delay(2000);
+}
+
+void timeset_loop() {
+  M5.Rtc.GetBm8563Time();
+  cursor = M5.Rtc.Hour;
+  timeset_drawmenu(24);
+  while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % 24 ;
+      timeset_drawmenu(24);
+      delay(100);
+    }
+  }
+  int hour = cursor;
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  M5.Lcd.println("SET MINUTE");
+  delay(2000);
+  cursor = M5.Rtc.Minute;
+  timeset_drawmenu(60);
+  while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % 60 ;
+      timeset_drawmenu(60);
+      delay(100);
+    }
+  }
+  int minute = cursor;
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  RTC_TimeTypeDef TimeStruct;
+  TimeStruct.Hours   = hour;
+  TimeStruct.Minutes = minute;
+  TimeStruct.Seconds = 0;
+  M5.Rtc.SetTime(&TimeStruct);
+  M5.Lcd.printf("Setting Time:\n%02d:%02d:00",hour,minute);
+  delay(2000);
+  rstOverride = false;
+  isSwitching = true;
+  current_proc = 0;
+}
+
 /// ENTRY ///
 void setup() {
   M5.begin();
@@ -593,7 +664,6 @@ void aj_setup(){
 }
 
 void aj_loop(){
-
   if (digitalRead(M5_BUTTON_RST) == LOW) {
     cursor++;
     cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
@@ -753,6 +823,9 @@ void loop() {
       case 2:
         smenu_setup();
         break;
+      case 3:
+        timeset_setup();
+        break;
       case 4:
         dmenu_setup();
         break;
@@ -783,6 +856,9 @@ void loop() {
       break;
     case 2:
       smenu_loop();
+      break;
+    case 3:
+      timeset_loop();
       break;
     case 4:
       dmenu_loop();
