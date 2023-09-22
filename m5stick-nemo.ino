@@ -8,7 +8,7 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
-
+int advtime = 0; 
 String formattedDate;
 String dayStamp;
 String timeStamp;
@@ -158,6 +158,7 @@ MENU smenu[] = {
   { "set dim time", 4},
   { "battery info", 6},
   { "rotation", 7},
+  { "credits", 10},
   { "back", 1},
 };
 
@@ -576,12 +577,10 @@ void setup() {
   // Boot Screen
   digitalWrite(M5_LED, HIGH); //LEDOFF
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(3);
-  M5.Lcd.setCursor(5, 10);
+  M5.Lcd.setTextSize(4);
+  M5.Lcd.setCursor(40, 15);
   M5.Lcd.setRotation(rotation);
   M5.Lcd.print("M5-NEMO\n");
-  M5.Lcd.setTextSize(2);
-  M5.Lcd.print("For M5StickC-Plus\nBy Axon | IG: @4x0nn");
   // Pin setup
   pinMode(M5_LED, OUTPUT);
   pinMode(M5_BUTTON_HOME, INPUT);
@@ -668,7 +667,7 @@ void aj_loop(){
     cursor++;
     cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
     aj_drawmenu();
-    delay(250);
+    delay(100);
   }
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
     deviceType = ajmenu[cursor].command;
@@ -774,7 +773,7 @@ void aj_loop(){
       M5.Lcd.setTextSize(2);
       M5.Lcd.print("Advertising:\n");
       M5.Lcd.print(ajmenu[cursor].name);
-      M5.Lcd.print("\n\nHold Side Key: Exit");
+      M5.Lcd.print("\n\nSide Key: Exit");
       isSwitching = true;
       current_proc = 9; // Jump over to the AppleJuice BLE beacon loop
     }
@@ -789,19 +788,47 @@ void aj_adv(){
   // run the advertising loop
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
-  BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-  if (deviceType >= 18){
-    oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
-  } else {
-    oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+  rstOverride = true;
+  M5.Rtc.GetBm8563Time();
+  if (M5.Rtc.Second != advtime){
+    advtime = M5.Rtc.Second;
+    pAdvertising->stop();
+    BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+    // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
+    // to work with bare integers, so sizeof() calls arbitrary elements of the
+    // correct length. Without this if block, only 31-byte messages worked.
+    if (deviceType >= 18){
+      oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
+    } else {
+      oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+    }
+    pAdvertising->setAdvertisementData(oAdvertisementData);
+    pAdvertising->start();
+    digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+    delay(10);
+    digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
-  pAdvertising->setAdvertisementData(oAdvertisementData);
-  pAdvertising->start();
-  digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    current_proc = 8;
+    delay(250);
+  }
+}
+
+void credits_setup(){
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(5, 10);
+  M5.Lcd.setRotation(rotation);
+  M5.Lcd.print("M5-NEMO\n");
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.println("For M5StickC-Plus");
+  M5.Lcd.println("By Noah Axon");
+  M5.Lcd.println("| Instagram: @4x0nn");  
+  M5.Lcd.println("| GitHub: n0xa");  
+}
+
+void credits(){
   delay(50);
-  digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
-  delay(950); // 1 second between beacons when combined with LED On delay above for brightness
-  pAdvertising->stop();
 }
 
 void loop() {
@@ -844,6 +871,9 @@ void loop() {
       case 9:
         aj_adv_setup();
         break;
+      case 10:
+        credits_setup();
+        break;
     }
   }
 
@@ -877,6 +907,9 @@ void loop() {
       break;
     case 9:
       aj_adv();
+      break;
+    case 10:
+      credits();
       break;
   }
 }
