@@ -6,9 +6,10 @@
 #include <IRsend.h>
 #include "applejuice.h"
 #include "WORLD_IR_CODES.h"
-#include <BLEDevice.h>
+#include "wifispam.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+
 int advtime = 0; 
 String formattedDate;
 String dayStamp;
@@ -28,7 +29,7 @@ struct MENU {
 // 0  - Clock
 // 1  - Main Menu
 // 2  - Settings Menu
-// 3  - Clock set (not implemented yet)
+// 3  - Clock set
 // 4  - Dimmer Time adjustment
 // 5  - TV B-GONE
 // 6  - Battery info
@@ -36,6 +37,8 @@ struct MENU {
 // 8  - AppleJuice Menu
 // 9  - AppleJuice Advertisement
 // 10 - Credits 
+// 11 - Wifi beacon spam
+// 12 - Wifi spam menu
 
 bool isSwitching = true;
 int current_proc = 0; // Start in Clock Mode
@@ -81,6 +84,7 @@ MENU mmenu[] = {
   { "clock", 0},
   { "TV B-GONE", 5},
   { "AppleJuice", 8},
+  { "WiFi Spam", 12},
   { "settings", 2},
 };
 
@@ -640,6 +644,127 @@ void credits_setup(){
   M5.Lcd.setTextColor(GREEN, BLACK);
 }
 
+/// WiFiSPAM ///
+void wifispam_setup() {
+  // create empty SSID
+  for (int i = 0; i < 32; i++)
+    emptySSID[i] = ' ';
+  // for random generator
+  randomSeed(1);
+
+  // set packetSize
+  packetSize = sizeof(beaconPacket);
+  if (wpa2) {
+    beaconPacket[34] = 0x31;
+  } else {
+    beaconPacket[34] = 0x21;
+    packetSize -= 26;
+  }
+
+  // generate random mac address
+  randomMac();
+  
+  //change WiFi mode
+  WiFi.mode(WIFI_MODE_STA);
+
+  // set channel
+  esp_wifi_set_channel(channels[0], WIFI_SECOND_CHAN_NONE);
+
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("WiFi Spam");
+  delay(2000);
+  M5.Lcd.setTextSize(2);
+  current_proc = 11;
+}
+
+void wifispam_loop() {
+  int i = 0;
+  int len = 0;
+  digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+  delay(1);
+  digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+  // put your main code here, to run repeatedly:
+  currentTime = millis();
+  if (currentTime - attackTime > 100) {
+    switch(spamtype) {
+      case 1:
+        len = sizeof(funnyssids);
+        while(i < len){
+          i++;
+        }
+        beaconSpam(funnyssids);
+        break;
+      case 2:
+        len = sizeof(rickrollssids);
+        while(i < len){
+          i++;
+        }
+        beaconSpam(rickrollssids);
+        break;
+    }
+  }
+}
+
+/// WIFISPAM MENU ///
+MENU wsmenu[] = {
+  { "Funny", 0},
+  { "Rickroll", 1},
+  { "back", 2},
+};
+
+void wsmenu_drawmenu() {
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 8, 1);
+  for ( int i = 0 ; i < ( sizeof(wsmenu) / sizeof(MENU) ) ; i++ ) {
+    M5.Lcd.print((cursor == i) ? ">" : " ");
+    M5.Lcd.println(wsmenu[i].name);
+  }
+}
+
+void wsmenu_setup() {
+  M5.Lcd.setRotation(rotation);
+  cursor = 0;
+  rstOverride = true;
+  wsmenu_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void wsmenu_loop() {
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    cursor++;
+    cursor = cursor % ( sizeof(wsmenu) / sizeof(MENU) );
+    wsmenu_drawmenu();
+    delay(250);
+  }
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    int option = wsmenu[cursor].command;
+    // Also borrowed heavily from ronaldstoner / ECTO-1A esp32 AppleJuice
+    //uint8_t* data;
+    switch(option) {
+      case 0:
+        spamtype = 1;
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 11;
+        break;
+      case 1:
+        spamtype = 2;
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 11;
+        break;
+      case 2:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 1;
+        break;
+    }
+  }
+}
+
 /// ENTRY ///
 void setup() {
   M5.begin();
@@ -717,6 +842,11 @@ void loop() {
       case 10:
         credits_setup();
         break;
+      case 11:
+        wifispam_setup();
+        break;
+      case 12:
+        wsmenu_setup();
     }
   }
 
@@ -752,7 +882,12 @@ void loop() {
       aj_adv();
       break;
     case 10:
-       // noop - just let the credits stay on screen
-       break;
+      // noop - just let the credits stay on screen
+      break;
+    case 11:
+      wifispam_loop();
+      break;
+    case 12:
+      wsmenu_loop();
   }
 }
