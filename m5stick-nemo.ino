@@ -62,7 +62,7 @@ void screen_dim_proc() {
   if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
     if (screen_dim_dimmed) {
       screen_dim_dimmed = false;
-      M5.Axp.ScreenBreath(11);
+      M5.Axp.ScreenBreath(255);
     }
     int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
 
@@ -788,7 +788,7 @@ void wsmenu_loop() {
 /// ENTRY ///
 void setup() {
   M5.begin();
-  M5.Axp.ScreenBreath(11); // Brightness
+  M5.Axp.ScreenBreath(255); // Brightness
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
   EEPROM.begin(EEPROM_SIZE);
