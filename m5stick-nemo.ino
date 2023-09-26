@@ -62,7 +62,7 @@ void screen_dim_proc() {
   if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
     if (screen_dim_dimmed) {
       screen_dim_dimmed = false;
-      M5.Axp.ScreenBreath(255);
+      M5.Axp.ScreenBreath(100);
     }
     int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
 
@@ -73,7 +73,7 @@ void screen_dim_proc() {
   }
   if (screen_dim_dimmed == false) {
     if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
-      M5.Axp.ScreenBreath(0);
+      M5.Axp.ScreenBreath(10);
       screen_dim_dimmed = true;
     }
   }
@@ -788,7 +788,7 @@ void wsmenu_loop() {
 /// ENTRY ///
 void setup() {
   M5.begin();
-  M5.Axp.ScreenBreath(255); // Brightness
+  M5.Axp.ScreenBreath(100); // Brightness
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
   EEPROM.begin(EEPROM_SIZE);
