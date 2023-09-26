@@ -602,7 +602,8 @@ void aj_adv(){
   M5.Rtc.GetBm8563Time();
   if (M5.Rtc.Second != advtime){
     advtime = M5.Rtc.Second;
-    pAdvertising->stop();
+    pAdvertising->stop(); // This is placed here mostly for timing.
+                          // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
     // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
     // to work with bare integers, so sizeof() calls arbitrary elements of the
@@ -619,7 +620,8 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
-    current_proc = 8;
+    current_proc = 8;    
+    pAdvertising->stop(); // Bug that keeps advertising in the background. Oops.
     delay(250);
   }
 }
@@ -671,10 +673,28 @@ void wifispam_setup() {
   esp_wifi_set_channel(channels[0], WIFI_SECOND_CHAN_NONE);
 
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(4);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("WiFi Spam");
-  delay(2000);
+  delay(1000);
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 0);
+  M5.Lcd.print("WiFi Spam");
+    int ct = 0;
+    const char *str;
+    switch(spamtype) {
+    case 1:
+      for(str = funnyssids; *str; ++str) ct += *str == '\n';
+      M5.Lcd.printf(" - %d SSIDs:\n", ct);
+      M5.Lcd.print(funnyssids);
+      break;
+    case 2:
+      for(str = rickrollssids; *str; ++str) ct += *str == '\n';
+      M5.Lcd.printf(" - %d SSIDs:\n", ct);
+      M5.Lcd.print(rickrollssids);
+      break;
+  }
   M5.Lcd.setTextSize(2);
   current_proc = 11;
 }
