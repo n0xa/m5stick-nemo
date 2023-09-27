@@ -75,6 +75,33 @@ const char rickrollssids[] PROGMEM = {
   "08 and hurt you\n"
 };
 
+const char foobar[] PROGMEM = {
+  "abh\nfoooo\nbarrr\nbaz\nbat\ngarply\nquux\nheyfuckface\n"
+};
+
+#define SSIDLEN 375 /* Change to whatever length you need */
+
+const char* randomSSID(){
+  /* Change to allowable characters */
+  const char possible[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -.!)(,?%";
+  static char ssid[SSIDLEN + 1];
+  for(int p = 0, i = 0; i < SSIDLEN; i++){
+    int r = random(0, strlen(possible));
+    if(r % 7 == 0){
+      ssid[p++] = '\n'; // inject newlines occasionally :D
+    }
+    ssid[p++] = possible[r];
+  }
+  ssid[SSIDLEN] = '\n';  M5.Lcd.setTextSize(1);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 0, 1);
+  M5.Lcd.println("Spamming Random SSIDs:");
+  // Maximum broadcast SSID length is 32, but the strings might show longer in the output. Sorry.
+  M5.Lcd.print(ssid);
+  return ssid;
+}
+
+const char* randoms = randomSSID();
 
 #include <WiFi.h>
 
