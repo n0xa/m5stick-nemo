@@ -16,8 +16,9 @@ String dayStamp;
 String timeStamp;
 int cursor = 0;
 int rotation = 1;
+int brightness = 100;
 bool rstOverride = false;
-#define EEPROM_SIZE 1
+#define EEPROM_SIZE 32
 
 struct MENU {
   char name[19];
@@ -62,7 +63,7 @@ void screen_dim_proc() {
   if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
     if (screen_dim_dimmed) {
       screen_dim_dimmed = false;
-      M5.Axp.ScreenBreath(100);
+      M5.Axp.ScreenBreath(brightness);
     }
     int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
 
@@ -123,7 +124,7 @@ void mmenu_loop() {
 /// SETTINGS MENU ///
 MENU smenu[] = {
   { "set clock time", 3},
-  { "set dim time", 4},
+  { "brightness", 4},
   { "battery info", 6},
   { "rotation", 7},
   { "credits", 10},
@@ -164,12 +165,12 @@ void smenu_loop() {
 
 /// Dimmer MENU ///
 MENU dmenu[] = {
-  { "30 seconds", 30},
-  { "25 seconds", 25},
-  { "20 seconds", 20},
-  { "15 seconds", 15},
-  { "10 seconds", 10},
   { "5 seconds", 5},
+  { "10 seconds", 10},
+  { "15 seconds", 15},
+  { "20 seconds", 20},
+  { "25 seconds", 25},
+  { "30 seconds", 30},
   { "back", screen_dim_time},
 };
 
@@ -185,7 +186,11 @@ void dmenu_drawmenu() {
 
 void dmenu_setup() {
   M5.Lcd.setRotation(rotation);
-  cursor = 0;
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  M5.Lcd.println("SET AUTO DIM TIME");
+  delay(1000);
+  cursor = (screen_dim_time / 5) - 1; 
   rstOverride = true;
   dmenu_drawmenu();
   delay(250); // Prevent switching after menu loads up
@@ -199,9 +204,30 @@ void dmenu_loop() {
     delay(250);
   }
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    screen_dim_time = dmenu[cursor].command;
+    EEPROM.write(1, screen_dim_time);
+    EEPROM.commit();
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setCursor(0, 5, 1);
+    M5.Lcd.println("SET BRIGHTNESS");
+    delay(1000);
+    cursor = brightness / 10;
+    timeset_drawmenu(11);
+    while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+      if (digitalRead(M5_BUTTON_RST) == LOW) {
+        cursor++;
+        cursor = cursor % 11 ;
+        timeset_drawmenu(11);
+        M5.Axp.ScreenBreath(10 * cursor);
+        delay(250);
+       }
+    }
+    brightness = 10 * cursor;
+    M5.Axp.ScreenBreath(brightness);
+    EEPROM.write(3, brightness);
+    EEPROM.commit();
     rstOverride = false;
     isSwitching = true;
-    screen_dim_time = dmenu[cursor].command;
     current_proc = 2;
   }
 }
@@ -788,18 +814,29 @@ void wsmenu_loop() {
 /// ENTRY ///
 void setup() {
   M5.begin();
-  M5.Axp.ScreenBreath(100); // Brightness
+  EEPROM.begin(EEPROM_SIZE);
+  // Uncomment these to blow away EEPROM to factory settings - for testing purposes
+  //EEPROM.write(0, 255);
+  //EEPROM.write(1, 255);
+  //EEPROM.write(2, 255);
+  EEPROM.commit();
+  if(EEPROM.read(0) <= 3){
+    rotation = EEPROM.read(0);
+  } else {
+    rotation = 3;
+    EEPROM.write(0, rotation);
+    EEPROM.commit();
+  }
+  screen_dim_time = EEPROM.read(1) % 30;
+  brightness = EEPROM.read(2) % 100;
+  M5.Axp.ScreenBreath(brightness);
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
-  EEPROM.begin(EEPROM_SIZE);
-  rotation = EEPROM.read(0);
-
   // Boot Screen
   digitalWrite(M5_LED, HIGH); //LEDOFF
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextSize(4);
   M5.Lcd.setCursor(40, 15);
-  M5.Lcd.setRotation(rotation);
   M5.Lcd.print("M5-NEMO\n");
   // Pin setup
   pinMode(M5_LED, OUTPUT);
