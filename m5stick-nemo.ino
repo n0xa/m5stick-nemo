@@ -720,6 +720,11 @@ void wifispam_setup() {
       M5.Lcd.printf(" - %d SSIDs:\n", ct);
       M5.Lcd.print(rickrollssids);
       break;
+    case 3:
+      for(str = randoms;  *str; ++str) ct += *str == '\n';
+      M5.Lcd.printf(" - %d SSIDs:\n", ct);
+      M5.Lcd.print(randoms);
+      break;
   }
   M5.Lcd.setTextSize(2);
   current_proc = 11;
@@ -749,6 +754,14 @@ void wifispam_loop() {
         }
         beaconSpam(rickrollssids);
         break;
+      case 3:
+        randoms = randomSSID();
+        len = sizeof(randoms);
+        while(i < len){
+          i++;
+        }
+        beaconSpam(randoms);
+        break;        
     }
   }
 }
@@ -757,7 +770,8 @@ void wifispam_loop() {
 MENU wsmenu[] = {
   { "Funny", 0},
   { "Rickroll", 1},
-  { "back", 2},
+  { "Random", 2},
+  { "back", 3},
 };
 
 void wsmenu_drawmenu() {
@@ -803,6 +817,12 @@ void wsmenu_loop() {
         current_proc = 11;
         break;
       case 2:
+        spamtype = 3;
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 11;
+        break;
+      case 3:
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
