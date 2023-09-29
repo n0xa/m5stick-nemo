@@ -224,7 +224,7 @@ void dmenu_loop() {
     }
     brightness = 10 * cursor;
     M5.Axp.ScreenBreath(brightness);
-    EEPROM.write(3, brightness);
+    EEPROM.write(2, brightness);
     EEPROM.commit();
     rstOverride = false;
     isSwitching = true;
@@ -839,16 +839,21 @@ void setup() {
   //EEPROM.write(0, 255);
   //EEPROM.write(1, 255);
   //EEPROM.write(2, 255);
-  EEPROM.commit();
-  if(EEPROM.read(0) <= 3){
-    rotation = EEPROM.read(0);
-  } else {
-    rotation = 3;
-    EEPROM.write(0, rotation);
+  //EEPROM.commit();
+  Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
+  Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
+  Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
+  if(EEPROM.read(0) > 3){
+    // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
+    Serial.println("EEPROM likely not properly configured. Writing defaults.");
+    EEPROM.write(0, 3);    // Left rotation
+    EEPROM.write(1, 15);   // 15 second auto dim time
+    EEPROM.write(2, 100);  // 100% brightness
     EEPROM.commit();
   }
-  screen_dim_time = EEPROM.read(1) % 30;
-  brightness = EEPROM.read(2) % 100;
+  rotation = EEPROM.read(0);
+  screen_dim_time = EEPROM.read(1);
+  brightness = EEPROM.read(2);
   M5.Axp.ScreenBreath(brightness);
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
