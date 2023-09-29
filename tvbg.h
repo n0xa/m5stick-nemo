@@ -86,12 +86,9 @@ uint8_t region;
 void sendAllCodes()
 {
   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
-  if (digitalRead(REGIONSWITCH)) {
-    region = NA;
+  if (region == NA) {
     num_codes = num_NAcodes;
-  }
-  else {
-    region = EU;
+  } else {
     num_codes = num_EUcodes;
   }
   for (i = 0 ; i < num_codes; i++)

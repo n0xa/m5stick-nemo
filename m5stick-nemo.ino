@@ -40,6 +40,7 @@ struct MENU {
 // 10 - Credits 
 // 11 - Wifi beacon spam
 // 12 - Wifi spam menu
+// 13 - TV-B-Gone Region Setting
 
 bool isSwitching = true;
 int current_proc = 0; // Start in Clock Mode
@@ -123,11 +124,12 @@ void mmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
-  { "set clock time", 3},
-  { "brightness", 4},
   { "battery info", 6},
+  { "brightness", 4},
+  { "set clock time", 3},
   { "rotation", 7},
-  { "credits", 10},
+  { "tvbg region", 13},
+  { "about", 10},
   { "back", 1},
 };
 
@@ -274,6 +276,47 @@ void rmenu_loop() {
   }
 }
 
+/// TVBG-Region MENU ///
+MENU tvbgmenu[] = {
+  { "North America", 0},
+  { "Europe", 1},
+  { "back", region},
+};
+
+void tvbgmenu_drawmenu() {
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 8, 1);
+  for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
+    M5.Lcd.print((cursor == i) ? ">" : " ");
+    M5.Lcd.println(tvbgmenu[i].name);
+  }
+}
+
+void tvbgmenu_setup() {
+  cursor = 0;
+  rstOverride = true;
+  tvbgmenu_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void tvbgmenu_loop() {
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    cursor++;
+    cursor = cursor % ( sizeof(tvbgmenu) / sizeof(MENU) );
+    tvbgmenu_drawmenu();
+    delay(250);
+  }
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    rstOverride = false;
+    isSwitching = true;
+    region = tvbgmenu[cursor].command;
+    EEPROM.write(3, region);
+    EEPROM.commit();
+    current_proc = 2;
+  }
+}
+
 /// BATTERY INFO ///
 void battery_drawmenu(int battery, int b, int c) {
   M5.Lcd.setTextSize(2);
@@ -323,12 +366,10 @@ void tvbgone_setup() {
   digitalWrite(IRLED, HIGH);
 
   delay_ten_us(5000);
-  if (digitalRead(REGIONSWITCH)) {
-    region = NA;
+  if(region == NA) {
     M5.Lcd.println("Region: NA");
   }
   else {
-    region = EU;
     M5.Lcd.println("Region: EU");
   }
   delay(1000); // Give time after loading
@@ -836,24 +877,28 @@ void setup() {
   M5.begin();
   EEPROM.begin(EEPROM_SIZE);
   // Uncomment these to blow away EEPROM to factory settings - for testing purposes
-  //EEPROM.write(0, 255);
-  //EEPROM.write(1, 255);
-  //EEPROM.write(2, 255);
+  //EEPROM.write(0, 255); // Rotation
+  //EEPROM.write(1, 255); // dim time
+  //EEPROM.write(2, 255); // brightness
+  //EEPROM.write(2, 255); // TV-B-Gone Region
   //EEPROM.commit();
   Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
   Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
   Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
+  Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
   if(EEPROM.read(0) > 3){
     // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
     Serial.println("EEPROM likely not properly configured. Writing defaults.");
     EEPROM.write(0, 3);    // Left rotation
     EEPROM.write(1, 15);   // 15 second auto dim time
     EEPROM.write(2, 100);  // 100% brightness
+    EEPROM.write(3, 0); // TVBG NA Region
     EEPROM.commit();
   }
   rotation = EEPROM.read(0);
   screen_dim_time = EEPROM.read(1);
   brightness = EEPROM.read(2);
+  region = EEPROM.read(3);
   M5.Axp.ScreenBreath(brightness);
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
@@ -929,6 +974,10 @@ void loop() {
         break;
       case 12:
         wsmenu_setup();
+        break;
+      case 13:
+        tvbgmenu_setup();
+        break;
     }
   }
 
@@ -971,5 +1020,9 @@ void loop() {
       break;
     case 12:
       wsmenu_loop();
+      break;
+    case 13:
+      tvbgmenu_loop();
+      break;
   }
 }
