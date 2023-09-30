@@ -18,7 +18,7 @@ int cursor = 0;
 int rotation = 1;
 int brightness = 100;
 bool rstOverride = false;
-#define EEPROM_SIZE 32
+#define EEPROM_SIZE 4
 
 struct MENU {
   char name[19];
@@ -44,7 +44,6 @@ struct MENU {
 
 bool isSwitching = true;
 int current_proc = 0; // Start in Clock Mode
-
 void switcher_button_proc() {
   if (rstOverride == false) {
     if (digitalRead(M5_BUTTON_RST) == LOW) {
@@ -84,7 +83,7 @@ void screen_dim_proc() {
 /// MAIN MENU ///
 MENU mmenu[] = {
   { "clock", 0},
-  { "TV B-GONE", 5},
+  { "TV B-GONE", 13}, // We jump to the region menu first
   { "AppleJuice", 8},
   { "WiFi Spam", 12},
   { "settings", 2},
@@ -128,7 +127,6 @@ MENU smenu[] = {
   { "brightness", 4},
   { "set clock time", 3},
   { "rotation", 7},
-  { "tvbg region", 13},
   { "about", 10},
   { "back", 1},
 };
@@ -276,47 +274,6 @@ void rmenu_loop() {
   }
 }
 
-/// TVBG-Region MENU ///
-MENU tvbgmenu[] = {
-  { "North America", 0},
-  { "Europe", 1},
-  { "back", region},
-};
-
-void tvbgmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(tvbgmenu[i].name);
-  }
-}
-
-void tvbgmenu_setup() {
-  cursor = 0;
-  rstOverride = true;
-  tvbgmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
-}
-
-void tvbgmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
-    cursor++;
-    cursor = cursor % ( sizeof(tvbgmenu) / sizeof(MENU) );
-    tvbgmenu_drawmenu();
-    delay(250);
-  }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
-    rstOverride = false;
-    isSwitching = true;
-    region = tvbgmenu[cursor].command;
-    EEPROM.write(3, region);
-    EEPROM.commit();
-    current_proc = 2;
-  }
-}
-
 /// BATTERY INFO ///
 void battery_drawmenu(int battery, int b, int c) {
   M5.Lcd.setTextSize(2);
@@ -361,18 +318,21 @@ void tvbgone_setup() {
   M5.Lcd.setTextSize(4);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("TV-B-Gone");
+  M5.Lcd.setTextSize(2);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
   digitalWrite(IRLED, HIGH);
 
   delay_ten_us(5000);
   if(region == NA) {
-    M5.Lcd.println("Region: NA");
+    M5.Lcd.print("Region:\nAmericas / Asia\n");
   }
   else {
-    M5.Lcd.println("Region: EU");
+    M5.Lcd.println("Region: EMEA");
   }
-  delay(1000); // Give time after loading
+  M5.Lcd.println("Front Key: Go/Pause");
+  M5.Lcd.println("Side Key: Exit");
+  delay(1000);
 }
 
 void tvbgone_loop()
@@ -388,6 +348,53 @@ void tvbgone_loop()
   }
   yield();
 }
+
+/// TVBG-Region MENU ///
+MENU tvbgmenu[] = {
+  { "Americas / Asia", 0},
+  { "EU/MidEast/Africa", 1},
+};
+
+void tvbgmenu_drawmenu() {
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 8, 1);
+  for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
+    M5.Lcd.print((cursor == i) ? ">" : " ");
+    M5.Lcd.println(tvbgmenu[i].name);
+  }
+}
+
+void tvbgmenu_setup() {  
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(4);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("TV-B-Gone");
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.println("Region");
+  cursor = region % 2;
+  rstOverride = true;
+  delay(1000); 
+  tvbgmenu_drawmenu();
+}
+
+void tvbgmenu_loop() {
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    cursor++;
+    cursor = cursor % ( sizeof(tvbgmenu) / sizeof(MENU) );
+    tvbgmenu_drawmenu();
+    delay(250);
+  }
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    region = tvbgmenu[cursor].command;
+    EEPROM.write(3, region);
+    EEPROM.commit();
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 5;
+  }
+}
+
 
 /// CLOCK ///
 void clock_setup() {
@@ -762,9 +769,7 @@ void wifispam_setup() {
       M5.Lcd.print(rickrollssids);
       break;
     case 3:
-      for(str = randoms;  *str; ++str) ct += *str == '\n';
-      M5.Lcd.printf(" - %d SSIDs:\n", ct);
-      M5.Lcd.print(randoms);
+      // placed here for consistency. no-op since display handled in loop. 
       break;
   }
   M5.Lcd.setTextSize(2);
@@ -796,7 +801,7 @@ void wifispam_loop() {
         beaconSpam(rickrollssids);
         break;
       case 3:
-        randoms = randomSSID();
+        char* randoms = randomSSID();
         len = sizeof(randoms);
         while(i < len){
           i++;
@@ -886,7 +891,7 @@ void setup() {
   Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
   Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
   Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
-  if(EEPROM.read(0) > 3){
+  if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
     // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
     Serial.println("EEPROM likely not properly configured. Writing defaults.");
     EEPROM.write(0, 3);    // Left rotation

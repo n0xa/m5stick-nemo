@@ -81,7 +81,7 @@ const char foobar[] PROGMEM = {
 
 #define SSIDLEN 375 /* Change to whatever length you need */
 
-const char* randomSSID(){
+char* randomSSID(){
   /* Change to allowable characters */
   const char possible[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -.!)(,?%";
   static char ssid[SSIDLEN + 1];
@@ -100,8 +100,6 @@ const char* randomSSID(){
   M5.Lcd.print(ssid);
   return ssid;
 }
-
-const char* randoms = randomSSID();
 
 #include <WiFi.h>
 
