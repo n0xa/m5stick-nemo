@@ -11,3 +11,7 @@ NEMO is named after the small, clever and headstrong fish in Finding Nemo. This 
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
 * EEPROM-backed Settings for rotation, brightness and, automatic dimming
 * Battery level and credits in settings menu
+
+## Building from Source
+* I have compiled successfully using Arduino IDE on Linux and Windows
+* If app size is too large, you must switch partition schemes. Tools -> Partition Scheme -> No OTA (Large APP)
