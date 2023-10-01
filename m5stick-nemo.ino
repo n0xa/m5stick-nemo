@@ -9,6 +9,13 @@
 #include "wifispam.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+bool pct_brightness = true;  /* set to false if the screen goes
+                              to full brightness over level 2. 
+                              Useful range is about 7-15.
+                              Set to true if the screen is too
+                              dim no matter what level is set.
+                              Some versions of the M5Stack lib
+                              have a percentage range 0-100. */
 
 int advtime = 0; 
 String formattedDate;
@@ -211,19 +218,31 @@ void dmenu_loop() {
     M5.Lcd.setCursor(0, 5, 1);
     M5.Lcd.println("SET BRIGHTNESS");
     delay(1000);
-    cursor = brightness / 10;
+    if(pct_brightness){
+      cursor = brightness / 10;
+    } else {
+      cursor = brightness + 5;
+    }
     timeset_drawmenu(11);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (digitalRead(M5_BUTTON_RST) == LOW) {
         cursor++;
         cursor = cursor % 11 ;
         timeset_drawmenu(11);
-        M5.Axp.ScreenBreath(10 * cursor);
+        if(pct_brightness){
+          M5.Axp.ScreenBreath(10 * cursor);
+        } else {
+          M5.Axp.ScreenBreath(5 + cursor);
+        }
         delay(250);
        }
     }
-    brightness = 10 * cursor;
-    M5.Axp.ScreenBreath(brightness);
+    if(pct_brightness){
+      brightness = cursor * 10;
+    } else {
+      brightness = cursor + 5;
+    }
+   M5.Axp.ScreenBreath(brightness);
     EEPROM.write(2, brightness);
     EEPROM.commit();
     rstOverride = false;
