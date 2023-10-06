@@ -102,10 +102,10 @@ void sendAllCodes()
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
     M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextSize(4);
+    M5.Lcd.setTextSize(BIG_TEXT);
     M5.Lcd.setCursor(5, 1);
     M5.Lcd.println("TV-B-Gone");
-    M5.Lcd.setTextSize(2);
+    M5.Lcd.setTextSize(SMALL_TEXT);
     M5.Lcd.println("Front Key: Go/Pause");
     const uint8_t bitcompression = powerCode->bitcompression;
     code_ptr = 0;
@@ -146,10 +146,10 @@ void sendAllCodes()
     quickflashLEDx(8);
   }
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.println("Front Key: Go/Pause");
   M5.Lcd.println("Side Key: Exit");
 }
