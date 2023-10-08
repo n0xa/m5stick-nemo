@@ -6,11 +6,13 @@
   #define BIG_TEXT 4 
   #define MEDIUM_TEXT 3
   #define SMALL_TEXT 2
+  #define TINY_TEXT 1
 #else
   #include <M5StickC.h>
   #define BIG_TEXT 2
   #define MEDIUM_TEXT 2
   #define SMALL_TEXT 1
+  #define TINY_TEXT 1
 #endif
 
 #include <EEPROM.h>
@@ -457,10 +459,10 @@ void sendAllCodes()
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
     M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextSize(4);
+    M5.Lcd.setTextSize(BIG_TEXT);
     M5.Lcd.setCursor(5, 1);
     M5.Lcd.println("TV-B-Gone");
-    M5.Lcd.setTextSize(2);
+    M5.Lcd.setTextSize(SMALL_TEXT);
     M5.Lcd.println("Front Key: Go/Pause");
     const uint8_t bitcompression = powerCode->bitcompression;
     code_ptr = 0;
@@ -469,7 +471,7 @@ void sendAllCodes()
       ti = (read_bits(bitcompression)) * 2;
       offtime = powerCode->times[ti];  // read word 1 - ontime
       ontime = powerCode->times[ti + 1]; // read word 2 - offtime
-      M5.Lcd.setTextSize(1);
+      M5.Lcd.setTextSize(TINY_TEXT);
       M5.Lcd.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
       rawData[k * 2] = offtime * 10;
       rawData[(k * 2) + 1] = ontime * 10;
@@ -505,10 +507,10 @@ void sendAllCodes()
     quickflashLEDx(8);
   }
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.println("Front Key: Go/Pause");
   M5.Lcd.println("Side Key: Exit");
 }
@@ -906,7 +908,7 @@ void wifispam_setup() {
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("WiFi Spam");
   delay(1000);
-  M5.Lcd.setTextSize(1);
+  M5.Lcd.setTextSize(TINY_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 0);
   M5.Lcd.print("WiFi Spam");
