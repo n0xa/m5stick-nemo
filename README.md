@@ -42,10 +42,11 @@ If you want to customize NEMO or contribute to the project, you should be famili
 * Install Arduino IDE. I've used Arduino 1.8 on Linux and Windows, and Arduino 2.2 on Windows successfully.
 * Install the M5Stack boards for Arduino IDE: In File -> Preferences, paste this URL into the "Boards Manager URLs" text box. Use commas between URLs if there are already URLs present.  https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
 * If M5Stack -> M5Stick-C-Plus doesn't show up under Tools -> Boards, then use Tools -> Boards -> Boards Manager and search for M5Stack. This will install support for most of the M5Stack boards including the Stick C Plus.
-* Ensure the M5Stick-C-Plus is selected in the boards menu.
+* Ensure the correct device model (e.g. M5Stick-C or M5Stick-C-Plus) is selected in the boards menu.
 * Install necessary libraries. In Sketch -> Include Library -> Library Manager, search for and install the following libraries and any dependencies they require:
-  * M5StickCPlus
+  * M5StickCPlus or M5StickC
   * IRRemoteESP8266
+* If compiling for the older (non-Plus) M5Stick-C, delete the line near the top that defines PLUS.
 * Switch partition schemes. Tools -> Partition Scheme -> No OTA (Large APP)
 * Compile and upload the project
 
