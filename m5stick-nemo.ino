@@ -1,6 +1,5 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
-#define PLUS
 #if defined(PLUS)
   #include <M5StickCPlus.h>
   #define BIG_TEXT 4 
@@ -469,8 +468,13 @@ void sendAllCodes()
     for (uint8_t k = 0; k < numpairs; k++) {
       uint16_t ti;
       ti = (read_bits(bitcompression)) * 2;
-      offtime = powerCode->times[ti];  // read word 1 - ontime
-      ontime = powerCode->times[ti + 1]; // read word 2 - offtime
+      #if defined(PLUS)
+        offtime = powerCode->times[ti];  // read word 1 - ontime
+        ontime = powerCode->times[ti + 1]; // read word 2 - offtime
+      #else
+        ontime = powerCode->times[ti];  // read word 1 - ontime
+        offtime = powerCode->times[ti + 1]; // read word 2 - offtime      
+      #endif
       M5.Lcd.setTextSize(TINY_TEXT);
       M5.Lcd.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
       rawData[k * 2] = offtime * 10;
@@ -478,8 +482,10 @@ void sendAllCodes()
       yield();
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    // Hack: Set IRLED high to turn it off after each burst. Otherwise it stays on (active low)
-    digitalWrite(IRLED, HIGH);
+    #if defined(PLUS)
+      // Hack: Set IRLED high to turn it off after each burst. Otherwise it stays on (active low)
+      digitalWrite(IRLED, HIGH);
+    #endif
     yield();
     bitsleft_r = 0;
     delay_ten_us(20500);
