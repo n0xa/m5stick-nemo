@@ -1,6 +1,18 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
-#include <M5StickCPlus.h>
+#define PLUS
+#if defined(PLUS)
+  #include <M5StickCPlus.h>
+  #define BIG_TEXT 4 
+  #define MEDIUM_TEXT 3
+  #define SMALL_TEXT 2
+#else
+  #include <M5StickC.h>
+  #define BIG_TEXT 2
+  #define MEDIUM_TEXT 2
+  #define SMALL_TEXT 1
+#endif
+
 #include <EEPROM.h>
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
@@ -109,7 +121,7 @@ MENU mmenu[] = {
 };
 
 void mmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(mmenu) / sizeof(MENU) ) ; i++ ) {
@@ -151,7 +163,7 @@ MENU smenu[] = {
 };
 
 void smenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(smenu) / sizeof(MENU) ) ; i++ ) {
@@ -194,7 +206,7 @@ MENU dmenu[] = {
 };
 
 void dmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(dmenu) / sizeof(MENU) ) ; i++ ) {
@@ -271,7 +283,7 @@ MENU rmenu[] = {
 };
 
 void rmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(rmenu) / sizeof(MENU) ) ; i++ ) {
@@ -307,7 +319,7 @@ void rmenu_loop() {
 
 /// BATTERY INFO ///
 void battery_drawmenu(int battery, int b, int c) {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   M5.Lcd.print("Battery: ");
@@ -346,10 +358,10 @@ void battery_loop() {
 /// TV-B-GONE ///
 void tvbgone_setup() {
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
   digitalWrite(IRLED, HIGH);
@@ -387,7 +399,7 @@ MENU tvbgmenu[] = {
 };
 
 void tvbgmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
@@ -398,10 +410,10 @@ void tvbgmenu_drawmenu() {
 
 void tvbgmenu_setup() {  
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(MEDIUM_TEXT);
   M5.Lcd.println("Region");
   cursor = region % 2;
   rstOverride = true;
@@ -506,7 +518,7 @@ void sendAllCodes()
 void clock_setup() {
   M5.Lcd.setRotation(rotation);
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(MEDIUM_TEXT);
 }
 
 void clock_loop() {
@@ -519,7 +531,7 @@ void clock_loop() {
 /// TIMESET ///
 void timeset_drawmenu(int nums) {
   M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 5, 1);
   // scrolling menu
@@ -624,7 +636,7 @@ MENU ajmenu[] = {
 
 void aj_drawmenu() {
   M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 5, 1);
   // scrolling menu
@@ -644,7 +656,7 @@ void aj_drawmenu() {
 
 void aj_setup(){
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(MEDIUM_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("AppleJuice");
   delay(1000);  
@@ -762,10 +774,10 @@ void aj_loop(){
     if (current_proc == 8 && isSwitching == false){
       M5.Lcd.setRotation(rotation);
       M5.Lcd.fillScreen(BLACK);
-      M5.Lcd.setTextSize(3);
+      M5.Lcd.setTextSize(MEDIUM_TEXT);
       M5.Lcd.setCursor(5, 1);
       M5.Lcd.println("AppleJuice");
-      M5.Lcd.setTextSize(2);
+      M5.Lcd.setTextSize(SMALL_TEXT);
       M5.Lcd.print("Advertising:\n");
       M5.Lcd.print(ajmenu[cursor].name);
       M5.Lcd.print("\n\nSide Key: Exit");
@@ -849,10 +861,10 @@ void credits_setup(){
   M5.Lcd.fillScreen(WHITE);  
   M5.Lcd.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 40, 100, 5);
   M5.Lcd.setTextColor(BLACK, WHITE);
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(MEDIUM_TEXT);
   M5.Lcd.setCursor(0, 25);
   M5.Lcd.print(" M5-NEMO\n");
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.println(" For M5Stack");
   M5.Lcd.println(" StickC-Plus");
   M5.Lcd.println("By Noah Axon");
@@ -890,7 +902,7 @@ void wifispam_setup() {
   esp_wifi_set_channel(channels[0], WIFI_SECOND_CHAN_NONE);
 
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(5, 1);
   M5.Lcd.println("WiFi Spam");
   delay(1000);
@@ -915,7 +927,7 @@ void wifispam_setup() {
       // placed here for consistency. no-op since display handled in loop. 
       break;
   }
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   current_proc = 11;
 }
 
@@ -964,7 +976,7 @@ MENU wsmenu[] = {
 };
 
 void wsmenu_drawmenu() {
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(SMALL_TEXT);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(wsmenu) / sizeof(MENU) ) ; i++ ) {
@@ -1053,7 +1065,7 @@ void setup() {
   // Boot Screen
   digitalWrite(M5_LED, HIGH); //LEDOFF
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(BIG_TEXT);
   M5.Lcd.setCursor(40, 15);
   M5.Lcd.print("M5-NEMO\n");
   // Pin setup
