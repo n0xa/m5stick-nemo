@@ -426,6 +426,81 @@ void tvbgmenu_loop() {
   }
 }
 
+void sendAllCodes()
+{
+  bool endingEarly = false; //will be set to true if the user presses the button during code-sending
+  if (region == NA) {
+    num_codes = num_NAcodes;
+  } else {
+    num_codes = num_EUcodes;
+  }
+  for (i = 0 ; i < num_codes; i++)
+  {
+    if (region == NA) {
+      powerCode = NApowerCodes[i];
+    }
+    else {
+      powerCode = EUpowerCodes[i];
+    }
+    const uint8_t freq = powerCode->timer_val;
+    const uint8_t numpairs = powerCode->numpairs;
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextSize(4);
+    M5.Lcd.setCursor(5, 1);
+    M5.Lcd.println("TV-B-Gone");
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.println("Front Key: Go/Pause");
+    const uint8_t bitcompression = powerCode->bitcompression;
+    code_ptr = 0;
+    for (uint8_t k = 0; k < numpairs; k++) {
+      uint16_t ti;
+      ti = (read_bits(bitcompression)) * 2;
+      offtime = powerCode->times[ti];  // read word 1 - ontime
+      ontime = powerCode->times[ti + 1]; // read word 2 - offtime
+      M5.Lcd.setTextSize(1);
+      M5.Lcd.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
+      rawData[k * 2] = offtime * 10;
+      rawData[(k * 2) + 1] = ontime * 10;
+      yield();
+    }
+    irsend.sendRaw(rawData, (numpairs * 2) , freq);
+    // Hack: Set IRLED high to turn it off after each burst. Otherwise it stays on (active low)
+    digitalWrite(IRLED, HIGH);
+    yield();
+    bitsleft_r = 0;
+    delay_ten_us(20500);
+    if (M5.Axp.GetBtnPress()){
+      // duplicate code here, sadly, since this is a blocking loop
+      endingEarly = true;
+      current_proc = 1;
+      isSwitching = true;
+      rstOverride = false; 
+      break;     
+    }
+    if (digitalRead(TRIGGER) == BUTTON_PRESSED){
+      while (digitalRead(TRIGGER) == BUTTON_PRESSED) {
+        yield();
+      }
+      endingEarly = true;
+      quickflashLEDx(4);
+      break; 
+    }
+  } 
+  if (endingEarly == false)
+  {
+    delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
+    delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
+    quickflashLEDx(8);
+  }
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(4);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("TV-B-Gone");
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.println("Front Key: Go/Pause");
+  M5.Lcd.println("Side Key: Exit");
+}
+
 
 /// CLOCK ///
 void clock_setup() {

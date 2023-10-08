@@ -13,6 +13,14 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * EEPROM-backed Settings for rotation, brightness and, automatic dimming
 * Battery level and credits in settings menu
 
+## User Interface
+* A quick tap of the power button (closest to the USB port) will bring up the main menu from anywhere.
+* Long pressing the power button for 6 seconds turns off the unit.
+* In Function modes, the side button stops or pauses the process and brings up a menu.
+* In Menu mode, the side button scrolls the cursor to the next option in the menu.
+* In Function modes, the front M5 button wakes up the dim screen.
+* In Menu mode, the front M5 button activates the selected menu item next to the cursor.
+
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO
 * [M5Stick C Plus Quick Start](https://docs.m5stack.com/en/quick_start/m5stickc_plus/uiflow) has links to the M5Burner app for Linux, MacOS and Windows. This is the official tool to install UIFlow and other official firmware. I provide up-to-date binaries for NEMO there.
