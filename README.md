@@ -48,6 +48,8 @@ If you want to customize NEMO or contribute to the project, you should be famili
   * IRRemoteESP8266
 * If compiling for the older (non-Plus) M5Stick-C, delete the line near the top that defines PLUS.
 * Switch partition schemes. Tools -> Partition Scheme -> No OTA (Large APP)
+* Configuration
+  * The code should compile cleanly and work on an M5StickC Plus out of the box from the master branch or a release tag.
+  * If you are using an older M5StickC (non-plus) remove the "#define PLUS" line near the top of m5stick-nemo.ino which should configure everything for the older model.
+  * If for some reason the screen jumps from very dim at level 0 to almost fully bright at level 1 and further brightness levels don't affect anything, set the pct_brightness variable to false.
 * Compile and upload the project
-
-
