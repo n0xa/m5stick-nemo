@@ -1,5 +1,6 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
+#define PLUS
 #if defined(PLUS)
   #include <M5StickCPlus.h>
   #define BIG_TEXT 4 
