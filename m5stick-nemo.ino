@@ -36,6 +36,7 @@ String formattedDate;
 String dayStamp;
 String timeStamp;
 int cursor = 0;
+int wifict = 0;
 int rotation = 1;
 int brightness = 100;
 int ajDelay = 1000;
@@ -64,6 +65,8 @@ struct MENU {
 // 11 - Wifi beacon spam
 // 12 - Wifi spam menu
 // 13 - TV-B-Gone Region Setting
+// 14 - Wifi scanning
+// 15 - Wifi scan results
 
 bool isSwitching = true;
 int current_proc = 0; // Start in Clock Mode
@@ -115,11 +118,12 @@ void check_axp_press() {
 
 /// MAIN MENU ///
 MENU mmenu[] = {
-  { "clock", 0},
+  { "Clock", 0},
   { "TV B-GONE", 13}, // We jump to the region menu first
   { "AppleJuice", 8},
   { "WiFi Spam", 12},
-  { "settings", 2},
+  { "WiFi Scan", 14},
+  { "Settings", 2},
 };
 
 void mmenu_drawmenu() {
@@ -1041,6 +1045,127 @@ void wsmenu_loop() {
   }
 }
 
+void wscan_drawmenu() {
+  char ssid[19];
+  M5.Lcd.setRotation(rotation);
+  M5.Lcd.setTextSize(SMALL_TEXT);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 5, 1);
+  // scrolling menu
+  if (cursor > 4) {
+    for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(WiFi.SSID(i).substring(0,19));
+    }
+  } else {
+    for ( int i = 0 ; i < wifict ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(WiFi.SSID(i).substring(0,19));
+    }
+  }
+  M5.Lcd.print((cursor == wifict) ? ">" : " ");
+  M5.Lcd.println("[RESCAN]");
+  M5.Lcd.print((cursor == wifict + 1) ? ">" : " ");
+  M5.Lcd.println("back");
+}
+
+void wscan_result_setup() {
+  M5.Lcd.setRotation(rotation);
+  cursor = 0;
+  rstOverride = true;
+  wscan_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void wscan_result_loop(){
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    cursor++;
+    cursor = cursor % ( wifict + 2);
+    wscan_drawmenu();
+    delay(250);
+  }
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    delay(250);
+    if(cursor == wifict){
+      rstOverride = false;
+      current_proc = 14;
+    }
+    if(cursor == wifict + 1){
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 1;
+    }
+    String encryptType = "";
+    switch (WiFi.encryptionType(cursor)) {
+    case 1:
+      encryptType = "WEP";
+      break;
+    case 2:
+      encryptType = "WPA/PSK/TKIP";
+      break;
+    case 3:
+      encryptType = "WPA/PSK/CCMP";
+      break;
+    case 4:
+      encryptType = "WPA2/PSK/Mixed/CCMP";
+      break;
+    case 8:
+      encryptType = "WPA/WPA2/PSK";
+      break ;
+    case 0:
+      encryptType = "Open";
+      break ;
+    }
+    
+    M5.Lcd.setTextSize(MEDIUM_TEXT);
+    if(WiFi.SSID(cursor).length() > 12){
+      M5.Lcd.setTextSize(SMALL_TEXT);
+    }       
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setCursor(5, 1);
+    M5.Lcd.println(WiFi.SSID(cursor));
+    M5.Lcd.setTextSize(SMALL_TEXT);
+    M5.Lcd.printf("Chan : %d\n", WiFi.channel(cursor));
+    M5.Lcd.printf("Crypt: %s\n", encryptType);
+        M5.Lcd.printf("BSSID:\n %x:%x:%x:%x:%x:%x\n", 
+      WiFi.BSSID(i)[5],
+      WiFi.BSSID(i)[4],
+      WiFi.BSSID(i)[3],
+      WiFi.BSSID(i)[2],
+      WiFi.BSSID(i)[1],
+      WiFi.BSSID(i)[0]
+      );
+
+    M5.Lcd.printf("\nSide Key: Back");
+  }
+}
+
+
+void wscan_setup(){
+  rstOverride = false;  
+  cursor = 0;
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(BIG_TEXT);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("WiFi Scan");
+  delay(2000);
+}
+
+void wscan_loop(){
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(MEDIUM_TEXT);
+  M5.Lcd.setCursor(5, 1);
+  M5.Lcd.println("Scanning...");
+  wifict = WiFi.scanNetworks();
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(SMALL_TEXT);
+  M5.Lcd.setCursor(5, 1);
+  if(wifict > 0){
+  isSwitching = true;
+  current_proc=15;
+  }
+}
+
 /// ENTRY ///
 void setup() {
   M5.begin();
@@ -1148,6 +1273,12 @@ void loop() {
       case 13:
         tvbgmenu_setup();
         break;
+      case 14:
+        wscan_setup();
+        break;
+      case 15:
+        wscan_result_setup();
+        break;
     }
   }
 
@@ -1193,6 +1324,12 @@ void loop() {
       break;
     case 13:
       tvbgmenu_loop();
+      break;
+    case 14:
+      wscan_loop();
+      break;
+    case 15:
+      wscan_result_loop();
       break;
   }
 }
