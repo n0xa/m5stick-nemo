@@ -1119,12 +1119,12 @@ void wscan_result_loop(){
     M5.Lcd.printf("Chan : %d\n", WiFi.channel(cursor));
     M5.Lcd.printf("Crypt: %s\n", encryptType);
         M5.Lcd.printf("BSSID:\n %x:%x:%x:%x:%x:%x\n", 
-      WiFi.BSSID(i)[5],
-      WiFi.BSSID(i)[4],
-      WiFi.BSSID(i)[3],
-      WiFi.BSSID(i)[2],
+      WiFi.BSSID(i)[0],
       WiFi.BSSID(i)[1],
-      WiFi.BSSID(i)[0]
+      WiFi.BSSID(i)[2],
+      WiFi.BSSID(i)[3],
+      WiFi.BSSID(i)[4],
+      WiFi.BSSID(i)[5]
       );
 
     M5.Lcd.printf("\nSide Key: Back");
