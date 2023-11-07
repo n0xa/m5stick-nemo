@@ -160,12 +160,12 @@ void mmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
-  { "battery info", 6},
-  { "brightness", 4},
-  { "set clock time", 3},
-  { "rotation", 7},
-  { "about", 10},
-  { "back", 1},
+  { "Battery Info", 6},
+  { "Brightness", 4},
+  { "Set Clock", 3},
+  { "Rotation", 7},
+  { "About", 10},
+  { "Back", 1},
 };
 
 void smenu_drawmenu() {
@@ -208,7 +208,7 @@ MENU dmenu[] = {
   { "20 seconds", 20},
   { "25 seconds", 25},
   { "30 seconds", 30},
-  { "back", screen_dim_time},
+  { "Back", screen_dim_time},
 };
 
 void dmenu_drawmenu() {
@@ -285,7 +285,7 @@ void dmenu_loop() {
 MENU rmenu[] = {
   { "Right", 1},
   { "Left", 3},
-  { "back", rotation},
+  { "Back", rotation},
 };
 
 void rmenu_drawmenu() {
@@ -526,7 +526,6 @@ void sendAllCodes()
   M5.Lcd.println("Side Key: Exit");
 }
 
-
 /// CLOCK ///
 void clock_setup() {
   M5.Lcd.setRotation(rotation);
@@ -644,7 +643,7 @@ MENU ajmenu[] = {
   { "AppleTV Network", 25},
   { "TV Color Balance", 26},
   { "Setup New Phone", 28},
-  { "back", 30},
+  { "Back", 30},
 };
 
 void aj_drawmenu() {
@@ -841,12 +840,6 @@ void aj_adv(){
       esp_fill_random(&packet[i], 3);
       oAdvertisementData.addData(std::string((char *)packet, 17));
     } else {
-      // TODO: use esp_fill_random to populate last 3 chars in data 
-      // payload for other appleJuice spam types to randomize device ID?
-      // 
-      // sizeof() has to match the 31 and 23 byte char* however it doesn't seem
-      // to work with bare integers, so sizeof() calls arbitrary elements of the
-      // correct length. Without this if block, only 31-byte messages worked.
       if (deviceType >= 18){
         oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
       } else {
@@ -950,7 +943,6 @@ void wifispam_loop() {
   digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
   delay(1);
   digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
-  // put your main code here, to run repeatedly:
   currentTime = millis();
   if (currentTime - attackTime > 100) {
     switch(spamtype) {
@@ -985,7 +977,7 @@ MENU wsmenu[] = {
   { "Funny", 0},
   { "Rickroll", 1},
   { "Random", 2},
-  { "back", 3},
+  { "Back", 3},
 };
 
 void wsmenu_drawmenu() {
@@ -1016,7 +1008,6 @@ void wsmenu_loop() {
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
     int option = wsmenu[cursor].command;
     // Also borrowed heavily from ronaldstoner / ECTO-1A esp32 AppleJuice
-    //uint8_t* data;
     switch(option) {
       case 0:
         spamtype = 1;
@@ -1066,7 +1057,7 @@ void wscan_drawmenu() {
   M5.Lcd.print((cursor == wifict) ? ">" : " ");
   M5.Lcd.println("[RESCAN]");
   M5.Lcd.print((cursor == wifict + 1) ? ">" : " ");
-  M5.Lcd.println("back");
+  M5.Lcd.println("Back");
 }
 
 void wscan_result_setup() {
