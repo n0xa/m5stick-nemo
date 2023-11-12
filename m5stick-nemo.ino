@@ -937,7 +937,6 @@ void aj_adv(){
         Serial.printf("%02x", packet[i]);
       }
       Serial.println("");
-
     } else if (swiftPair) {
       const char* display_name = generateRandomName();
       Serial.printf("SwiftPair Advertisement: '%s' - ", display_name);
@@ -962,8 +961,10 @@ void aj_adv(){
 
       i += display_name_len;  
       oAdvertisementData.addData(std::string((char *)packet, size));
+      free(packet);
+      free((void*)display_name);
     } else {
-      Serial.printf("AppleJuice Advertisement: ", deviceType);
+      Serial.print("AppleJuice Advertisement: ");
       if (deviceType >= 18){
         oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
       } else {
@@ -982,7 +983,7 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
-    if (sourApple || swiftPair){
+    if (sourApple || swiftPair || maelstrom){
       current_proc = 16;
       btmenu_drawmenu();
     } else {
