@@ -1,19 +1,58 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
-#define PLUS
-#if defined(PLUS)
+
+// -=-=-=-=-=-=-  Uncomment the platform you're building for -=-=-=-=-=-=-
+#define STICK_C_PLUS
+//#define STICK_C
+//#define CARDPUTER
+
+#if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
-  #define BIG_TEXT 4 
+  #define BIG_TEXT 4
   #define MEDIUM_TEXT 3
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
-#else
+  // -=-=- FEATURES -=-=-
+  #define LED
+  #define RTC
+  #define AXP
+  #define ACTIVE_LOW_IR
+  #define ROTATION
+  #define USE_EEPROM
+  // -=-=- ALIASES -=-=-
+  #define DISP M5.Lcd
+#endif
+
+#ifdef STICK_C
   #include <M5StickC.h>
   #define BIG_TEXT 2
   #define MEDIUM_TEXT 2
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
+  // -=-=- FEATURES -=-=-
+  #define LED
+  #define RTC
+  #define AXP
+  #define ROTATION
+  #define USE_EEPROM
+  // -=-=- ALIASES -=-=-
+  #define DISP M5.Lcd
 #endif
+
+#ifdef CARDPUTER
+  #include <M5Cardputer.h>
+  #define BIG_TEXT 4
+  #define MEDIUM_TEXT 3
+  #define SMALL_TEXT 2
+  #define TINY_TEXT 1
+  // -=-=- FEATURES -=-=-
+  #define KB
+  #define HID
+  #define ACTIVE_LOW_IR
+  // -=-=- ALIASES -=-=-
+  #define DISP M5Cardputer.Display
+#endif
+
 
 #include <EEPROM.h>
 #include <IRremoteESP8266.h>
@@ -23,29 +62,19 @@
 #include "wifispam.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
-bool pct_brightness = true;  /* set to false if the screen goes
-                              to full brightness over level 2. 
-                              Useful range is about 7-15.
-                              Set to true if the screen is too
-                              dim no matter what level is set.
-                              Some versions of the M5Stack lib
-                              have a percentage range 0-100. */
 
 int advtime = 0; 
-String formattedDate;
-String dayStamp;
-String timeStamp;
 int cursor = 0;
 int wifict = 0;
-int rotation = 1;
 int brightness = 100;
 int ajDelay = 1000;
 bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
 bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
 bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
-#define EEPROM_SIZE 4
-
+#ifdef USE_EEPROM
+  #define EEPROM_SIZE 4
+#endif
 struct MENU {
   char name[19];
   int command;
@@ -73,7 +102,12 @@ struct MENU {
 // 17 - Bluetooth Maelstrom
 
 bool isSwitching = true;
-int current_proc = 0; // Start in Clock Mode
+#ifdef RTC
+  int current_proc = 0; // Start in Clock Mode
+#else
+  int current_prof = 1; // Start in Main Menu mode if no RTC
+#endif
+
 void switcher_button_proc() {
   if (rstOverride == false) {
     if (digitalRead(M5_BUTTON_RST) == LOW) {
@@ -83,46 +117,12 @@ void switcher_button_proc() {
   }
 }
 
-bool screen_dim_dimmed = false;
-int screen_dim_time = 30;
-int screen_dim_current = 0;
-
-void screen_dim_proc() {
-  M5.Rtc.GetBm8563Time();
-  // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
-  if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
-    if (screen_dim_dimmed) {
-      screen_dim_dimmed = false;
-      M5.Axp.ScreenBreath(brightness);
-    }
-    int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
-
-    if (newtime >= 60) {
-      newtime = newtime - 60;
-    }
-    screen_dim_current = newtime;
-  }
-  if (screen_dim_dimmed == false) {
-    if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
-      M5.Axp.ScreenBreath(10);
-      screen_dim_dimmed = true;
-    }
-  }
-}
-
-// Tap the power button from pretty much anywhere to get to the main menu
-void check_axp_press() {
-  if (M5.Axp.GetBtnPress()) {
-    isSwitching = true;
-    rstOverride = false;
-    current_proc = 1;
-    delay(100);
-  }
-}
 
 /// MAIN MENU ///
 MENU mmenu[] = {
+#ifdef RTC
   { "Clock", 0},
+#endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth Spam", 16},
   { "WiFi Spam", 12},
@@ -131,17 +131,16 @@ MENU mmenu[] = {
 };
 
 void mmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(mmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(mmenu[i].name);
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(mmenu[i].name);
   }
 }
 
 void mmenu_setup() {
-  M5.Lcd.setRotation(rotation);
   cursor = 0;
   rstOverride = true;
   mmenu_drawmenu();
@@ -162,28 +161,170 @@ void mmenu_loop() {
   }
 }
 
+#if defined(AXP) && defined(RTC)
+  //Screen dimming needs both AXP and RTC features
+  bool pct_brightness = true;  /* set to false if the screen goes
+                              to full brightness over level 2.
+                              Useful range is about 7-15.
+                              Set to true if the screen is too
+                              dim no matter what level is set.
+                              Some versions of the M5Stack lib
+                              have a percentage range 0-100. */
+
+  bool screen_dim_dimmed = false;
+  int screen_dim_time = 30;
+  int screen_dim_current = 0;
+
+  void screen_dim_proc() {
+    M5.Rtc.GetBm8563Time();
+    // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
+    if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
+      if (screen_dim_dimmed) {
+        screen_dim_dimmed = false;
+        M5.Axp.ScreenBreath(brightness);
+      }
+      int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
+
+      if (newtime >= 60) {
+        newtime = newtime - 60;
+      }
+      screen_dim_current = newtime;
+    }
+    if (screen_dim_dimmed == false) {
+      if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
+        M5.Axp.ScreenBreath(10);
+        screen_dim_dimmed = true;
+      }
+    }
+  }
+
+  /// Dimmer MENU ///
+  MENU dmenu[] = {
+    { "5 seconds", 5},
+    { "10 seconds", 10},
+    { "15 seconds", 15},
+    { "20 seconds", 20},
+    { "25 seconds", 25},
+    { "30 seconds", 30},
+    { "Back", screen_dim_time},
+  };
+
+  void dmenu_drawmenu() {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 8, 1);
+    for ( int i = 0 ; i < ( sizeof(dmenu) / sizeof(MENU) ) ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(dmenu[i].name);
+    }
+  }
+
+  void dmenu_setup() {
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 5, 1);
+    DISP.println("SET AUTO DIM TIME");
+    delay(1000);
+    cursor = (screen_dim_time / 5) - 1;
+    rstOverride = true;
+    dmenu_drawmenu();
+    delay(250); // Prevent switching after menu loads up
+  }
+
+  void dmenu_loop() {
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
+      dmenu_drawmenu();
+      delay(250);
+    }
+    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+      screen_dim_time = dmenu[cursor].command;
+      #ifdef USE_EEPROM
+        EEPROM.write(1, screen_dim_time);
+        EEPROM.commit();
+      #endif
+      DISP.fillScreen(BLACK);
+      DISP.setCursor(0, 5, 1);
+      DISP.println("SET BRIGHTNESS");
+      delay(1000);
+      if(pct_brightness){
+        cursor = brightness / 10;
+      } else {
+        cursor = brightness + 5;
+      }
+      timeset_drawmenu(11);
+      while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+        if (digitalRead(M5_BUTTON_RST) == LOW) {
+          cursor++;
+          cursor = cursor % 11 ;
+          timeset_drawmenu(11);
+          if(pct_brightness){
+            M5.Axp.ScreenBreath(10 * cursor);
+          } else {
+            M5.Axp.ScreenBreath(5 + cursor);
+          }
+          delay(250);
+         }
+      }
+      if(pct_brightness){
+        brightness = cursor * 10;
+      } else {
+        brightness = cursor + 5;
+      }
+     M5.Axp.ScreenBreath(brightness);
+      #ifdef USE_EEPROM
+        EEPROM.write(2, brightness);
+        EEPROM.commit();
+      #endif
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 2;
+    }
+  }
+#endif //AXP / RTC Dimmer
+
+// Tap the power button from pretty much anywhere to get to the main menu
+void check_menu_press() {
+#ifdef AXP
+  if (M5.Axp.GetBtnPress()) {
+#else
+  // There's a no-op until I get Cardputer sorted out)
+  if (true == false) {
+#endif
+    isSwitching = true;
+    rstOverride = false;
+    current_proc = 1;
+    delay(100);
+  }
+}
+
 /// SETTINGS MENU ///
 MENU smenu[] = {
+#ifdef AXP
   { "Battery Info", 6},
   { "Brightness", 4},
+#endif
+#ifdef RTC
   { "Set Clock", 3},
+#endif
+#ifdef ROTATION
   { "Rotation", 7},
+#endif
   { "About", 10},
   { "Back", 1},
 };
 
 void smenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(smenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(smenu[i].name);
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(smenu[i].name);
   }
 }
 
 void smenu_setup() {
-  M5.Lcd.setRotation(rotation);
   cursor = 0;
   rstOverride = true;
   smenu_drawmenu();
@@ -204,187 +345,112 @@ void smenu_loop() {
   }
 }
 
-/// Dimmer MENU ///
-MENU dmenu[] = {
-  { "5 seconds", 5},
-  { "10 seconds", 10},
-  { "15 seconds", 15},
-  { "20 seconds", 20},
-  { "25 seconds", 25},
-  { "30 seconds", 30},
-  { "Back", screen_dim_time},
-};
+int rotation = 1;
+#ifdef ROTATION
+  /// Rotation MENU ///
+  MENU rmenu[] = {
+    { "Right", 1},
+    { "Left", 3},
+    { "Back", rotation},
+  };
 
-void dmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(dmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(dmenu[i].name);
-  }
-}
-
-void dmenu_setup() {
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
-  M5.Lcd.println("SET AUTO DIM TIME");
-  delay(1000);
-  cursor = (screen_dim_time / 5) - 1; 
-  rstOverride = true;
-  dmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
-}
-
-void dmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
-    cursor++;
-    cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
-    dmenu_drawmenu();
-    delay(250);
-  }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
-    screen_dim_time = dmenu[cursor].command;
-    EEPROM.write(1, screen_dim_time);
-    EEPROM.commit();
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setCursor(0, 5, 1);
-    M5.Lcd.println("SET BRIGHTNESS");
-    delay(1000);
-    if(pct_brightness){
-      cursor = brightness / 10;
-    } else {
-      cursor = brightness + 5;
+  void rmenu_drawmenu() {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 8, 1);
+    for ( int i = 0 ; i < ( sizeof(rmenu) / sizeof(MENU) ) ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(rmenu[i].name);
     }
-    timeset_drawmenu(11);
-    while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-      if (digitalRead(M5_BUTTON_RST) == LOW) {
-        cursor++;
-        cursor = cursor % 11 ;
-        timeset_drawmenu(11);
-        if(pct_brightness){
-          M5.Axp.ScreenBreath(10 * cursor);
-        } else {
-          M5.Axp.ScreenBreath(5 + cursor);
-        }
-        delay(250);
-       }
-    }
-    if(pct_brightness){
-      brightness = cursor * 10;
-    } else {
-      brightness = cursor + 5;
-    }
-   M5.Axp.ScreenBreath(brightness);
-    EEPROM.write(2, brightness);
-    EEPROM.commit();
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 2;
   }
-}
 
-/// Rotation MENU ///
-MENU rmenu[] = {
-  { "Right", 1},
-  { "Left", 3},
-  { "Back", rotation},
-};
-
-void rmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(rmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(rmenu[i].name);
-  }
-}
-
-void rmenu_setup() {
-  M5.Lcd.setRotation(rotation);
-  cursor = 0;
-  rstOverride = true;
-  rmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
-}
-
-void rmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
-    cursor++;
-    cursor = cursor % ( sizeof(rmenu) / sizeof(MENU) );
+  void rmenu_setup() {
+    cursor = 0;
+    rstOverride = true;
     rmenu_drawmenu();
-    delay(250);
+    delay(250); // Prevent switching after menu loads up
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
-    rstOverride = false;
-    isSwitching = true;
-    rotation = rmenu[cursor].command;
-    EEPROM.write(0, rotation);
-    EEPROM.commit();
-    current_proc = 2;
-  }
-}
 
-/// BATTERY INFO ///
-void battery_drawmenu(int battery, int b, int c) {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
-  M5.Lcd.print("Battery: ");
-  M5.Lcd.print(battery);
-  M5.Lcd.println("%");
-  M5.Lcd.print("DeltaB: ");
-  M5.Lcd.println(b);
-  M5.Lcd.print("DeltaC: ");
-  M5.Lcd.println(c);
-  M5.Lcd.println("");
-  M5.Lcd.println("Press any button to exit");
-}
-void battery_setup() {
-  M5.Lcd.setRotation(rotation);
-  rstOverride = false;
-  float c = M5.Axp.GetVapsData() * 1.4 / 1000;
-  float b = M5.Axp.GetVbatData() * 1.1 / 1000;
-  int battery = ((b - 3.0) / 1.2) * 100;
-  battery_drawmenu(battery, b, c);
-  delay(250); // Prevent switching after menu loads up
-}
-
-void battery_loop() {
-  delay(300);
-  float c = M5.Axp.GetVapsData() * 1.4 / 1000;
-  float b = M5.Axp.GetVbatData() * 1.1 / 1000;
-  int battery = ((b - 3.0) / 1.2) * 100;
-  battery_drawmenu(battery, b, c);
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 1;
+  void rmenu_loop() {
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % ( sizeof(rmenu) / sizeof(MENU) );
+      rmenu_drawmenu();
+      delay(250);
+    }
+    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+      rstOverride = false;
+      isSwitching = true;
+      rotation = rmenu[cursor].command;
+      DISP.setRotation(rotation);
+      #ifdef USE_EEPROM
+        EEPROM.write(0, rotation);
+        EEPROM.commit();
+      #endif
+      current_proc = 2;
+    }
   }
-}
+#endif //ROTATION
+
+#ifdef AXP
+  /// BATTERY INFO ///
+  void battery_drawmenu(int battery, int b, int c) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 8, 1);
+    DISP.print("Battery: ");
+    DISP.print(battery);
+    DISP.println("%");
+    DISP.print("DeltaB: ");
+    DISP.println(b);
+    DISP.print("DeltaC: ");
+    DISP.println(c);
+    DISP.println("");
+    DISP.println("Press any button to exit");
+  }
+  void battery_setup() {
+    rstOverride = false;
+    float c = M5.Axp.GetVapsData() * 1.4 / 1000;
+    float b = M5.Axp.GetVbatData() * 1.1 / 1000;
+    int battery = ((b - 3.0) / 1.2) * 100;
+    battery_drawmenu(battery, b, c);
+    delay(250); // Prevent switching after menu loads up
+  }
+
+  void battery_loop() {
+    delay(300);
+    float c = M5.Axp.GetVapsData() * 1.4 / 1000;
+    float b = M5.Axp.GetVbatData() * 1.1 / 1000;
+    int battery = ((b - 3.0) / 1.2) * 100;
+    battery_drawmenu(battery, b, c);
+    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 1;
+    }
+  }
+#endif // AXP
 
 /// TV-B-GONE ///
 void tvbgone_setup() {
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("TV-B-Gone");
+  DISP.setTextSize(SMALL_TEXT);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
   digitalWrite(IRLED, HIGH);
 
   delay_ten_us(5000);
   if(region == NA) {
-    M5.Lcd.print("Region:\nAmericas / Asia\n");
+    DISP.print("Region:\nAmericas / Asia\n");
   }
   else {
-    M5.Lcd.println("Region: EMEA");
+    DISP.println("Region: EMEA");
   }
-  M5.Lcd.println("Front Key: Go/Pause");
-  M5.Lcd.println("Side Key: Exit");
+  DISP.println("Front Key: Go/Pause");
+  DISP.println("Side Key: Exit");
   delay(1000);
 }
 
@@ -409,22 +475,22 @@ MENU tvbgmenu[] = {
 };
 
 void tvbgmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(tvbgmenu[i].name);
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(tvbgmenu[i].name);
   }
 }
 
 void tvbgmenu_setup() {  
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(MEDIUM_TEXT);
-  M5.Lcd.println("Region");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("TV-B-Gone");
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.println("Region");
   cursor = region % 2;
   rstOverride = true;
   delay(1000); 
@@ -440,8 +506,10 @@ void tvbgmenu_loop() {
   }
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
     region = tvbgmenu[cursor].command;
-    EEPROM.write(3, region);
-    EEPROM.commit();
+    #ifdef USE_EEPROM
+      EEPROM.write(3, region);
+      EEPROM.commit();
+    #endif
     rstOverride = false;
     isSwitching = true;
     current_proc = 5;
@@ -466,38 +534,40 @@ void sendAllCodes()
     }
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextSize(BIG_TEXT);
-    M5.Lcd.setCursor(5, 1);
-    M5.Lcd.println("TV-B-Gone");
-    M5.Lcd.setTextSize(SMALL_TEXT);
-    M5.Lcd.println("Front Key: Go/Pause");
+    DISP.fillScreen(BLACK);
+    DISP.setTextSize(BIG_TEXT);
+    DISP.setCursor(5, 1);
+    DISP.println("TV-B-Gone");
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.println("Front Key: Go/Pause");
     const uint8_t bitcompression = powerCode->bitcompression;
     code_ptr = 0;
     for (uint8_t k = 0; k < numpairs; k++) {
       uint16_t ti;
       ti = (read_bits(bitcompression)) * 2;
-      #if defined(PLUS)
+      #ifdef ACTIVE_LOW_IR
         offtime = powerCode->times[ti];  // read word 1 - ontime
         ontime = powerCode->times[ti + 1]; // read word 2 - offtime
       #else
         ontime = powerCode->times[ti];  // read word 1 - ontime
         offtime = powerCode->times[ti + 1]; // read word 2 - offtime      
       #endif
-      M5.Lcd.setTextSize(TINY_TEXT);
-      M5.Lcd.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
+      DISP.setTextSize(TINY_TEXT);
+      DISP.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
       rawData[k * 2] = offtime * 10;
       rawData[(k * 2) + 1] = ontime * 10;
       yield();
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    #if defined(PLUS)
-      // Hack: Set IRLED high to turn it off after each burst. Otherwise it stays on (active low)
+    #ifdef ACTIVE_LOW_IR
+      // Set Active Low IRLED high to turn it off after each burst.
       digitalWrite(IRLED, HIGH);
     #endif
     yield();
     bitsleft_r = 0;
     delay_ten_us(20500);
+    #ifdef AXP
+    // TODO sort out home button for cardputer
     if (M5.Axp.GetBtnPress()){
       // duplicate code here, sadly, since this is a blocking loop
       endingEarly = true;
@@ -506,6 +576,8 @@ void sendAllCodes()
       rstOverride = false; 
       break;     
     }
+    #endif
+    // TODO Replace TRIGGER with better button defs
     if (digitalRead(TRIGGER) == BUTTON_PRESSED){
       while (digitalRead(TRIGGER) == BUTTON_PRESSED) {
         yield();
@@ -521,100 +593,100 @@ void sendAllCodes()
     delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
     quickflashLEDx(8);
   }
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("TV-B-Gone");
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.println("Front Key: Go/Pause");
-  M5.Lcd.println("Side Key: Exit");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("TV-B-Gone");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.println("Front Key: Go/Pause");
+  DISP.println("Side Key: Exit");
 }
 
 /// CLOCK ///
-void clock_setup() {
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(MEDIUM_TEXT);
-}
+#ifdef RTC
+  void clock_setup() {
+    DISP.fillScreen(BLACK);
+    DISP.setTextSize(MEDIUM_TEXT);
+  }
 
-void clock_loop() {
-  M5.Rtc.GetBm8563Time();
-  M5.Lcd.setCursor(40, 40, 2);
-  M5.Lcd.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
-  delay(250);
-}
+  void clock_loop() {
+    M5.Rtc.GetBm8563Time();
+    DISP.setCursor(40, 40, 2);
+    DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    delay(250);
+  }
 
-/// TIMESET ///
-void timeset_drawmenu(int nums) {
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
-  // scrolling menu
-  if (cursor > 5) {
-    for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(i);
-    }
-  } else {
-    for (
-      int i = 0 ; i < nums ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(i);
+  /// TIMESET ///
+  void timeset_drawmenu(int nums) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 5, 1);
+    // scrolling menu
+    if (cursor > 5) {
+      for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
+        DISP.print((cursor == i) ? ">" : " ");
+        DISP.println(i);
+      }
+    } else {
+      for (
+        int i = 0 ; i < nums ; i++ ) {
+        DISP.print((cursor == i) ? ">" : " ");
+        DISP.println(i);
+      }
     }
   }
-}
 
-/// TIME SETTING ///
-void timeset_setup() {
-  rstOverride = true;
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
-  M5.Lcd.println("SET HOUR");
-  delay(2000);
-}
+  /// TIME SETTING ///
+  void timeset_setup() {
+    rstOverride = true;
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 5, 1);
+    DISP.println("SET HOUR");
+    delay(2000);
+  }
 
-void timeset_loop() {
-  M5.Rtc.GetBm8563Time();
-  cursor = M5.Rtc.Hour;
-  timeset_drawmenu(24);
-  while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
-      cursor++;
-      cursor = cursor % 24 ;
-      timeset_drawmenu(24);
-      delay(100);
+  void timeset_loop() {
+    M5.Rtc.GetBm8563Time();
+    cursor = M5.Rtc.Hour;
+    timeset_drawmenu(24);
+    while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+      if (digitalRead(M5_BUTTON_RST) == LOW) {
+        cursor++;
+        cursor = cursor % 24 ;
+        timeset_drawmenu(24);
+        delay(100);
+      }
     }
-  }
-  int hour = cursor;
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
-  M5.Lcd.println("SET MINUTE");
-  delay(2000);
-  cursor = M5.Rtc.Minute;
-  timeset_drawmenu(60);
-  while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
-      cursor++;
-      cursor = cursor % 60 ;
-      timeset_drawmenu(60);
-      delay(100);
+    int hour = cursor;
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 5, 1);
+    DISP.println("SET MINUTE");
+    delay(2000);
+    cursor = M5.Rtc.Minute;
+    timeset_drawmenu(60);
+    while(digitalRead(M5_BUTTON_HOME) == HIGH) {
+      if (digitalRead(M5_BUTTON_RST) == LOW) {
+        cursor++;
+        cursor = cursor % 60 ;
+        timeset_drawmenu(60);
+        delay(100);
+      }
     }
+    int minute = cursor;
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(0, 5, 1);
+    RTC_TimeTypeDef TimeStruct;
+    TimeStruct.Hours   = hour;
+    TimeStruct.Minutes = minute;
+    TimeStruct.Seconds = 0;
+    M5.Rtc.SetTime(&TimeStruct);
+    DISP.printf("Setting Time:\n%02d:%02d:00",hour,minute);
+    delay(2000);
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 0;
   }
-  int minute = cursor;
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
-  RTC_TimeTypeDef TimeStruct;
-  TimeStruct.Hours   = hour;
-  TimeStruct.Minutes = minute;
-  TimeStruct.Seconds = 0;
-  M5.Rtc.SetTime(&TimeStruct);
-  M5.Lcd.printf("Setting Time:\n%02d:%02d:00",hour,minute);
-  delay(2000);
-  rstOverride = false;
-  isSwitching = true;
-  current_proc = 0;
-}
+#endif // RTC
 
 /// Bluetooth Spamming ///
 /// BTSPAM MENU ///
@@ -627,17 +699,16 @@ MENU btmenu[] = {
 };
 
 void btmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(btmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(btmenu[i].name);
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(btmenu[i].name);
   }
 }
 
 void btmenu_setup() {
-  M5.Lcd.setRotation(rotation);
   cursor = 0;
   sourApple = false;
   swiftPair = false;
@@ -656,17 +727,16 @@ void btmenu_loop() {
   }
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
     int option = btmenu[cursor].command;
-    M5.Lcd.setRotation(rotation);
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextSize(MEDIUM_TEXT);
-    M5.Lcd.setCursor(5, 1);
-    M5.Lcd.println("BT Spam");
-    M5.Lcd.setTextSize(SMALL_TEXT);
-    M5.Lcd.print("Advertising:\n");
+    DISP.fillScreen(BLACK);
+    DISP.setTextSize(MEDIUM_TEXT);
+    DISP.setCursor(5, 1);
+    DISP.println("BT Spam");
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.print("Advertising:\n");
 
     switch(option) {
       case 0:
-        M5.Lcd.fillScreen(BLACK);
+        DISP.fillScreen(BLACK);
         rstOverride = false;
         isSwitching = true;
         current_proc = 8;
@@ -676,27 +746,27 @@ void btmenu_loop() {
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        M5.Lcd.print("Swift Pair Random");
-        M5.Lcd.print("\n\nSide Key: Exit");
+        DISP.print("Swift Pair Random");
+        DISP.print("\n\nSide Key: Exit");
         break;
       case 2:
         sourApple = true;
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        M5.Lcd.print("SourApple Crash");
-        M5.Lcd.print("\n\nSide Key: Exit");
+        DISP.print("SourApple Crash");
+        DISP.print("\n\nSide Key: Exit");
         break;
       case 3:
         rstOverride = false;
         isSwitching = true;
         current_proc = 17; // Maelstrom
-        M5.Lcd.print("Bluetooth Maelstrom\n");
-        M5.Lcd.print(" Combined BT Spam");
-        M5.Lcd.print("\n\nSide Key: Exit");
+        DISP.print("Bluetooth Maelstrom\n");
+        DISP.print(" Combined BT Spam");
+        DISP.print("\n\nSide Key: Exit");
         break;
       case 4:
-        M5.Lcd.fillScreen(BLACK);
+        DISP.fillScreen(BLACK);
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
@@ -738,30 +808,29 @@ MENU ajmenu[] = {
 };
 
 void aj_drawmenu() {
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 5, 1);
   // scrolling menu
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < ( sizeof(ajmenu) / sizeof(MENU) ) ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(ajmenu[i].name);
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(ajmenu[i].name);
     }
   } else {
     for (
       int i = 0 ; i < ( sizeof(ajmenu) / sizeof(MENU) ) ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(ajmenu[i].name);
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(ajmenu[i].name);
     }
   }
 }
 
 void aj_setup(){
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(MEDIUM_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("AppleJuice");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("AppleJuice");
   delay(1000);  
   cursor = 0;
   sourApple = false;
@@ -877,15 +946,14 @@ void aj_loop(){
         break;
     }
     if (current_proc == 8 && isSwitching == false){
-      M5.Lcd.setRotation(rotation);
-      M5.Lcd.fillScreen(BLACK);
-      M5.Lcd.setTextSize(MEDIUM_TEXT);
-      M5.Lcd.setCursor(5, 1);
-      M5.Lcd.println("AppleJuice");
-      M5.Lcd.setTextSize(SMALL_TEXT);
-      M5.Lcd.print("Advertising:\n");
-      M5.Lcd.print(ajmenu[cursor].name);
-      M5.Lcd.print("\n\nSide Key: Exit");
+      DISP.fillScreen(BLACK);
+      DISP.setTextSize(MEDIUM_TEXT);
+      DISP.setCursor(5, 1);
+      DISP.println("AppleJuice");
+      DISP.setTextSize(SMALL_TEXT);
+      DISP.print("Advertising:\n");
+      DISP.print(ajmenu[cursor].name);
+      DISP.print("\n\nSide Key: Exit");
       isSwitching = true;
       current_proc = 9; // Jump over to the AppleJuice BLE beacon loop
     }
@@ -978,9 +1046,11 @@ void aj_adv(){
     
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
+#ifdef LED
     digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
     delay(10);
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+#endif
   }
   if (digitalRead(M5_BUTTON_RST) == LOW) {
     if (sourApple || swiftPair || maelstrom){
@@ -1000,22 +1070,21 @@ void aj_adv(){
 
 /// CREDITS ///
 void credits_setup(){
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.fillScreen(WHITE);  
-  M5.Lcd.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 40, 100, 5);
-  M5.Lcd.setTextColor(BLACK, WHITE);
-  M5.Lcd.setTextSize(MEDIUM_TEXT);
-  M5.Lcd.setCursor(0, 25);
-  M5.Lcd.print(" M5-NEMO\n");
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.println(" For M5Stack");
-  M5.Lcd.println(" StickC-Plus");
-  M5.Lcd.println("By Noah Axon");
-  M5.Lcd.setCursor(155, 5);
-  M5.Lcd.println("GitHub");
-  M5.Lcd.setCursor(155, 25);
-  M5.Lcd.println("Source:");
-  M5.Lcd.setTextColor(GREEN, BLACK);
+  DISP.fillScreen(WHITE);
+  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 40, 100, 5);
+  DISP.setTextColor(BLACK, WHITE);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setCursor(0, 25);
+  DISP.print(" M5-NEMO\n");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.println(" For M5Stack");
+  DISP.println(" StickC-Plus");
+  DISP.println("By Noah Axon");
+  DISP.setCursor(155, 5);
+  DISP.println("GitHub");
+  DISP.setCursor(155, 25);
+  DISP.println("Source:");
+  DISP.setTextColor(GREEN, BLACK);
 }
 
 /// WiFiSPAM ///
@@ -1044,42 +1113,44 @@ void wifispam_setup() {
   // set channel
   esp_wifi_set_channel(channels[0], WIFI_SECOND_CHAN_NONE);
 
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("WiFi Spam");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("WiFi Spam");
   delay(1000);
-  M5.Lcd.setTextSize(TINY_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 0);
-  M5.Lcd.print("WiFi Spam");
+  DISP.setTextSize(TINY_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 0);
+  DISP.print("WiFi Spam");
     int ct = 0;
     const char *str;
     switch(spamtype) {
     case 1:
       for(str = funnyssids; *str; ++str) ct += *str == '\n';
-      M5.Lcd.printf(" - %d SSIDs:\n", ct);
-      M5.Lcd.print(funnyssids);
+      DISP.printf(" - %d SSIDs:\n", ct);
+      DISP.print(funnyssids);
       break;
     case 2:
       for(str = rickrollssids; *str; ++str) ct += *str == '\n';
-      M5.Lcd.printf(" - %d SSIDs:\n", ct);
-      M5.Lcd.print(rickrollssids);
+      DISP.printf(" - %d SSIDs:\n", ct);
+      DISP.print(rickrollssids);
       break;
     case 3:
       // placed here for consistency. no-op since display handled in loop. 
       break;
   }
-  M5.Lcd.setTextSize(SMALL_TEXT);
+  DISP.setTextSize(SMALL_TEXT);
   current_proc = 11;
 }
 
 void wifispam_loop() {
   int i = 0;
   int len = 0;
+#ifdef LED
   digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
   delay(1);
   digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+#endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
     switch(spamtype) {
@@ -1137,17 +1208,16 @@ MENU wsmenu[] = {
 };
 
 void wsmenu_drawmenu() {
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(wsmenu) / sizeof(MENU) ) ; i++ ) {
-    M5.Lcd.print((cursor == i) ? ">" : " ");
-    M5.Lcd.println(wsmenu[i].name);
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(wsmenu[i].name);
   }
 }
 
 void wsmenu_setup() {
-  M5.Lcd.setRotation(rotation);
   cursor = 0;
   rstOverride = true;
   wsmenu_drawmenu();
@@ -1185,30 +1255,28 @@ void wsmenu_loop() {
 
 void wscan_drawmenu() {
   char ssid[19];
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 5, 1);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 5, 1);
   // scrolling menu
   if (cursor > 4) {
     for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(WiFi.SSID(i).substring(0,19));
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(WiFi.SSID(i).substring(0,19));
     }
   } else {
     for ( int i = 0 ; i < wifict ; i++ ) {
-      M5.Lcd.print((cursor == i) ? ">" : " ");
-      M5.Lcd.println(WiFi.SSID(i).substring(0,19));
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(WiFi.SSID(i).substring(0,19));
     }
   }
-  M5.Lcd.print((cursor == wifict) ? ">" : " ");
-  M5.Lcd.println("[RESCAN]");
-  M5.Lcd.print((cursor == wifict + 1) ? ">" : " ");
-  M5.Lcd.println("Back");
+  DISP.print((cursor == wifict) ? ">" : " ");
+  DISP.println("[RESCAN]");
+  DISP.print((cursor == wifict + 1) ? ">" : " ");
+  DISP.println("Back");
 }
 
 void wscan_result_setup() {
-  M5.Lcd.setRotation(rotation);
   cursor = 0;
   rstOverride = true;
   wscan_drawmenu();
@@ -1255,17 +1323,17 @@ void wscan_result_loop(){
       break ;
     }
     
-    M5.Lcd.setTextSize(MEDIUM_TEXT);
+    DISP.setTextSize(MEDIUM_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      M5.Lcd.setTextSize(SMALL_TEXT);
+      DISP.setTextSize(SMALL_TEXT);
     }       
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setCursor(5, 1);
-    M5.Lcd.println(WiFi.SSID(cursor));
-    M5.Lcd.setTextSize(SMALL_TEXT);
-    M5.Lcd.printf("Chan : %d\n", WiFi.channel(cursor));
-    M5.Lcd.printf("Crypt: %s\n", encryptType);
-        M5.Lcd.printf("BSSID:\n %x:%x:%x:%x:%x:%x\n", 
+    DISP.fillScreen(BLACK);
+    DISP.setCursor(5, 1);
+    DISP.println(WiFi.SSID(cursor));
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.printf("Chan : %d\n", WiFi.channel(cursor));
+    DISP.printf("Crypt: %s\n", encryptType);
+        DISP.printf("BSSID:\n %x:%x:%x:%x:%x:%x\n",
       WiFi.BSSID(i)[0],
       WiFi.BSSID(i)[1],
       WiFi.BSSID(i)[2],
@@ -1274,29 +1342,29 @@ void wscan_result_loop(){
       WiFi.BSSID(i)[5]
       );
 
-    M5.Lcd.printf("\nSide Key: Back");
+    DISP.printf("\nSide Key: Back");
   }
 }
 
 void wscan_setup(){
   rstOverride = false;  
   cursor = 0;
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("WiFi Scan");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("WiFi Scan");
   delay(2000);
 }
 
 void wscan_loop(){
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(MEDIUM_TEXT);
-  M5.Lcd.setCursor(5, 1);
-  M5.Lcd.println("Scanning...");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setCursor(5, 1);
+  DISP.println("Scanning...");
   wifict = WiFi.scanNetworks();
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(SMALL_TEXT);
-  M5.Lcd.setCursor(5, 1);
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setCursor(5, 1);
   if(wifict > 0){
   isSwitching = true;
   current_proc=15;
@@ -1306,41 +1374,47 @@ void wscan_loop(){
 /// ENTRY ///
 void setup() {
   M5.begin();
-  EEPROM.begin(EEPROM_SIZE);
-  // Uncomment these to blow away EEPROM to factory settings - for testing purposes
-  //EEPROM.write(0, 255); // Rotation
-  //EEPROM.write(1, 255); // dim time
-  //EEPROM.write(2, 255); // brightness
-  //EEPROM.write(2, 255); // TV-B-Gone Region
-  //EEPROM.commit();
-  Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
-  Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
-  Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
-  Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
-  if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
-    // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
-    Serial.println("EEPROM likely not properly configured. Writing defaults.");
-    EEPROM.write(0, 3);    // Left rotation
-    EEPROM.write(1, 15);   // 15 second auto dim time
-    EEPROM.write(2, 100);  // 100% brightness
-    EEPROM.write(3, 0); // TVBG NA Region
-    EEPROM.commit();
-  }
-  rotation = EEPROM.read(0);
-  screen_dim_time = EEPROM.read(1);
-  brightness = EEPROM.read(2);
-  region = EEPROM.read(3);
-  M5.Axp.ScreenBreath(brightness);
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.setTextColor(GREEN, BLACK);
+  #ifdef USE_EEPROM
+    EEPROM.begin(EEPROM_SIZE);
+    // Uncomment these to blow away EEPROM to factory settings - for testing purposes
+    //EEPROM.write(0, 255); // Rotation
+    //EEPROM.write(1, 255); // dim time
+    //EEPROM.write(2, 255); // brightness
+    //EEPROM.write(2, 255); // TV-B-Gone Region
+    //EEPROM.commit();
+    Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
+    Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
+    Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
+    Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
+      // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
+      Serial.println("EEPROM likely not properly configured. Writing defaults.");
+      EEPROM.write(0, 3);    // Left rotation
+      EEPROM.write(1, 15);   // 15 second auto dim time
+      EEPROM.write(2, 100);  // 100% brightness
+      EEPROM.write(3, 0); // TVBG NA Region
+      EEPROM.commit();
+    }
+    rotation = EEPROM.read(0);
+    screen_dim_time = EEPROM.read(1);
+    brightness = EEPROM.read(2);
+    region = EEPROM.read(3);
+  #endif
+  #ifdef AXP
+    M5.Axp.ScreenBreath(brightness);
+  #endif
+  DISP.setRotation(rotation);
+  DISP.setTextColor(GREEN, BLACK);
   // Boot Screen
-  digitalWrite(M5_LED, HIGH); //LEDOFF
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(BIG_TEXT);
-  M5.Lcd.setCursor(40, 15);
-  M5.Lcd.print("M5-NEMO\n");
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(40, 15);
+  DISP.print("M5-NEMO\n");
   // Pin setup
+#ifdef LED
   pinMode(M5_LED, OUTPUT);
+  digitalWrite(M5_LED, HIGH); //LEDOFF
+#endif
   pinMode(M5_BUTTON_HOME, INPUT);
   pinMode(M5_BUTTON_RST, INPUT);
 
@@ -1362,7 +1436,7 @@ void loop() {
   // Background processes
   switcher_button_proc();
   screen_dim_proc();
-  check_axp_press();
+  check_menu_press();
   
   // Switcher
   if (isSwitching) {

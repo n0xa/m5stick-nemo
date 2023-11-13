@@ -93,12 +93,12 @@ char* randomSSID(){
     }
     ssid[p++] = possible[r];
   }
-  ssid[SSIDLEN] = '\n';  M5.Lcd.setTextSize(1);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 0, 1);
-  M5.Lcd.println("Spamming Random SSIDs:");
+  ssid[SSIDLEN] = '\n';  DISP.setTextSize(1);
+  DISP.fillScreen(BLACK);
+  DISP.setCursor(0, 0, 1);
+  DISP.println("Spamming Random SSIDs:");
   // Maximum broadcast SSID length is 32, but the strings might show longer in the output. Sorry.
-  M5.Lcd.print(ssid);
+  DISP.print(ssid);
   return ssid;
 }
 
