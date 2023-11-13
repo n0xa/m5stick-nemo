@@ -110,13 +110,64 @@ bool isSwitching = true;
 
 void switcher_button_proc() {
   if (rstOverride == false) {
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
+    if (check_next_press()) {
       isSwitching = true;
       current_proc = 1;
     }
   }
 }
 
+// Tap the power button from pretty much anywhere to get to the main menu
+void check_menu_press() {
+#ifdef AXP
+  if (M5.Axp.GetBtnPress()) {
+#endif
+#ifdef KB
+  M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isChange()) {
+    if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
+#endif
+    isSwitching = true;
+    rstOverride = false;
+    current_proc = 1;
+    delay(100);
+#ifdef KB
+    }
+#endif
+  }
+}
+
+bool check_next_press(){
+#ifdef KB
+  M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isChange()) {
+    if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
+      return true;
+    }
+  }
+#else
+  if (digitalRead(M5_BUTTON_RST) == LOW){
+    return true;
+  }
+#endif
+  return false;
+}
+
+bool check_select_press(){
+#ifdef KB
+  M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isChange()) {
+    if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER)){
+      return true;
+    }
+  }
+#else
+  if (digitalRead(M5_BUTTON_HOME) == LOW){
+    return true;
+  }
+#endif
+  return false;
+}
 
 /// MAIN MENU ///
 MENU mmenu[] = {
@@ -148,13 +199,13 @@ void mmenu_setup() {
 }
 
 void mmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(mmenu) / sizeof(MENU) );
     mmenu_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     rstOverride = false;
     isSwitching = true;
     current_proc = mmenu[cursor].command;
@@ -178,7 +229,7 @@ void mmenu_loop() {
   void screen_dim_proc() {
     M5.Rtc.GetBm8563Time();
     // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
-    if (digitalRead(M5_BUTTON_RST) == LOW || digitalRead(M5_BUTTON_HOME) == LOW) {
+    if (check_next_press() || check_select_press()) {
       if (screen_dim_dimmed) {
         screen_dim_dimmed = false;
         M5.Axp.ScreenBreath(brightness);
@@ -231,13 +282,13 @@ void mmenu_loop() {
   }
 
   void dmenu_loop() {
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
+    if (check_next_press()) {
       cursor++;
       cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
       dmenu_drawmenu();
       delay(250);
     }
-    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    if (check_select_press()) {
       screen_dim_time = dmenu[cursor].command;
       #ifdef USE_EEPROM
         EEPROM.write(1, screen_dim_time);
@@ -253,8 +304,8 @@ void mmenu_loop() {
         cursor = brightness + 5;
       }
       timeset_drawmenu(11);
-      while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-        if (digitalRead(M5_BUTTON_RST) == LOW) {
+      while( !check_next_press()) {
+        if (check_next_press()) {
           cursor++;
           cursor = cursor % 11 ;
           timeset_drawmenu(11);
@@ -282,21 +333,6 @@ void mmenu_loop() {
     }
   }
 #endif //AXP / RTC Dimmer
-
-// Tap the power button from pretty much anywhere to get to the main menu
-void check_menu_press() {
-#ifdef AXP
-  if (M5.Axp.GetBtnPress()) {
-#else
-  // There's a no-op until I get Cardputer sorted out)
-  if (true == false) {
-#endif
-    isSwitching = true;
-    rstOverride = false;
-    current_proc = 1;
-    delay(100);
-  }
-}
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
@@ -332,13 +368,13 @@ void smenu_setup() {
 }
 
 void smenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(smenu) / sizeof(MENU) );
     smenu_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     rstOverride = false;
     isSwitching = true;
     current_proc = smenu[cursor].command;
@@ -372,13 +408,13 @@ int rotation = 1;
   }
 
   void rmenu_loop() {
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
+    if (check_next_press()) {
       cursor++;
       cursor = cursor % ( sizeof(rmenu) / sizeof(MENU) );
       rmenu_drawmenu();
       delay(250);
     }
-    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
       rotation = rmenu[cursor].command;
@@ -423,7 +459,7 @@ int rotation = 1;
     float b = M5.Axp.GetVbatData() * 1.1 / 1000;
     int battery = ((b - 3.0) / 1.2) * 100;
     battery_drawmenu(battery, b, c);
-    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+    if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
       current_proc = 1;
@@ -456,9 +492,9 @@ void tvbgone_setup() {
 
 void tvbgone_loop()
 {
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     delay_ten_us(40000);
-    while (digitalRead(M5_BUTTON_HOME) == LOW) {
+    while (check_select_press()) {
       delay_ten_us(500);
       yield();
     }
@@ -497,13 +533,13 @@ void tvbgmenu_setup() {
 }
 
 void tvbgmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(tvbgmenu) / sizeof(MENU) );
     tvbgmenu_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     region = tvbgmenu[cursor].command;
     #ifdef USE_EEPROM
       EEPROM.write(3, region);
@@ -577,8 +613,8 @@ void sendAllCodes()
     }
     #endif
 
-    if (digitalRead(M5_BUTTON_HOME) == LOW){
-      while (digitalRead(M5_BUTTON_HOME) == LOW) {
+    if (check_select_press()){
+      while (check_select_press()) {
         yield();
       }
       endingEarly = true;
@@ -649,7 +685,7 @@ void sendAllCodes()
     cursor = M5.Rtc.Hour;
     timeset_drawmenu(24);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-      if (digitalRead(M5_BUTTON_RST) == LOW) {
+      if (check_next_press()) {
         cursor++;
         cursor = cursor % 24 ;
         timeset_drawmenu(24);
@@ -664,7 +700,7 @@ void sendAllCodes()
     cursor = M5.Rtc.Minute;
     timeset_drawmenu(60);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
-      if (digitalRead(M5_BUTTON_RST) == LOW) {
+      if (check_next_press()) {
         cursor++;
         cursor = cursor % 60 ;
         timeset_drawmenu(60);
@@ -718,13 +754,13 @@ void btmenu_setup() {
 }
 
 void btmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(btmenu) / sizeof(MENU) );
     btmenu_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     int option = btmenu[cursor].command;
     DISP.fillScreen(BLACK);
     DISP.setTextSize(MEDIUM_TEXT);
@@ -841,14 +877,14 @@ void aj_setup(){
 
 void aj_loop(){
   if (!maelstrom){
-    if (digitalRead(M5_BUTTON_RST) == LOW) {
+    if (check_next_press()) {
       cursor++;
       cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
       aj_drawmenu();
       delay(100);
     }
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW || maelstrom) {
+  if (check_select_press() || maelstrom) {
     deviceType = ajmenu[cursor].command;
     if (maelstrom) {
       deviceType = random(1, 28);
@@ -1051,7 +1087,7 @@ void aj_adv(){
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
 #endif
   }
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     if (sourApple || swiftPair || maelstrom){
       current_proc = 16;
       btmenu_drawmenu();
@@ -1224,13 +1260,13 @@ void wsmenu_setup() {
 }
 
 void wsmenu_loop() {
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(wsmenu) / sizeof(MENU) );
     wsmenu_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     int option = wsmenu[cursor].command;
     rstOverride = false;
     current_proc = 11;
@@ -1283,13 +1319,13 @@ void wscan_result_setup() {
 }
 
 void wscan_result_loop(){
-  if (digitalRead(M5_BUTTON_RST) == LOW) {
+  if (check_next_press()) {
     cursor++;
     cursor = cursor % ( wifict + 2);
     wscan_drawmenu();
     delay(250);
   }
-  if (digitalRead(M5_BUTTON_HOME) == LOW) {
+  if (check_select_press()) {
     delay(250);
     if(cursor == wifict){
       rstOverride = false;
