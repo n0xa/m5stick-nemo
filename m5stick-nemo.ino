@@ -105,7 +105,7 @@ bool isSwitching = true;
 #ifdef RTC
   int current_proc = 0; // Start in Clock Mode
 #else
-  int current_prof = 1; // Start in Main Menu mode if no RTC
+  int current_proc = 1; // Start in Main Menu mode if no RTC
 #endif
 
 void switcher_button_proc() {
