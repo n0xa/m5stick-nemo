@@ -14,8 +14,6 @@ By Anton Grimpelhuber (anton.grimpelhuber@gmail.com)
 // What pins do what
 #define LED 10 //LED indicator pin (built-in LED)
 #define IRLED 9        //the IR sender LED / D5 on wemos D1 mini
-#define TRIGGER 37       //the button pin / D6 on wemos D1 mini
-#define REGIONSWITCH 39  //HIGH (1) = NA, LOW (0) = EU; Pin 5 / D1 (REGIONSWITCH) is HIGH (via in input pullup resistor) for North America, or you (the user) must wire it to ground to set the codes for Europe.
 
 // Lets us calculate the size of the NA/EU databases
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)));
@@ -77,8 +75,6 @@ uint8_t read_bits(uint8_t count)
   }
   return tmp;
 }
-#define BUTTON_PRESSED LOW
-#define BUTTON_RELEASED HIGH
 uint16_t ontime, offtime;
 uint8_t i, num_codes;
 uint8_t region;

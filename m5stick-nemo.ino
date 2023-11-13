@@ -456,10 +456,9 @@ void tvbgone_setup() {
 
 void tvbgone_loop()
 {
-  if (digitalRead(TRIGGER) == BUTTON_PRESSED)
-  {
+  if (digitalRead(M5_BUTTON_HOME) == LOW) {
     delay_ten_us(40000);
-    while (digitalRead(TRIGGER) == BUTTON_PRESSED) {
+    while (digitalRead(M5_BUTTON_HOME) == LOW) {
       delay_ten_us(500);
       yield();
     }
@@ -577,9 +576,9 @@ void sendAllCodes()
       break;     
     }
     #endif
-    // TODO Replace TRIGGER with better button defs
-    if (digitalRead(TRIGGER) == BUTTON_PRESSED){
-      while (digitalRead(TRIGGER) == BUTTON_PRESSED) {
+
+    if (digitalRead(M5_BUTTON_HOME) == LOW){
+      while (digitalRead(M5_BUTTON_HOME) == LOW) {
         yield();
       }
       endingEarly = true;
