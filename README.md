@@ -26,8 +26,8 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 This is the absolute easiest way to get NEMO
 * [M5Stick C Plus Quick Start](https://docs.m5stack.com/en/quick_start/m5stickc_plus/uiflow) has links to the M5Burner app for Linux, MacOS and Windows. This is the official tool to install UIFlow and other official firmware. I provide up-to-date binaries for NEMO there.
 * Launch M5Burner
-* Select "StickC" from the menu on the left
-* Use the search at the top of the app to look for "NEMO For M5Stick C Plus"
+* Select "StickC" from the menu on the left (or StampS3 for Cardputer)
+* Use the search at the top of the app to look for "NEMO". My official builds will be uploaded by "4x0nn" and have photos.
 * Click Download
 * Click Burn
 
@@ -43,14 +43,14 @@ If you want to customize NEMO or contribute to the project, you should be famili
 * Install Arduino IDE. I've used Arduino 1.8 on Linux and Windows, and Arduino 2.2 on Windows successfully.
 * Install the M5Stack boards for Arduino IDE: In File -> Preferences, paste this URL into the "Boards Manager URLs" text box. Use commas between URLs if there are already URLs present.  https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
 * If M5Stack -> M5Stick-C-Plus doesn't show up under Tools -> Boards, then use Tools -> Boards -> Boards Manager and search for M5Stack. This will install support for most of the M5Stack boards including the Stick C Plus.
-* Ensure the correct device model (e.g. M5Stick-C or M5Stick-C-Plus) is selected in the boards menu.
+* Ensure the correct device model (e.g. M5Stick-C, M5Stick-C-Plus or M5Cardputer) is selected in the boards menu.
 * Install necessary libraries. In Sketch -> Include Library -> Library Manager, search for and install the following libraries and any dependencies they require:
-  * M5StickCPlus or M5StickC
+  * M5StickCPlus, M5StickC or M5Cardputer
   * IRRemoteESP8266
-* If compiling for the older (non-Plus) M5Stick-C, delete the line near the top that defines PLUS.
-* Switch partition schemes. Tools -> Partition Scheme -> No OTA (Large APP)
+* Un-comment the appropriate `#define` line near the top for your platform (STICK_C, STICK_C_PLUS or CARDPUTER)
+* Switch partition schemes. `Tools` -> `Partition Scheme` -> `No OTA (Large APP)` - sometimes this option is labeled `Huge APP` 
 * Configuration
-  * The code should compile cleanly and work on an M5StickC Plus out of the box from the master branch or a release tag.
-  * If you are using an older M5StickC (non-plus) remove the "#define PLUS" line near the top of m5stick-nemo.ino which should configure everything for the older model.
+  * The code should compile cleanly and work on an M5Stick C Plus out of the box from the master branch or a release tag.
+  * Uncomment only the one appropriate `#define` option or compiler errors will occur. 
   * If for some reason the screen jumps from very dim at level 0 to almost fully bright at level 1 and further brightness levels don't affect anything, set the pct_brightness variable to false.
 * Compile and upload the project
