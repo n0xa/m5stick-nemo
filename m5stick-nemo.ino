@@ -1,10 +1,12 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
 
-// -=-=-=-=-=-=-  Uncomment the platform you're building for -=-=-=-=-=-=-
+// -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 #define STICK_C_PLUS
 //#define STICK_C
 //#define CARDPUTER
+// -=-=- Uncommenting more than one at a time will result in errors -=-=-
+
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -13,7 +15,7 @@
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define LED
+  #define M5LED
   #define RTC
   #define AXP
   #define ACTIVE_LOW_IR
@@ -23,14 +25,14 @@
   #define DISP M5.Lcd
 #endif
 
-#ifdef STICK_C
+#if defined(STICK_C)
   #include <M5StickC.h>
   #define BIG_TEXT 2
   #define MEDIUM_TEXT 2
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define LED
+  #define M5LED
   #define RTC
   #define AXP
   #define ROTATION
@@ -39,7 +41,7 @@
   #define DISP M5.Lcd
 #endif
 
-#ifdef CARDPUTER
+#if defined(CARDPUTER)
   #include <M5Cardputer.h>
   #define BIG_TEXT 4
   #define MEDIUM_TEXT 3
@@ -52,7 +54,6 @@
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
 #endif
-
 
 #include <EEPROM.h>
 #include <IRremoteESP8266.h>
@@ -72,7 +73,7 @@ bool rstOverride = false; // Reset Button Override. Set to true when navigating 
 bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
 bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
-#ifdef USE_EEPROM
+#if defined(USE_EEPROM)
   #define EEPROM_SIZE 4
 #endif
 struct MENU {
@@ -102,7 +103,7 @@ struct MENU {
 // 17 - Bluetooth Maelstrom
 
 bool isSwitching = true;
-#ifdef RTC
+#if defined(RTC)
   int current_proc = 0; // Start in Clock Mode
 #else
   int current_proc = 1; // Start in Main Menu mode if no RTC
@@ -117,33 +118,33 @@ void switcher_button_proc() {
   }
 }
 
+#if defined(KB)
+  void check_kb(){
+    M5Cardputer.update();
+    if (M5Cardputer.Keyboard.isChange()) {
+      delay(250);
+    }
+  }
+#endif
 // Tap the power button from pretty much anywhere to get to the main menu
 void check_menu_press() {
-#ifdef AXP
+#if defined(AXP)
   if (M5.Axp.GetBtnPress()) {
 #endif
-#ifdef KB
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isChange()) {
-    if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
+#if defined(KB)
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_OPT)){
 #endif
     isSwitching = true;
     rstOverride = false;
     current_proc = 1;
     delay(100);
-#ifdef KB
-    }
-#endif
   }
 }
 
 bool check_next_press(){
-#ifdef KB
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isChange()) {
-    if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
-      return true;
-    }
+#if defined(KB)
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
+    return true;
   }
 #else
   if (digitalRead(M5_BUTTON_RST) == LOW){
@@ -154,12 +155,9 @@ bool check_next_press(){
 }
 
 bool check_select_press(){
-#ifdef KB
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isChange()) {
-    if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER)){
-      return true;
-    }
+#if defined(KB)
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER)){
+    return true;
   }
 #else
   if (digitalRead(M5_BUTTON_HOME) == LOW){
@@ -171,7 +169,7 @@ bool check_select_press(){
 
 /// MAIN MENU ///
 MENU mmenu[] = {
-#ifdef RTC
+#if defined(RTC)
   { "Clock", 0},
 #endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
@@ -290,7 +288,7 @@ void mmenu_loop() {
     }
     if (check_select_press()) {
       screen_dim_time = dmenu[cursor].command;
-      #ifdef USE_EEPROM
+      #if defined(USE_EEPROM)
         EEPROM.write(1, screen_dim_time);
         EEPROM.commit();
       #endif
@@ -323,7 +321,7 @@ void mmenu_loop() {
         brightness = cursor + 5;
       }
      M5.Axp.ScreenBreath(brightness);
-      #ifdef USE_EEPROM
+      #if defined(USE_EEPROM)
         EEPROM.write(2, brightness);
         EEPROM.commit();
       #endif
@@ -336,14 +334,14 @@ void mmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
-#ifdef AXP
+#if defined(AXP)
   { "Battery Info", 6},
   { "Brightness", 4},
 #endif
-#ifdef RTC
+#if defined(RTC)
   { "Set Clock", 3},
 #endif
-#ifdef ROTATION
+#if defined(ROTATION)
   { "Rotation", 7},
 #endif
   { "About", 10},
@@ -382,7 +380,7 @@ void smenu_loop() {
 }
 
 int rotation = 1;
-#ifdef ROTATION
+#if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
     { "Right", 1},
@@ -419,7 +417,7 @@ int rotation = 1;
       isSwitching = true;
       rotation = rmenu[cursor].command;
       DISP.setRotation(rotation);
-      #ifdef USE_EEPROM
+      #if defined(USE_EEPROM)
         EEPROM.write(0, rotation);
         EEPROM.commit();
       #endif
@@ -428,7 +426,7 @@ int rotation = 1;
   }
 #endif //ROTATION
 
-#ifdef AXP
+#if defined(AXP)
   /// BATTERY INFO ///
   void battery_drawmenu(int battery, int b, int c) {
     DISP.setTextSize(SMALL_TEXT);
@@ -541,7 +539,7 @@ void tvbgmenu_loop() {
   }
   if (check_select_press()) {
     region = tvbgmenu[cursor].command;
-    #ifdef USE_EEPROM
+    #if defined(USE_EEPROM)
       EEPROM.write(3, region);
       EEPROM.commit();
     #endif
@@ -580,7 +578,7 @@ void sendAllCodes()
     for (uint8_t k = 0; k < numpairs; k++) {
       uint16_t ti;
       ti = (read_bits(bitcompression)) * 2;
-      #ifdef ACTIVE_LOW_IR
+      #if defined(ACTIVE_LOW_IR)
         offtime = powerCode->times[ti];  // read word 1 - ontime
         ontime = powerCode->times[ti + 1]; // read word 2 - offtime
       #else
@@ -594,14 +592,14 @@ void sendAllCodes()
       yield();
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    #ifdef ACTIVE_LOW_IR
+    #if defined(ACTIVE_LOW_IR)
       // Set Active Low IRLED high to turn it off after each burst.
       digitalWrite(IRLED, HIGH);
     #endif
     yield();
     bitsleft_r = 0;
     delay_ten_us(20500);
-    #ifdef AXP
+    #if defined(AXP)
     // TODO sort out home button for cardputer
     if (M5.Axp.GetBtnPress()){
       // duplicate code here, sadly, since this is a blocking loop
@@ -638,7 +636,7 @@ void sendAllCodes()
 }
 
 /// CLOCK ///
-#ifdef RTC
+#if defined(RTC)
   void clock_setup() {
     DISP.fillScreen(BLACK);
     DISP.setTextSize(MEDIUM_TEXT);
@@ -1081,7 +1079,7 @@ void aj_adv(){
     
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
-#ifdef LED
+#if defined(M5LED)
     digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
     delay(10);
     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
@@ -1181,7 +1179,7 @@ void wifispam_setup() {
 void wifispam_loop() {
   int i = 0;
   int len = 0;
-#ifdef LED
+#if defined(M5LED)
   digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
   delay(1);
   digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
@@ -1368,7 +1366,7 @@ void wscan_result_loop(){
     DISP.setTextSize(SMALL_TEXT);
     DISP.printf("Chan : %d\n", WiFi.channel(cursor));
     DISP.printf("Crypt: %s\n", encryptType);
-        DISP.printf("BSSID:\n %x:%x:%x:%x:%x:%x\n",
+        DISP.printf("BSSID:\n %02x:%02x:%02x:%02x:%02x:%02x\n",
       WiFi.BSSID(i)[0],
       WiFi.BSSID(i)[1],
       WiFi.BSSID(i)[2],
@@ -1408,8 +1406,13 @@ void wscan_loop(){
 
 /// ENTRY ///
 void setup() {
+#if defined(CARDPUTER)
+  auto cfg = M5.config();
+  M5Cardputer.begin(cfg, true);
+#else
   M5.begin();
-  #ifdef USE_EEPROM
+#endif
+  #if defined(USE_EEPROM)
     EEPROM.begin(EEPROM_SIZE);
     // Uncomment these to blow away EEPROM to factory settings - for testing purposes
     //EEPROM.write(0, 255); // Rotation
@@ -1435,7 +1438,7 @@ void setup() {
     brightness = EEPROM.read(2);
     region = EEPROM.read(3);
   #endif
-  #ifdef AXP
+  #if defined(AXP)
     M5.Axp.ScreenBreath(brightness);
   #endif
   DISP.setRotation(rotation);
@@ -1446,13 +1449,14 @@ void setup() {
   DISP.setCursor(40, 15);
   DISP.print("M5-NEMO\n");
   // Pin setup
-#ifdef LED
+#if defined(M5LED)
   pinMode(M5_LED, OUTPUT);
   digitalWrite(M5_LED, HIGH); //LEDOFF
 #endif
+#if !defined(KB)
   pinMode(M5_BUTTON_HOME, INPUT);
   pinMode(M5_BUTTON_RST, INPUT);
-
+#endif
   // Random seed
   randomSeed(analogRead(0));
 
@@ -1470,37 +1474,50 @@ void loop() {
   // This is the code to handle running the main loops
   // Background processes
   switcher_button_proc();
+#if defined(AXP) && defined(RTC)
   screen_dim_proc();
+#endif
+#if defined(CARDPUTER)
+  check_kb();
+#endif
   check_menu_press();
   
   // Switcher
   if (isSwitching) {
     isSwitching = false;
     switch (current_proc) {
+#if defined(RTC)
       case 0:
         clock_setup();
         break;
+#endif
       case 1:
         mmenu_setup();
         break;
       case 2:
         smenu_setup();
         break;
+#if defined(RTC)
       case 3:
         timeset_setup();
         break;
       case 4:
         dmenu_setup();
         break;
+#endif
       case 5:
         tvbgone_setup();
         break;
+#if defined(AXP)
       case 6:
         battery_setup();
         break;
+#endif
+#if defined(ROTATION)
       case 7:
         rmenu_setup();
         break;
+#endif
       case 8:
         aj_setup();
         break;
@@ -1535,30 +1552,38 @@ void loop() {
   }
 
   switch (current_proc) {
+#if defined(RTC)
     case 0:
       clock_loop();
       break;
+#endif
     case 1:
       mmenu_loop();
       break;
     case 2:
       smenu_loop();
       break;
+#if defined(RTC)
     case 3:
       timeset_loop();
       break;
     case 4:
       dmenu_loop();
       break;
+#endif
     case 5:
       tvbgone_loop();
       break;
+#if defined(AXP)
     case 6:
       battery_loop();
       break;
+#endif
+#if defined(ROTATION)
     case 7:
       rmenu_loop();
       break;
+#endif
     case 8:
       aj_loop();
       break;
