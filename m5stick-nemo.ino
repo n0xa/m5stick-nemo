@@ -11,6 +11,18 @@ String buildver="2.0.0rc1";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
+struct QRCODE {
+  char name[19];
+  String url;
+};
+
+QRCODE qrcodes[] = {
+  { "Rickroll", "https://youtu.be/dQw4w9WgXcQ"},
+  { "HackerTyper", "https://hackertyper.net/"},
+  { "ZomboCom", "https://html5zombo.com/"},
+  { "Back", "" },
+};
+
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
   #define BIG_TEXT 4
@@ -104,6 +116,7 @@ struct MENU {
 // 15 - Wifi scan results
 // 16 - Bluetooth Spam Menu
 // 17 - Bluetooth Maelstrom
+// 18 - QR Codes
 
 bool isSwitching = true;
 #if defined(RTC)
@@ -181,15 +194,15 @@ MENU mmenu[] = {
   { "Clock", 0},
 #endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
-  { "Bluetooth Spam", 16},
-  { "WiFi Spam", 12},
-  { "WiFi Scan", 14},
+  { "Bluetooth", 16},
+  { "WiFi", 12},
+  { "QR Codes", 18},
   { "Settings", 2},
 };
 
 void mmenu_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(mmenu) / sizeof(MENU) ) ; i++ ) {
     DISP.print((cursor == i) ? ">" : " ");
@@ -268,7 +281,7 @@ void mmenu_loop() {
 
   void dmenu_drawmenu() {
     DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
     for ( int i = 0 ; i < ( sizeof(dmenu) / sizeof(MENU) ) ; i++ ) {
       DISP.print((cursor == i) ? ">" : " ");
@@ -277,7 +290,7 @@ void mmenu_loop() {
   }
 
   void dmenu_setup() {
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     DISP.println("SET AUTO DIM TIME");
     delay(1000);
@@ -300,7 +313,7 @@ void mmenu_loop() {
         EEPROM.write(1, screen_dim_time);
         EEPROM.commit();
       #endif
-      DISP.fillScreen(BLACK);
+      DISP.fillScreen(BGCOLOR);
       DISP.setCursor(0, 5, 1);
       DISP.println("SET BRIGHTNESS");
       delay(1000);
@@ -504,8 +517,8 @@ void tvbgone_setup() {
   else {
     DISP.println("Region: EMEA");
   }
-  DISP.println("Front Key: Go/Pause");
-  DISP.println("Side Key: Exit");
+  DISP.println("Select: Go/Pause");
+  DISP.println("Next: Exit");
   delay(1000);
 }
 
@@ -650,8 +663,8 @@ void sendAllCodes()
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(SMALL_TEXT);
-  DISP.println("Front Key: Go/Pause");
-  DISP.println("Side Key: Exit");
+  DISP.println("Select: Go/Pause");
+  DISP.println("Next: Exit");
 }
 
 /// CLOCK ///
@@ -799,7 +812,7 @@ void btmenu_loop() {
         rstOverride = false;
         isSwitching = true;
         DISP.print("Swift Pair Random");
-        DISP.print("\n\nSide Key: Exit");
+        DISP.print("\n\nNext: Exit");
         break;
       case 2:
         sourApple = true;
@@ -807,7 +820,7 @@ void btmenu_loop() {
         rstOverride = false;
         isSwitching = true;
         DISP.print("SourApple Crash");
-        DISP.print("\n\nSide Key: Exit");
+        DISP.print("\n\nNext: Exit");
         break;
       case 3:
         rstOverride = false;
@@ -815,7 +828,7 @@ void btmenu_loop() {
         current_proc = 17; // Maelstrom
         DISP.print("Bluetooth Maelstrom\n");
         DISP.print(" Combined BT Spam");
-        DISP.print("\n\nSide Key: Exit");
+        DISP.print("\n\nNext: Exit");
         break;
       case 4:
         DISP.fillScreen(BLACK);
@@ -1005,7 +1018,7 @@ void aj_loop(){
       DISP.setTextSize(SMALL_TEXT);
       DISP.print("Advertising:\n");
       DISP.print(ajmenu[cursor].name);
-      DISP.print("\n\nSide Key: Exit");
+      DISP.print("\n\nNext: Exit");
       isSwitching = true;
       current_proc = 9; // Jump over to the AppleJuice BLE beacon loop
     }
@@ -1259,12 +1272,13 @@ void btmaelstrom_loop(){
   aj_adv();
 }
 
-/// WIFISPAM MENU ///
+/// WIFI MENU ///
 MENU wsmenu[] = {
-  { "Funny", 0},
-  { "Rickroll", 1},
-  { "Random", 2},
-  { "Back", 3},
+  { "Scan Wifi", 0},
+  { "Spam Funny", 1},
+  { "Spam Rickroll", 2},
+  { "Spam Random", 3},
+  { "Back", 4},
 };
 
 void wsmenu_drawmenu() {
@@ -1298,15 +1312,20 @@ void wsmenu_loop() {
     isSwitching = true;
     switch(option) {
       case 0:
-        spamtype = 1;
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 14;
         break;
       case 1:
-        spamtype = 2;
+        spamtype = 1;
         break;
       case 2:
-        spamtype = 3;
+        spamtype = 2;
         break;
       case 3:
+        spamtype = 3;
+        break;
+      case 4:
         current_proc = 1;
         break;
     }
@@ -1359,7 +1378,7 @@ void wscan_result_loop(){
     if(cursor == wifict + 1){
       rstOverride = false;
       isSwitching = true;
-      current_proc = 1;
+      current_proc = 12;
     }
     String encryptType = "";
     switch (WiFi.encryptionType(cursor)) {
@@ -1401,8 +1420,7 @@ void wscan_result_loop(){
       WiFi.BSSID(i)[4],
       WiFi.BSSID(i)[5]
       );
-
-    DISP.printf("\nSide Key: Back");
+    DISP.printf("\nNext: Back\n");
   }
 }
 
@@ -1426,8 +1444,8 @@ void wscan_loop(){
   DISP.setTextSize(SMALL_TEXT);
   DISP.setCursor(5, 1);
   if(wifict > 0){
-  isSwitching = true;
-  current_proc=15;
+    isSwitching = true;
+    current_proc=15;
   }
 }
 
@@ -1467,6 +1485,42 @@ void bootScreen(){
   DISP.println("Home: Power Button");
   delay(3000);
 #endif
+}
+
+void qrmenu_drawmenu() {
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 8, 1);
+  for ( int i = 0 ; i < ( sizeof(qrcodes) / sizeof(QRCODE) ) ; i++ ) {
+    DISP.print((cursor == i) ? ">" : " ");
+    DISP.println(qrcodes[i].name);
+  }
+}
+
+void qrmenu_setup() {
+  cursor = 0;
+  rstOverride = true;
+  qrmenu_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void qrmenu_loop() {
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % ( sizeof(qrcodes) / sizeof(QRCODE) );
+    qrmenu_drawmenu();
+    delay(250);
+  }
+  if (check_select_press()) {
+    if(qrcodes[cursor].url.length() == 0){
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 1;
+    }else{
+      DISP.fillScreen(WHITE);
+      DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
+    }
+  }
 }
 
 /// ENTRY ///
@@ -1603,6 +1657,10 @@ void loop() {
       case 17:
         btmaelstrom_setup();
         break;
+      case 18:
+        qrmenu_setup();
+        break;
+
     }
   }
 
@@ -1668,6 +1726,9 @@ void loop() {
       break;
     case 17:
       btmaelstrom_loop();
+      break;
+    case 18:
+      qrmenu_loop();
       break;
   }
 }
