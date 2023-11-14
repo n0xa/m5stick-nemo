@@ -310,7 +310,7 @@ void mmenu_loop() {
         cursor = brightness + 5;
       }
       timeset_drawmenu(11);
-      while( !check_next_press()) {
+      while( !check_select_press()) {
         if (check_next_press()) {
           cursor++;
           cursor = cursor % 11 ;
@@ -353,6 +353,9 @@ MENU smenu[] = {
   { "Rotation", 7},
 #endif
   { "About", 10},
+#if defined(USE_EEPROM)
+  { "Clear Settings", 99},
+#endif
   { "Back", 1},
 };
 
@@ -383,6 +386,16 @@ void smenu_loop() {
   if (check_select_press()) {
     rstOverride = false;
     isSwitching = true;
+    if(smenu[cursor].command == 99){
+#if defined(USE_EEPROM)
+      EEPROM.write(0, 255); // Rotation
+      EEPROM.write(1, 255); // dim time
+      EEPROM.write(2, 255); // brightness
+      EEPROM.write(2, 255); // TV-B-Gone Region
+      EEPROM.commit();
+#endif
+      ESP.restart();
+    }
     current_proc = smenu[cursor].command;
   }
 }
@@ -1428,7 +1441,7 @@ void bootScreen(){
   DISP.setTextSize(SMALL_TEXT);
   DISP.print(buildver);
 #if defined(STICK_C_PLUS)
-  DISP.println("-StickC-Plus");
+  DISP.println("-StickC+");
 #endif
 #if defined(STICK_C)
   DISP.println("-StickC");
@@ -1466,18 +1479,12 @@ void setup() {
 #endif
   #if defined(USE_EEPROM)
     EEPROM.begin(EEPROM_SIZE);
-    // Uncomment these to blow away EEPROM to factory settings - for testing purposes
-    //EEPROM.write(0, 255); // Rotation
-    //EEPROM.write(1, 255); // dim time
-    //EEPROM.write(2, 255); // brightness
-    //EEPROM.write(2, 255); // TV-B-Gone Region
-    //EEPROM.commit();
     Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
     Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
     Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
     Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
     if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
-      // Let's just assume rotation > 3 is a fresh/corrupt EEPROM and write defaults for everything
+      // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       EEPROM.write(0, 3);    // Left rotation
       EEPROM.write(1, 15);   // 15 second auto dim time
@@ -1496,7 +1503,7 @@ void setup() {
   DISP.setRotation(rotation);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   bootScreen();
-  
+
   // Pin setup
 #if defined(M5LED)
   pinMode(M5_LED, OUTPUT);
