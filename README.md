@@ -1,5 +1,5 @@
 # M5Stick-NEMO
-M5 Stick C firmware for high-tech pranks
+Firmware for high-tech pranks on M5Stack ESP32 Devices
 
 ## Name and Background
 NEMO started a personal project to help me learn more about ESP32 development with the Arduino IDE. I decided to replicate a few common, trending pranks that were getting a lot of attention in the tech community, as a challenge to myself, and to also better understand these attacks.  
