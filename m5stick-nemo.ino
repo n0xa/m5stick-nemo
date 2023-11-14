@@ -7,6 +7,9 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
+String buildver="2.0.0rc1";
+#define BGCOLOR BLACK
+#define FGCOLOR GREEN
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -132,7 +135,7 @@ void check_menu_press() {
   if (M5.Axp.GetBtnPress()) {
 #endif
 #if defined(KB)
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_OPT)){
+  if (M5Cardputer.Keyboard.isKeyPressed(',') || M5Cardputer.Keyboard.isKeyPressed('`')){
 #endif
     isSwitching = true;
     rstOverride = false;
@@ -143,7 +146,12 @@ void check_menu_press() {
 
 bool check_next_press(){
 #if defined(KB)
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB)){
+  if (M5Cardputer.Keyboard.isKeyPressed(';')){
+    // hack to handle the up arrow
+    cursor = cursor - 2;
+    return true;
+  }
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
     return true;
   }
 #else
@@ -156,7 +164,7 @@ bool check_next_press(){
 
 bool check_select_press(){
 #if defined(KB)
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER)){
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
     return true;
   }
 #else
@@ -600,9 +608,7 @@ void sendAllCodes()
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
-    // TODO sort out home button for cardputer
     if (M5.Axp.GetBtnPress()){
-      // duplicate code here, sadly, since this is a blocking loop
       endingEarly = true;
       current_proc = 1;
       isSwitching = true;
@@ -1110,14 +1116,23 @@ void credits_setup(){
   DISP.setCursor(0, 25);
   DISP.print(" M5-NEMO\n");
   DISP.setTextSize(SMALL_TEXT);
+  DISP.printf("  %s\n",buildver);
   DISP.println(" For M5Stack");
-  DISP.println(" StickC-Plus");
+#if defined(STICK_C_PLUS)
+  DISP.println("  StickC-Plus");
+#endif
+#if defined(STICK_C)
+  DISP.println("  StickC");
+#endif
+#if defined(CARDPUTER)
+  DISP.println("  Cardputer");
+#endif
   DISP.println("By Noah Axon");
   DISP.setCursor(155, 5);
   DISP.println("GitHub");
   DISP.setCursor(155, 25);
   DISP.println("Source:");
-  DISP.setTextColor(GREEN, BLACK);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 /// WiFiSPAM ///
@@ -1230,7 +1245,6 @@ void btmaelstrom_loop(){
   aj_loop(); // roll a random device ID
   aj_adv();
 }
-
 
 /// WIFISPAM MENU ///
 MENU wsmenu[] = {
@@ -1404,6 +1418,44 @@ void wscan_loop(){
   }
 }
 
+void bootScreen(){
+  // Boot Screen
+  DISP.fillScreen(BLACK);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(40, 0);
+  DISP.println("M5-NEMO");
+  DISP.setCursor(10, 30);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.print(buildver);
+#if defined(STICK_C_PLUS)
+  DISP.println("-StickC-Plus");
+#endif
+#if defined(STICK_C)
+  DISP.println("-StickC");
+#endif
+#if defined(CARDPUTER)
+  DISP.println("-Cardputer");
+  DISP.println("Next: Down Arrow");
+  DISP.println("Prev: Up Arrow");
+  DISP.println("Sel : Enter or ->");
+  DISP.println("Home: Esc   or <- ");
+  DISP.println("         Press a key");
+  while(true){
+    M5Cardputer.update();
+    if (M5Cardputer.Keyboard.isChange()) {
+      mmenu_drawmenu();
+      delay(500);
+      break;
+    }
+  }
+#else
+  DISP.println("Next: Side Button");
+  DISP.println("Sel : M5 Button");
+  DISP.println("Home: Power Button");
+  delay(3000);
+#endif
+}
+
 /// ENTRY ///
 void setup() {
 #if defined(CARDPUTER)
@@ -1442,12 +1494,9 @@ void setup() {
     M5.Axp.ScreenBreath(brightness);
   #endif
   DISP.setRotation(rotation);
-  DISP.setTextColor(GREEN, BLACK);
-  // Boot Screen
-  DISP.fillScreen(BLACK);
-  DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(40, 15);
-  DISP.print("M5-NEMO\n");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  bootScreen();
+  
   // Pin setup
 #if defined(M5LED)
   pinMode(M5_LED, OUTPUT);
@@ -1467,7 +1516,6 @@ void setup() {
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
 
   // Finish with time to show logo
-  delay(3000);
 }
 
 void loop() {
