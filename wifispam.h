@@ -120,7 +120,7 @@ char* randomSSID() {
 
 
 uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
-                /*4*/   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //Destination address 
+                /*4*/   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //Destination address
                 /*10*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //Source address - overwritten later
                 /*16*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //BSSID - overwritten to the same as the source address
                 /*22*/  0xc0, 0x6c, //Seq-ctl
@@ -200,9 +200,9 @@ void nextChannel() {
 
 void beaconSpam(const char ESSID[]){
   Serial.printf("WiFi SSID: %s\n", ESSID);
-  int set_channel = random(1,12); 
+  int set_channel = random(1,12);
   esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  delay(1);  
+  delay(1);
   packet[10] = packet[16] = random(256);
   packet[11] = packet[17] = random(256);
   packet[12] = packet[18] = random(256);
@@ -222,7 +222,7 @@ void beaconSpam(const char ESSID[]){
 
   for(int i = 0; i < numSpace; i++)
     packet[38 + realLen + i] = 0x20;
-  
+
   packet[50 + fullLen] = set_channel;
 
   esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
