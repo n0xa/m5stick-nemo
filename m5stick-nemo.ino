@@ -7,7 +7,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.0rc1";
+String buildver="2.0.0rc2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -1178,9 +1178,6 @@ void wifispam_setup() {
     packetSize -= 26;
   }
 
-  // generate random mac address
-  randomMac();
-  
   //change WiFi mode
   WiFi.mode(WIFI_MODE_STA);
 
@@ -1210,7 +1207,7 @@ void wifispam_setup() {
       DISP.print(rickrollssids);
       break;
     case 3:
-      // placed here for consistency. no-op since display handled in loop. 
+      DISP.printf(" - Random SSIDs\n", ct);
       break;
   }
   DISP.setTextSize(SMALL_TEXT);
@@ -1233,14 +1230,14 @@ void wifispam_loop() {
         while(i < len){
           i++;
         }
-        beaconSpam(funnyssids);
+        beaconSpamList(funnyssids);
         break;
       case 2:
         len = sizeof(rickrollssids);
         while(i < len){
           i++;
         }
-        beaconSpam(rickrollssids);
+        beaconSpamList(rickrollssids);
         break;
       case 3:
         char* randoms = randomSSID();
@@ -1248,7 +1245,7 @@ void wifispam_loop() {
         while(i < len){
           i++;
         }
-        beaconSpam(randoms);
+        beaconSpamList(randoms);
         break;        
     }
   }
