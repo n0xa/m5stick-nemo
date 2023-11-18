@@ -76,31 +76,18 @@ const char rickrollssids[] PROGMEM = {
   "08 and hurt you\n"
 };
 
-const char foobar[] PROGMEM = {
-  "abh\nfoooo\nbarrr\nbaz\nbat\ngarply\nquux\nheyfuckface\n"
-};
-
-#define SSIDLEN 375 /* Change to whatever length you need */
-
-char* randomSSID(){
-  /* Change to allowable characters */
-  const char possible[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -.!)(,?%";
-  static char ssid[SSIDLEN + 1];
-  for(int p = 0, i = 0; i < SSIDLEN; i++){
-    int r = random(0, strlen(possible));
-    if(r % 7 == 0){
-      ssid[p++] = '\n'; // inject newlines occasionally :D
-    }
-    ssid[p++] = possible[r];
-  }
-  ssid[SSIDLEN] = '\n';  DISP.setTextSize(1);
-  DISP.fillScreen(BLACK);
-  DISP.setCursor(0, 0, 1);
-  DISP.println("Spamming Random SSIDs:");
-  // Maximum broadcast SSID length is 32, but the strings might show longer in the output. Sorry.
-  DISP.print(ssid);
-  return ssid;
-}
+// run-time variables
+char emptySSID[32];
+char beaconSSID[32];
+char randomName[32];
+uint8_t channelIndex = 0;
+uint8_t macAddr[6];
+uint8_t wifi_channel = 1;
+uint32_t currentTime = 0;
+uint32_t packetSize = 0;
+uint32_t packetCounter = 0;
+uint32_t attackTime = 0;
+uint32_t packetRateTime = 0;
 
 #include <WiFi.h>
 
@@ -121,17 +108,28 @@ const char* generateRandomName() {
   return randomName;
 }
 
+char* randomSSID() {
+  const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  int len = rand() % 22 + 7; // Generate a random length between 1 and 10
+  for (int i = 0; i < len; ++i) {
+    randomName[i] = charset[rand() % strlen(charset)]; // S elect random characters from the charset
+  }
+  randomName[len] = '\0'; // Null-terminate the string
+  return randomName;
+}
 
-// run-time variables
-char emptySSID[32];
-uint8_t channelIndex = 0;
-uint8_t macAddr[6];
-uint8_t wifi_channel = 1;
-uint32_t currentTime = 0;
-uint32_t packetSize = 0;
-uint32_t packetCounter = 0;
-uint32_t attackTime = 0;
-uint32_t packetRateTime = 0;
+
+uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
+                /*4*/   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //Destination address
+                /*10*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //Source address - overwritten later
+                /*16*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //BSSID - overwritten to the same as the source address
+                /*22*/  0xc0, 0x6c, //Seq-ctl
+                /*24*/  0x83, 0x51, 0xf7, 0x8f, 0x0f, 0x00, 0x00, 0x00, //timestamp - the number of microseconds the AP has been active
+                /*32*/  0x64, 0x00, //Beacon interval
+                /*34*/  0x01, 0x04, //Capability info
+                /* SSID */
+                /*36*/  0x00
+                };
 
 // beacon frame definition
 uint8_t beaconPacket[109] = {
@@ -200,26 +198,46 @@ void nextChannel() {
   }
 }
 
-// generates random MAC
-void randomMac() {
-  for (int i = 0; i < 6; i++)
-    macAddr[i] = random(256);
+void beaconSpam(const char ESSID[]){
+  Serial.printf("WiFi SSID: %s\n", ESSID);
+  int set_channel = random(1,12);
+  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+  delay(1);
+  packet[10] = packet[16] = random(256);
+  packet[11] = packet[17] = random(256);
+  packet[12] = packet[18] = random(256);
+  packet[13] = packet[19] = random(256);
+  packet[14] = packet[20] = random(256);
+  packet[15] = packet[21] = random(256);
+
+  int realLen = strlen(ESSID);
+  int ssidLen = random(realLen, 33);
+  int numSpace = ssidLen - realLen;
+  //int rand_len = sizeof(rand_reg);
+  int fullLen = ssidLen;
+  packet[37] = fullLen;
+
+  for(int i = 0; i < realLen; i++)
+    packet[38 + i] = ESSID[i];
+
+  for(int i = 0; i < numSpace; i++)
+    packet[38 + realLen + i] = 0x20;
+
+  packet[50 + fullLen] = set_channel;
+
+  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
+  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
+  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
 }
 
-void beaconSpam(const char list[]){
-  attackTime = currentTime;
-
-  // temp variables
+void beaconSpamList(const char list[]){
+  // Parses the char array and splits it into SSIDs
   int i = 0;
   int j = 0;
   int ssidNum = 1;
   char tmp;
   int ssidsLen = strlen_P(list);
   bool sent = false;
-
-  // go to next channel
-  nextChannel();
-
   while (i < ssidsLen) {
     // read out next SSID
     j = 0;
@@ -227,31 +245,10 @@ void beaconSpam(const char list[]){
       tmp = pgm_read_byte(list + i + j);
       j++;
     } while (tmp != '\n' && j <= 32 && i + j < ssidsLen);
-
     uint8_t ssidLen = j - 1;
-
-    // set MAC address
-    macAddr[5] = ssidNum;
-    ssidNum++;
-
-    // write MAC address into beacon frame
-    memcpy(&beaconPacket[10], macAddr, 6);
-    memcpy(&beaconPacket[16], macAddr, 6);
-
-    // reset SSID
-    memcpy(&beaconPacket[38], emptySSID, 32);
-
-    // write new SSID into beacon frame
-    memcpy_P(&beaconPacket[38], &list[i], ssidLen);
-
-    // set channel for beacon frame
-    beaconPacket[82] = wifi_channel;
-
-    // send packet
-    for (int k = 0; k < 3; k++) {
-      packetCounter += esp_wifi_80211_tx(WIFI_IF_STA, beaconPacket, packetSize, 0) == 0;
-      delay(1);
-    }
+    memcpy_P(&beaconSSID, &list[i], ssidLen);
+    beaconSpam(beaconSSID);
+    memcpy_P(&beaconSSID, &emptySSID, 32);
     i += j;
   }
 }

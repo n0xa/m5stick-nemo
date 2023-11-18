@@ -7,7 +7,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.0rc1";
+String buildver="2.0.0rc2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -65,7 +65,6 @@ QRCODE qrcodes[] = {
   // -=-=- FEATURES -=-=-
   #define KB
   #define HID
-  #define ACTIVE_LOW_IR
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
 #endif
@@ -138,7 +137,7 @@ void switcher_button_proc() {
   void check_kb(){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
-      delay(250);
+      delay(100);
     }
   }
 #endif
@@ -214,7 +213,7 @@ void mmenu_setup() {
   cursor = 0;
   rstOverride = true;
   mmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void mmenu_loop() {
@@ -297,7 +296,7 @@ void mmenu_loop() {
     cursor = (screen_dim_time / 5) - 1;
     rstOverride = true;
     dmenu_drawmenu();
-    delay(250); // Prevent switching after menu loads up
+    delay(500); // Prevent switching after menu loads up
   }
 
   void dmenu_loop() {
@@ -386,7 +385,7 @@ void smenu_setup() {
   cursor = 0;
   rstOverride = true;
   smenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void smenu_loop() {
@@ -436,7 +435,7 @@ int rotation = 1;
     cursor = 0;
     rstOverride = true;
     rmenu_drawmenu();
-    delay(250); // Prevent switching after menu loads up
+    delay(500); // Prevent switching after menu loads up
   }
 
   void rmenu_loop() {
@@ -482,7 +481,7 @@ int rotation = 1;
     float b = M5.Axp.GetVbatData() * 1.1 / 1000;
     int battery = ((b - 3.0) / 1.2) * 100;
     battery_drawmenu(battery, b, c);
-    delay(250); // Prevent switching after menu loads up
+    delay(500); // Prevent switching after menu loads up
   }
 
   void battery_loop() {
@@ -525,14 +524,10 @@ void tvbgone_setup() {
 void tvbgone_loop()
 {
   if (check_select_press()) {
-    delay_ten_us(40000);
-    while (check_select_press()) {
-      delay_ten_us(500);
-      yield();
-    }
+    delay(250);
+    Serial.println("triggered TVBG");
     sendAllCodes();
   }
-  yield();
 }
 
 /// TVBG-Region MENU ///
@@ -583,8 +578,7 @@ void tvbgmenu_loop() {
   }
 }
 
-void sendAllCodes()
-{
+void sendAllCodes() {
   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
   if (region == NA) {
     num_codes = num_NAcodes;
@@ -621,20 +615,19 @@ void sendAllCodes()
       #endif
       DISP.setTextSize(TINY_TEXT);
       DISP.printf("rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
+      Serial.printf("TVBG: rti = %d Pair = %d, %d\n", ti >> 1, ontime, offtime);
       rawData[k * 2] = offtime * 10;
       rawData[(k * 2) + 1] = ontime * 10;
-      yield();
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
     #if defined(ACTIVE_LOW_IR)
       // Set Active Low IRLED high to turn it off after each burst.
       digitalWrite(IRLED, HIGH);
     #endif
-    yield();
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
-    if (M5.Axp.GetBtnPress()){
+    if (M5.Axp.GetBtnPress()) {
       endingEarly = true;
       current_proc = 1;
       isSwitching = true;
@@ -642,13 +635,13 @@ void sendAllCodes()
       break;     
     }
     #endif
-
+#if defined(KB)
+    check_kb();
+#endif
     if (check_select_press()){
-      while (check_select_press()) {
-        yield();
-      }
+      Serial.println("endingearly");
       endingEarly = true;
-      quickflashLEDx(4);
+      delay(250);
       break; 
     }
   } 
@@ -780,7 +773,7 @@ void btmenu_setup() {
   maelstrom = false;
   rstOverride = true;
   btmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void btmenu_loop() {
@@ -1114,14 +1107,16 @@ void aj_adv(){
 #if defined(M5LED)
     digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
     delay(10);
-    digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
     if (sourApple || swiftPair || maelstrom){
+      isSwitching = true;
       current_proc = 16;
       btmenu_drawmenu();
     } else {
+      isSwitching = true;
       current_proc = 8;      
       aj_drawmenu();
     }
@@ -1178,9 +1173,6 @@ void wifispam_setup() {
     packetSize -= 26;
   }
 
-  // generate random mac address
-  randomMac();
-  
   //change WiFi mode
   WiFi.mode(WIFI_MODE_STA);
 
@@ -1210,7 +1202,7 @@ void wifispam_setup() {
       DISP.print(rickrollssids);
       break;
     case 3:
-      // placed here for consistency. no-op since display handled in loop. 
+      DISP.printf(" - Random SSIDs\n", ct);
       break;
   }
   DISP.setTextSize(SMALL_TEXT);
@@ -1233,14 +1225,14 @@ void wifispam_loop() {
         while(i < len){
           i++;
         }
-        beaconSpam(funnyssids);
+        beaconSpamList(funnyssids);
         break;
       case 2:
         len = sizeof(rickrollssids);
         while(i < len){
           i++;
         }
-        beaconSpam(rickrollssids);
+        beaconSpamList(rickrollssids);
         break;
       case 3:
         char* randoms = randomSSID();
@@ -1248,7 +1240,7 @@ void wifispam_loop() {
         while(i < len){
           i++;
         }
-        beaconSpam(randoms);
+        beaconSpamList(randoms);
         break;        
     }
   }
@@ -1263,13 +1255,17 @@ void btmaelstrom_loop(){
   swiftPair = false;
   sourApple = true;
   aj_adv();
-  swiftPair = true;
-  sourApple = false;
-  aj_adv();
-  swiftPair = false;
-  sourApple = false;
-  aj_loop(); // roll a random device ID
-  aj_adv();
+  if (maelstrom){
+    swiftPair = true;
+    sourApple = false;
+    aj_adv();
+  }
+  if (maelstrom){
+    swiftPair = false;
+    sourApple = false;
+    aj_loop(); // roll a random device ID
+    aj_adv();
+  }
 }
 
 /// WIFI MENU ///
@@ -1295,7 +1291,7 @@ void wsmenu_setup() {
   cursor = 0;
   rstOverride = true;
   wsmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void wsmenu_loop() {
@@ -1359,7 +1355,7 @@ void wscan_result_setup() {
   cursor = 0;
   rstOverride = true;
   wscan_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void wscan_result_loop(){
@@ -1475,7 +1471,7 @@ void bootScreen(){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
       mmenu_drawmenu();
-      delay(500);
+      delay(250);
       break;
     }
   }
@@ -1501,7 +1497,7 @@ void qrmenu_setup() {
   cursor = 0;
   rstOverride = true;
   qrmenu_drawmenu();
-  delay(250); // Prevent switching after menu loads up
+  delay(500); // Prevent switching after menu loads up
 }
 
 void qrmenu_loop() {
