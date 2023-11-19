@@ -16,12 +16,21 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * Battery level and credits in settings menu
 
 ## User Interface
-* A quick tap of the power button (closest to the USB port) will bring up the main menu from anywhere.
-* Long pressing the power button for 6 seconds turns off the unit.
-* In Function modes, the side button stops or pauses the process and brings up a menu.
-* In Menu mode, the side button scrolls the cursor to the next option in the menu.
-* In Function modes, the front M5 button wakes up the dim screen.
-* In Menu mode, the front M5 button activates the selected menu item next to the cursor.
+There are three main controls:
+* Home - Stops the current process and returns you to the menu from almost anywhere in NEMO
+* Next - Moves the cursor to the next menu option. In function modes, this usually stops the process and returns you to the previous menu.
+* Select - Activates the currently-selected menu option, and wakes up the dimmed screen in function modes  
+
+* StickC and StickC-Plus
+  * Power: Long-press the power button for 6 seconds to turn off the unit
+  * Home: Tap the power button (closest to the USB port)
+  * Next: Tap the side button
+  * Select: Tap the M5 button on the front of the unit  
+
+* Cardputer
+  * Home: Tap the Esc/~/` key or the Left-Arrow/, key
+  * Next/Prev: Tap the Down-Arrow/. key and Up-Arrow/; keys to navigate
+  * Select: Tap the OK/Enter key or Right-Arrow/? key  
 
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO
@@ -55,3 +64,14 @@ If you want to customize NEMO or contribute to the project, you should be famili
   * Uncomment only the one appropriate `#define` option or compiler errors will occur. 
   * If for some reason the screen jumps from very dim at level 0 to almost fully bright at level 1 and further brightness levels don't affect anything, set the pct_brightness variable to false.
 * Compile and upload the project
+
+## Contributing
+Contributions are welcome. Please look at the GitHub Issues for ideas to help enhance the project. When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.  Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns.
+
+Things I'd like help on:
+* A new "Region" of TV-B-Gone that's full of additional IR codes that can turn RGB LED strips, air conditioners, fans, sound bars and the like on and off
+* Help refactoring how menus work. The way it was built was fine when it was one main menu with a few options. Now, adding a new sub-menu involves a lot of duplicated code.   
+
+Things I probably won't merge in:
+* Bulk wifi deauthentication spamming
+* Bluetooth spam that potentially disrupts health and fitness trackers, smart watches, etc.
