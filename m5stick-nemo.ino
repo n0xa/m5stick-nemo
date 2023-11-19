@@ -11,18 +11,6 @@ String buildver="2.0.0rc2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
-struct QRCODE {
-  char name[19];
-  String url;
-};
-
-QRCODE qrcodes[] = {
-  { "Rickroll", "https://youtu.be/dQw4w9WgXcQ"},
-  { "HackerTyper", "https://hackertyper.net/"},
-  { "ZomboCom", "https://html5zombo.com/"},
-  { "Back", "" },
-};
-
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
   #define BIG_TEXT 4
@@ -116,6 +104,18 @@ struct MENU {
 // 16 - Bluetooth Spam Menu
 // 17 - Bluetooth Maelstrom
 // 18 - QR Codes
+
+struct QRCODE {
+  char name[19];
+  String url;
+};
+
+QRCODE qrcodes[] = {
+  { "Back", "" },
+  { "Rickroll", "https://youtu.be/dQw4w9WgXcQ"},
+  { "HackerTyper", "https://hackertyper.net/"},
+  { "ZomboCom", "https://html5zombo.com/"},
+};
 
 bool isSwitching = true;
 #if defined(RTC)
@@ -269,13 +269,13 @@ void mmenu_loop() {
 
   /// Dimmer MENU ///
   MENU dmenu[] = {
+    { "Back", screen_dim_time},
     { "5 seconds", 5},
     { "10 seconds", 10},
     { "15 seconds", 15},
     { "20 seconds", 20},
     { "25 seconds", 25},
     { "30 seconds", 30},
-    { "Back", screen_dim_time},
   };
 
   void dmenu_drawmenu() {
@@ -354,6 +354,7 @@ void mmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
+  { "Back", 1},
 #if defined(AXP)
   { "Battery Info", 6},
   { "Brightness", 4},
@@ -368,7 +369,6 @@ MENU smenu[] = {
 #if defined(USE_EEPROM)
   { "Clear Settings", 99},
 #endif
-  { "Back", 1},
 };
 
 void smenu_drawmenu() {
@@ -416,9 +416,9 @@ int rotation = 1;
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
+    { "Back", rotation},
     { "Right", 1},
     { "Left", 3},
-    { "Back", rotation},
   };
 
   void rmenu_drawmenu() {
@@ -532,6 +532,7 @@ void tvbgone_loop()
 
 /// TVBG-Region MENU ///
 MENU tvbgmenu[] = {
+  { "Back", 3},
   { "Americas / Asia", 0},
   { "EU/MidEast/Africa", 1},
 };
@@ -568,6 +569,14 @@ void tvbgmenu_loop() {
   }
   if (check_select_press()) {
     region = tvbgmenu[cursor].command;
+
+    if (region == 3) {
+      current_proc = 1;
+      isSwitching = true;
+      rstOverride = false; 
+      return;
+    }
+
     #if defined(USE_EEPROM)
       EEPROM.write(3, region);
       EEPROM.commit();
@@ -749,11 +758,11 @@ void sendAllCodes() {
 /// Bluetooth Spamming ///
 /// BTSPAM MENU ///
 MENU btmenu[] = {
+  { "Back", 4},
   { "AppleJuice", 0},
   { "Swift Pair", 1},
   { "SourApple Crash", 2},
   { "BT Maelstrom", 3},
-  { "Back", 4}
 };
 
 void btmenu_drawmenu() {
@@ -834,6 +843,7 @@ void btmenu_loop() {
 }
 
 MENU ajmenu[] = {
+  { "Back", 29},
   { "AirPods", 1},
   { "Transfer Number", 27},
   { "AirPods Pro", 2},
@@ -862,7 +872,6 @@ MENU ajmenu[] = {
   { "AppleTV Network", 25},
   { "TV Color Balance", 26},
   { "Setup New Phone", 28},
-  { "Back", 29},
 };
 
 void aj_drawmenu() {
@@ -1270,11 +1279,11 @@ void btmaelstrom_loop(){
 
 /// WIFI MENU ///
 MENU wsmenu[] = {
+  { "Back", 4},
   { "Scan Wifi", 0},
   { "Spam Funny", 1},
   { "Spam Rickroll", 2},
   { "Spam Random", 3},
-  { "Back", 4},
 };
 
 void wsmenu_drawmenu() {
@@ -1408,14 +1417,7 @@ void wscan_result_loop(){
     DISP.setTextSize(SMALL_TEXT);
     DISP.printf("Chan : %d\n", WiFi.channel(cursor));
     DISP.printf("Crypt: %s\n", encryptType);
-        DISP.printf("BSSID:\n %02x:%02x:%02x:%02x:%02x:%02x\n",
-      WiFi.BSSID(i)[0],
-      WiFi.BSSID(i)[1],
-      WiFi.BSSID(i)[2],
-      WiFi.BSSID(i)[3],
-      WiFi.BSSID(i)[4],
-      WiFi.BSSID(i)[5]
-      );
+    DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
     DISP.printf("\nNext: Back\n");
   }
 }
