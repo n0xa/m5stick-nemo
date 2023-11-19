@@ -7,7 +7,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.0rc2";
+String buildver="2.0.1";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
