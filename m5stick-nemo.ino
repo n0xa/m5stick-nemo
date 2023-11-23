@@ -7,12 +7,14 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.1";
+String buildver="2.0.2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
+  // -=-=- Display -=-=-
+  String platformName="StickC+";
   #define BIG_TEXT 4
   #define MEDIUM_TEXT 3
   #define SMALL_TEXT 2
@@ -30,6 +32,8 @@ String buildver="2.0.1";
 
 #if defined(STICK_C)
   #include <M5StickC.h>
+  // -=-=- Display -=-=-
+  String platformName="StickC";
   #define BIG_TEXT 2
   #define MEDIUM_TEXT 2
   #define SMALL_TEXT 1
@@ -46,6 +50,8 @@ String buildver="2.0.1";
 
 #if defined(CARDPUTER)
   #include <M5Cardputer.h>
+  // -=-=- Display -=-=-
+  String platformName="Cardputer";
   #define BIG_TEXT 4
   #define MEDIUM_TEXT 3
   #define SMALL_TEXT 2
@@ -57,7 +63,16 @@ String buildver="2.0.1";
   #define DISP M5Cardputer.Display
 #endif
 
-#include <EEPROM.h>
+// -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
+// M5LED      - An LED exposed as M5_LED
+// RTC        - Real-time clock exposed as M5.Rtc 
+// AXP        - AXP192 Power Management exposed as M5.Axp
+// KB         - Keyboard exposed as M5Cardputer.Keyboard
+// HID        - HID exposed as USBHIDKeyboard
+// USE_EEPROM - Store settings in EEPROM
+// ROTATION   - Allow screen to be rotated
+// DISP       - Set to the API's Display class
+
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include "applejuice.h"
@@ -76,6 +91,7 @@ bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iO
 bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
 bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 #if defined(USE_EEPROM)
+  #include <EEPROM.h>
   #define EEPROM_SIZE 4
 #endif
 struct MENU {
@@ -161,9 +177,11 @@ bool check_next_press(){
   if (M5Cardputer.Keyboard.isKeyPressed(';')){
     // hack to handle the up arrow
     cursor = cursor - 2;
+    check_kb();
     return true;
   }
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
+    check_kb();
     return true;
   }
 #else
@@ -177,6 +195,7 @@ bool check_next_press(){
 bool check_select_press(){
 #if defined(KB)
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
+    
     return true;
   }
 #else
@@ -373,7 +392,7 @@ MENU smenu[] = {
 
 void smenu_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(smenu) / sizeof(MENU) ) ; i++ ) {
     DISP.print((cursor == i) ? ">" : " ");
@@ -423,7 +442,7 @@ int rotation = 1;
 
   void rmenu_drawmenu() {
     DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
     for ( int i = 0 ; i < ( sizeof(rmenu) / sizeof(MENU) ) ; i++ ) {
       DISP.print((cursor == i) ? ">" : " ");
@@ -463,7 +482,7 @@ int rotation = 1;
   /// BATTERY INFO ///
   void battery_drawmenu(int battery, int b, int c) {
     DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
     DISP.print("Battery: ");
     DISP.print(battery);
@@ -500,7 +519,7 @@ int rotation = 1;
 
 /// TV-B-GONE ///
 void tvbgone_setup() {
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
@@ -539,7 +558,7 @@ MENU tvbgmenu[] = {
 
 void tvbgmenu_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
     DISP.print((cursor == i) ? ">" : " ");
@@ -548,7 +567,7 @@ void tvbgmenu_drawmenu() {
 }
 
 void tvbgmenu_setup() {  
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
@@ -604,7 +623,7 @@ void sendAllCodes() {
     }
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(BIG_TEXT);
     DISP.setCursor(5, 1);
     DISP.println("TV-B-Gone");
@@ -660,7 +679,7 @@ void sendAllCodes() {
     delay_ten_us(MAX_WAIT_TIME); // wait 655.350ms
     quickflashLEDx(8);
   }
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
@@ -672,7 +691,7 @@ void sendAllCodes() {
 /// CLOCK ///
 #if defined(RTC)
   void clock_setup() {
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(MEDIUM_TEXT);
   }
 
@@ -686,7 +705,7 @@ void sendAllCodes() {
   /// TIMESET ///
   void timeset_drawmenu(int nums) {
     DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     // scrolling menu
     if (cursor > 5) {
@@ -706,7 +725,7 @@ void sendAllCodes() {
   /// TIME SETTING ///
   void timeset_setup() {
     rstOverride = true;
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     DISP.println("SET HOUR");
     delay(2000);
@@ -725,7 +744,7 @@ void sendAllCodes() {
       }
     }
     int hour = cursor;
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     DISP.println("SET MINUTE");
     delay(2000);
@@ -740,7 +759,7 @@ void sendAllCodes() {
       }
     }
     int minute = cursor;
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     RTC_TimeTypeDef TimeStruct;
     TimeStruct.Hours   = hour;
@@ -767,7 +786,7 @@ MENU btmenu[] = {
 
 void btmenu_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(btmenu) / sizeof(MENU) ) ; i++ ) {
     DISP.print((cursor == i) ? ">" : " ");
@@ -794,7 +813,7 @@ void btmenu_loop() {
   }
   if (check_select_press()) {
     int option = btmenu[cursor].command;
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(MEDIUM_TEXT);
     DISP.setCursor(5, 1);
     DISP.println("BT Spam");
@@ -803,7 +822,7 @@ void btmenu_loop() {
 
     switch(option) {
       case 0:
-        DISP.fillScreen(BLACK);
+        DISP.fillScreen(BGCOLOR);
         rstOverride = false;
         isSwitching = true;
         current_proc = 8;
@@ -833,7 +852,7 @@ void btmenu_loop() {
         DISP.print("\n\nNext: Exit");
         break;
       case 4:
-        DISP.fillScreen(BLACK);
+        DISP.fillScreen(BGCOLOR);
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
@@ -876,7 +895,7 @@ MENU ajmenu[] = {
 
 void aj_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 5, 1);
   // scrolling menu
   if (cursor > 5) {
@@ -894,7 +913,7 @@ void aj_drawmenu() {
 }
 
 void aj_setup(){
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("AppleJuice");
@@ -1013,7 +1032,7 @@ void aj_loop(){
         break;
     }
     if (current_proc == 8 && isSwitching == false){
-      DISP.fillScreen(BLACK);
+      DISP.fillScreen(BGCOLOR);
       DISP.setTextSize(MEDIUM_TEXT);
       DISP.setCursor(5, 1);
       DISP.println("AppleJuice");
@@ -1188,13 +1207,13 @@ void wifispam_setup() {
   // set channel
   esp_wifi_set_channel(channels[0], WIFI_SECOND_CHAN_NONE);
 
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("WiFi Spam");
   delay(1000);
   DISP.setTextSize(TINY_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
   DISP.print("WiFi Spam");
     int ct = 0;
@@ -1288,7 +1307,7 @@ MENU wsmenu[] = {
 
 void wsmenu_drawmenu() {
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(wsmenu) / sizeof(MENU) ) ; i++ ) {
     DISP.print((cursor == i) ? ">" : " ");
@@ -1340,7 +1359,7 @@ void wsmenu_loop() {
 void wscan_drawmenu() {
   char ssid[19];
   DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 5, 1);
   // scrolling menu
   if (cursor > 4) {
@@ -1411,7 +1430,7 @@ void wscan_result_loop(){
     if(WiFi.SSID(cursor).length() > 12){
       DISP.setTextSize(SMALL_TEXT);
     }       
-    DISP.fillScreen(BLACK);
+    DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
     DISP.setTextSize(SMALL_TEXT);
@@ -1425,7 +1444,7 @@ void wscan_result_loop(){
 void wscan_setup(){
   rstOverride = false;  
   cursor = 0;
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("WiFi Scan");
@@ -1433,12 +1452,12 @@ void wscan_setup(){
 }
 
 void wscan_loop(){
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setCursor(5, 1);
   DISP.println("Scanning...");
   wifict = WiFi.scanNetworks();
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(SMALL_TEXT);
   DISP.setCursor(5, 1);
   if(wifict > 0){
@@ -1449,21 +1468,14 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
   DISP.println("M5-NEMO");
   DISP.setCursor(10, 30);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.print(buildver);
-#if defined(STICK_C_PLUS)
-  DISP.println("-StickC+");
-#endif
-#if defined(STICK_C)
-  DISP.println("-StickC");
-#endif
+  DISP.printf("%s-%s\n",buildver,platformName);
 #if defined(CARDPUTER)
-  DISP.println("-Cardputer");
   DISP.println("Next: Down Arrow");
   DISP.println("Prev: Up Arrow");
   DISP.println("Sel : Enter or ->");
