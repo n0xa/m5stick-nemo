@@ -2,9 +2,9 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.0.2";
@@ -149,14 +149,14 @@ void switcher_button_proc() {
   }
 }
 
-#if defined(KB)
-  void check_kb(){
-    M5Cardputer.update();
-    if (M5Cardputer.Keyboard.isChange()) {
-      delay(100);
-    }
-  }
-#endif
+//#if defined(KB)
+//  void check_kb(){
+//    M5Cardputer.update();
+//    if (M5Cardputer.Keyboard.isChange()) {
+//      delay(100);
+//    }
+//  }
+//#endif
 // Tap the power button from pretty much anywhere to get to the main menu
 void check_menu_press() {
 #if defined(AXP)
@@ -174,14 +174,16 @@ void check_menu_press() {
 
 bool check_next_press(){
 #if defined(KB)
+  M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(';')){
     // hack to handle the up arrow
     cursor = cursor - 2;
-    check_kb();
+//    check_kb();
     return true;
   }
+  M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
-    check_kb();
+//    check_kb();
     return true;
   }
 #else
@@ -194,6 +196,7 @@ bool check_next_press(){
 
 bool check_select_press(){
 #if defined(KB)
+  M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
     
     return true;
@@ -664,7 +667,7 @@ void sendAllCodes() {
     }
     #endif
 #if defined(KB)
-    check_kb();
+//    check_kb();
 #endif
     if (check_select_press()){
       Serial.println("endingearly");
@@ -1597,7 +1600,7 @@ void loop() {
   screen_dim_proc();
 #endif
 #if defined(CARDPUTER)
-  check_kb();
+//  check_kb();
 #endif
   check_menu_press();
   
