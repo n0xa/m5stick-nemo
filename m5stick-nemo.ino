@@ -7,7 +7,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.2";
+String buildver="2.0.3";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -28,6 +28,7 @@ String buildver="2.0.2";
   #define USE_EEPROM
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
+  #define IRLED 9  
 #endif
 
 #if defined(STICK_C)
@@ -46,6 +47,8 @@ String buildver="2.0.2";
   #define USE_EEPROM
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
+  #define IRLED 9  
+
 #endif
 
 #if defined(CARDPUTER)
@@ -59,8 +62,10 @@ String buildver="2.0.2";
   // -=-=- FEATURES -=-=-
   #define KB
   #define HID
+  #define ACTIVE_LOW_IR
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
+  #define IRLED 44
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-

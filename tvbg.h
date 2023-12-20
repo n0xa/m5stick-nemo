@@ -13,7 +13,6 @@ By Anton Grimpelhuber (anton.grimpelhuber@gmail.com)
 
 // What pins do what
 #define LED 10 //LED indicator pin (built-in LED)
-#define IRLED 9        //the IR sender LED / D5 on wemos D1 mini
 
 // Lets us calculate the size of the NA/EU databases
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)));
