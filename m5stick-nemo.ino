@@ -2,7 +2,8 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
+#define STICK_C_PLUS2
 //#define STICK_C
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
@@ -28,7 +29,29 @@ String buildver="2.0.3";
   #define USE_EEPROM
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
-  #define IRLED 9  
+  #define IRLED 9
+#endif
+
+#if defined(STICK_C_PLUS2)
+  #include <M5StickCPlus2.h>
+  // -=-=- Display -=-=-
+  String platformName="StickC+2";
+  #define BIG_TEXT 4
+  #define MEDIUM_TEXT 3
+  #define SMALL_TEXT 2
+  #define TINY_TEXT 1
+  // -=-=- FEATURES -=-=-
+  // #define RTC //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.  
+  #define ACTIVE_LOW_IR
+  #define ROTATION
+  //#define USE_EEPROM //TODO: This won't work until RTC is sorted out
+  // -=-=- ALIASES -=-=-
+  #define DISP M5.Lcd
+  #define IRLED 19
+  #define M5_BUTTON_MENU 35
+  #define M5_BUTTON_HOME 37
+  #define M5_BUTTON_RST 39
+  //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
 #endif
 
 #if defined(STICK_C)
@@ -47,7 +70,7 @@ String buildver="2.0.3";
   #define USE_EEPROM
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
-  #define IRLED 9  
+  #define IRLED 9
 
 #endif
 
@@ -161,6 +184,9 @@ void check_menu_press() {
 #endif
 #if defined(KB)
   if (M5Cardputer.Keyboard.isKeyPressed(',') || M5Cardputer.Keyboard.isKeyPressed('`')){
+#endif
+#if defined(M5_BUTTON_MENU)
+  if (digitalRead(M5_BUTTON_MENU) == LOW){
 #endif
     isSwitching = true;
     rstOverride = false;
@@ -1573,6 +1599,9 @@ void setup() {
 #if !defined(KB)
   pinMode(M5_BUTTON_HOME, INPUT);
   pinMode(M5_BUTTON_RST, INPUT);
+#endif
+#if defined(M5_BUTTON_MENU)
+  pinMode(M5_BUTTON_MENU, INPUT);
 #endif
   // Random seed
   randomSeed(analogRead(0));
