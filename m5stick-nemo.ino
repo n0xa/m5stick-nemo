@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.0.3";
+String buildver="2.0.5";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -86,6 +86,7 @@ String buildver="2.0.3";
   #define KB
   #define HID
   #define ACTIVE_LOW_IR
+  #define USE_EEPROM
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
   #define IRLED 44
@@ -122,6 +123,7 @@ bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Ma
   #include <EEPROM.h>
   #define EEPROM_SIZE 4
 #endif
+
 struct MENU {
   char name[19];
   int command;
@@ -273,42 +275,44 @@ void mmenu_loop() {
   }
 }
 
+//Screen dimming needs both AXP and RTC features
+bool screen_dim_dimmed = false;
+int screen_dim_time = 30;
+int screen_dim_current = 0;
+
+void screenBrightness(int bright){
+  #if defined(AXP)
+    M5.Axp.ScreenBreath(bright);
+  #endif
+  #if defined(CARDPUTER)
+    analogWrite(38, 155 + (bright));
+  #endif
+}
+
+void screen_dim_proc() {
 #if defined(AXP) && defined(RTC)
-  //Screen dimming needs both AXP and RTC features
-  bool pct_brightness = true;  /* set to false if the screen goes
-                              to full brightness over level 2.
-                              Useful range is about 7-15.
-                              Set to true if the screen is too
-                              dim no matter what level is set.
-                              Some versions of the M5Stack lib
-                              have a percentage range 0-100. */
-
-  bool screen_dim_dimmed = false;
-  int screen_dim_time = 30;
-  int screen_dim_current = 0;
-
-  void screen_dim_proc() {
-    M5.Rtc.GetBm8563Time();
-    // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
-    if (check_next_press() || check_select_press()) {
-      if (screen_dim_dimmed) {
-        screen_dim_dimmed = false;
-        M5.Axp.ScreenBreath(brightness);
-      }
-      int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
-
-      if (newtime >= 60) {
-        newtime = newtime - 60;
-      }
-      screen_dim_current = newtime;
+  M5.Rtc.GetBm8563Time();
+  // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
+  if (check_next_press() || check_select_press()) {
+    if (screen_dim_dimmed) {
+      screen_dim_dimmed = false;
+      M5.Axp.ScreenBreath(brightness);
     }
-    if (screen_dim_dimmed == false) {
-      if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
-        M5.Axp.ScreenBreath(10);
-        screen_dim_dimmed = true;
-      }
+    int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
+
+    if (newtime >= 60) {
+      newtime = newtime - 60;
+    }
+    screen_dim_current = newtime;
+  }
+  if (screen_dim_dimmed == false) {
+    if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
+      M5.Axp.ScreenBreath(10);
+      screen_dim_dimmed = true;
     }
   }
+#endif
+}
 
   /// Dimmer MENU ///
   MENU dmenu[] = {
@@ -334,15 +338,18 @@ void mmenu_loop() {
   void dmenu_setup() {
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET AUTO DIM TIME");
-    delay(1000);
-    cursor = (screen_dim_time / 5) - 1;
-    rstOverride = true;
-    dmenu_drawmenu();
-    delay(500); // Prevent switching after menu loads up
+    #if defined(RTC)
+      DISP.println("SET AUTO DIM TIME");
+      delay(1000);
+      cursor = (screen_dim_time / 5) - 1;
+      rstOverride = true;
+      dmenu_drawmenu();
+      delay(500); // Prevent switching after menu loads up
+    #endif
   }
 
   void dmenu_loop() {
+  #if defined(RTC)
     if (check_next_press()) {
       cursor++;
       cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
@@ -351,57 +358,46 @@ void mmenu_loop() {
     }
     if (check_select_press()) {
       screen_dim_time = dmenu[cursor].command;
-      #if defined(USE_EEPROM)
+      #if defined(USE_EEPROM) && defined(RTC)
         EEPROM.write(1, screen_dim_time);
         EEPROM.commit();
       #endif
+  #endif
       DISP.fillScreen(BGCOLOR);
       DISP.setCursor(0, 5, 1);
       DISP.println("SET BRIGHTNESS");
       delay(1000);
-      if(pct_brightness){
-        cursor = brightness / 10;
-      } else {
-        cursor = brightness + 5;
-      }
+      cursor = brightness / 10;
       timeset_drawmenu(11);
       while( !check_select_press()) {
         if (check_next_press()) {
           cursor++;
           cursor = cursor % 11 ;
           timeset_drawmenu(11);
-          if(pct_brightness){
-            M5.Axp.ScreenBreath(10 * cursor);
-          } else {
-            M5.Axp.ScreenBreath(5 + cursor);
-          }
+          screenBrightness(10 * cursor);
           delay(250);
          }
       }
-      if(pct_brightness){
-        brightness = cursor * 10;
-      } else {
-        brightness = cursor + 5;
-      }
-     M5.Axp.ScreenBreath(brightness);
+      screenBrightness(10 * cursor);
       #if defined(USE_EEPROM)
-        EEPROM.write(2, brightness);
+        EEPROM.write(2, 10 * cursor);
         EEPROM.commit();
       #endif
       rstOverride = false;
       isSwitching = true;
       current_proc = 2;
     }
+  #if defined(RTC)
   }
-#endif //AXP / RTC Dimmer
+  #endif
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
   { "Back", 1},
 #if defined(AXP)
   { "Battery Info", 6},
-  { "Brightness", 4},
 #endif
+  { "Brightness", 4},
 #if defined(RTC)
   { "Set Clock", 3},
 #endif
@@ -712,19 +708,6 @@ void sendAllCodes() {
 }
 
 /// CLOCK ///
-#if defined(RTC)
-  void clock_setup() {
-    DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(MEDIUM_TEXT);
-  }
-
-  void clock_loop() {
-    M5.Rtc.GetBm8563Time();
-    DISP.setCursor(40, 40, 2);
-    DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
-    delay(250);
-  }
-
   /// TIMESET ///
   void timeset_drawmenu(int nums) {
     DISP.setTextSize(SMALL_TEXT);
@@ -743,6 +726,19 @@ void sendAllCodes() {
         DISP.println(i);
       }
     }
+  }
+
+#if defined(RTC)
+  void clock_setup() {
+    DISP.fillScreen(BGCOLOR);
+    DISP.setTextSize(MEDIUM_TEXT);
+  }
+
+  void clock_loop() {
+    M5.Rtc.GetBm8563Time();
+    DISP.setCursor(40, 40, 2);
+    DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    delay(250);
   }
 
   /// TIME SETTING ///
@@ -1561,6 +1557,7 @@ void setup() {
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
+  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
 #else
   M5.begin();
 #endif
@@ -1580,13 +1577,14 @@ void setup() {
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
-    screen_dim_time = EEPROM.read(1);
+    #if defined(RTC)
+      screen_dim_time = EEPROM.read(1);
+    #endif
     brightness = EEPROM.read(2);
     region = EEPROM.read(3);
   #endif
-  #if defined(AXP)
-    M5.Axp.ScreenBreath(brightness);
-  #endif
+  screenBrightness(brightness);
+
   DISP.setRotation(rotation);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   bootScreen();
@@ -1645,10 +1643,10 @@ void loop() {
       case 3:
         timeset_setup();
         break;
+#endif
       case 4:
         dmenu_setup();
         break;
-#endif
       case 5:
         tvbgone_setup();
         break;
@@ -1715,10 +1713,10 @@ void loop() {
     case 3:
       timeset_loop();
       break;
+#endif
     case 4:
       dmenu_loop();
       break;
-#endif
     case 5:
       tvbgone_loop();
       break;
