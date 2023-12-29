@@ -502,6 +502,7 @@ int rotation = 1;
 
 #if defined(AXP)
   /// BATTERY INFO ///
+  int oldbattery=0;
   void battery_drawmenu(int battery, int b, int c) {
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
@@ -530,12 +531,15 @@ int rotation = 1;
     float c = M5.Axp.GetVapsData() * 1.4 / 1000;
     float b = M5.Axp.GetVbatData() * 1.1 / 1000;
     int battery = ((b - 3.0) / 1.2) * 100;
-    battery_drawmenu(battery, b, c);
+    if (battery != oldbattery){
+      battery_drawmenu(battery, b, c);
+    }
     if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
      current_proc = 1;
     }
+    oldbattery = battery;
   }
 #endif // AXP
 
