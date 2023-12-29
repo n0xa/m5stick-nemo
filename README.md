@@ -9,6 +9,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 ## Features
 * [TV B-Gone](http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html) port (thanks to MrArm's [HAKRWATCH](https://github.com/MrARM/hakrwatch)) to shut off many infrared-controlled TVs, projectors and other devices
 * [AppleJuice](https://github.com/ECTO-1A/AppleJuice) iOS Bluetooth device pairing spam
+* Bluetooth device notification spamming for SwiftPair (Windows) and Android
 * WiFi Spam - Funny SSIDs, WiFi Rickrolling, and a Random mode that creates hundreds of randomly-named SSIDs per minute
 * WiFi SSID Scanner - Display 2.4 GHz SSIDs nearby and get information about them
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
