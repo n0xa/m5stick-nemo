@@ -8,7 +8,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.1.0";
+String buildver="2.1.1";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -52,6 +52,7 @@ String buildver="2.1.0";
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
   //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
+  #define BACKLIGHT 27 // best I can tell from the schematics?
 #endif
 
 #if defined(STICK_C)
@@ -71,7 +72,6 @@ String buildver="2.1.0";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
-
 #endif
 
 #if defined(CARDPUTER)
@@ -90,6 +90,7 @@ String buildver="2.1.0";
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
   #define IRLED 44
+  #define BACKLIGHT 38
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
@@ -191,6 +192,7 @@ void check_menu_press() {
 #if defined(M5_BUTTON_MENU)
   if (digitalRead(M5_BUTTON_MENU) == LOW){
 #endif
+    dimtimer();
     isSwitching = true;
     rstOverride = false;
     current_proc = 1;
@@ -204,14 +206,17 @@ bool check_next_press(){
   if (M5Cardputer.Keyboard.isKeyPressed(';')){
     // hack to handle the up arrow
     cursor = cursor - 2;
+    dimtimer();
     return true;
   }
   M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
+    dimtimer();
     return true;
   }
 #else
   if (digitalRead(M5_BUTTON_RST) == LOW){
+    dimtimer();
     return true;
   }
 #endif
@@ -222,11 +227,12 @@ bool check_select_press(){
 #if defined(KB)
   M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
-    
+    dimtimer();
     return true;
   }
 #else
   if (digitalRead(M5_BUTTON_HOME) == LOW){
+    dimtimer();
     return true;
   }
 #endif
@@ -285,34 +291,33 @@ void screenBrightness(int bright){
   #if defined(AXP)
     M5.Axp.ScreenBreath(bright);
   #endif
-  #if defined(CARDPUTER)
-    analogWrite(38, 155 + (bright));
+  #if defined(BACKLIGHT)
+    analogWrite(BACKLIGHT, 155 + (bright));
   #endif
 }
 
-void screen_dim_proc() {
-#if defined(AXP) && defined(RTC)
-  M5.Rtc.GetBm8563Time();
-  // if one of the buttons is pressed, take the current time and add screen_dim_time on to it and roll over when necessary
-  if (check_next_press() || check_select_press()) {
-    if (screen_dim_dimmed) {
-      screen_dim_dimmed = false;
-      M5.Axp.ScreenBreath(brightness);
-    }
-    int newtime = M5.Rtc.Second + screen_dim_time + 2; // hacky but needs a couple extra seconds added
+int uptime(){
+  return(int(millis() / 1000));
+}
 
-    if (newtime >= 60) {
-      newtime = newtime - 60;
-    }
-    screen_dim_current = newtime;
+void dimtimer(){
+  if(screen_dim_dimmed){
+    screenBrightness(brightness);
+    screen_dim_dimmed = false;
   }
+  screen_dim_current = uptime() + screen_dim_time + 2;
+}
+
+void screen_dim_proc() {
+  check_menu_press();
+  check_next_press();
+  check_select_press();
   if (screen_dim_dimmed == false) {
-    if (M5.Rtc.Second == screen_dim_current || (M5.Rtc.Second + 1) == screen_dim_current || (M5.Rtc.Second + 2) == screen_dim_current) {
-      M5.Axp.ScreenBreath(10);
+    if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
+      screenBrightness(10);
       screen_dim_dimmed = true;
     }
   }
-#endif
 }
 
   /// Dimmer MENU ///
@@ -339,18 +344,15 @@ void screen_dim_proc() {
   void dmenu_setup() {
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    #if defined(RTC)
-      DISP.println("SET AUTO DIM TIME");
-      delay(1000);
-      cursor = (screen_dim_time / 5) - 1;
-      rstOverride = true;
-      dmenu_drawmenu();
-      delay(500); // Prevent switching after menu loads up
-    #endif
+    DISP.println("SET AUTO DIM TIME");
+    delay(1000);
+    cursor = (screen_dim_time / 5) - 1;
+    rstOverride = true;
+    dmenu_drawmenu();
+    delay(500); // Prevent switching after menu loads up
   }
 
   void dmenu_loop() {
-  #if defined(RTC)
     if (check_next_press()) {
       cursor++;
       cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
@@ -359,11 +361,10 @@ void screen_dim_proc() {
     }
     if (check_select_press()) {
       screen_dim_time = dmenu[cursor].command;
-      #if defined(USE_EEPROM) && defined(RTC)
+      #if defined(USE_EEPROM)
         EEPROM.write(1, screen_dim_time);
         EEPROM.commit();
       #endif
-  #endif
       DISP.fillScreen(BGCOLOR);
       DISP.setCursor(0, 5, 1);
       DISP.println("SET BRIGHTNESS");
@@ -388,9 +389,7 @@ void screen_dim_proc() {
       isSwitching = true;
       current_proc = 2;
     }
-  #if defined(RTC)
   }
-  #endif
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
@@ -1615,21 +1614,23 @@ void setup() {
     if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
+      #if defined(CARDPUTER)
+      EEPROM.write(0, 1);    // Right rotation for cardputer
+      #else
       EEPROM.write(0, 3);    // Left rotation
+      #endif
       EEPROM.write(1, 15);   // 15 second auto dim time
       EEPROM.write(2, 100);  // 100% brightness
       EEPROM.write(3, 0); // TVBG NA Region
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
-    #if defined(RTC)
-      screen_dim_time = EEPROM.read(1);
-    #endif
+    screen_dim_time = EEPROM.read(1);
     brightness = EEPROM.read(2);
     region = EEPROM.read(3);
   #endif
   screenBrightness(brightness);
-
+  dimtimer();
   DISP.setRotation(rotation);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   bootScreen();
@@ -1662,11 +1663,7 @@ void loop() {
   // This is the code to handle running the main loops
   // Background processes
   switcher_button_proc();
-#if defined(AXP) && defined(RTC)
   screen_dim_proc();
-#endif
-#if defined(CARDPUTER)
-#endif
   check_menu_press();
   
   // Switcher
