@@ -172,6 +172,44 @@ bool isSwitching = true;
   int current_proc = 1; // Start in Main Menu mode if no RTC
 #endif
 
+void drawmenu(MENU thismenu[], int size) {
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 5, 1);
+  // scrolling menu
+  if (cursor > 5) {
+    for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(thismenu[i].name);
+    }
+  } else {
+    for (
+      int i = 0 ; i < size ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(thismenu[i].name);
+    }
+  }
+}
+
+void number_drawmenu(int nums) {
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 5, 1);
+  // scrolling menu
+  if (cursor > 5) {
+    for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(i);
+    }
+  } else {
+    for (
+      int i = 0 ; i < nums ; i++ ) {
+      DISP.print((cursor == i) ? ">" : " ");
+      DISP.println(i);
+    }
+  }
+}
+
 void switcher_button_proc() {
   if (rstOverride == false) {
     if (check_next_press()) {
@@ -250,29 +288,20 @@ MENU mmenu[] = {
   { "QR Codes", 18},
   { "Settings", 2},
 };
-
-void mmenu_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(mmenu) / sizeof(MENU) ) ; i++ ) {
-    DISP.print((cursor == i) ? ">" : " ");
-    DISP.println(mmenu[i].name);
-  }
-}
+int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
 void mmenu_setup() {
   cursor = 0;
   rstOverride = true;
-  mmenu_drawmenu();
+  drawmenu(mmenu, mmenu_size);
   delay(500); // Prevent switching after menu loads up
 }
 
 void mmenu_loop() {
   if (check_next_press()) {
     cursor++;
-    cursor = cursor % ( sizeof(mmenu) / sizeof(MENU) );
-    mmenu_drawmenu();
+    cursor = cursor % mmenu_size;
+    drawmenu(mmenu, mmenu_size);
     delay(250);
   }
   if (check_select_press()) {
@@ -320,76 +349,67 @@ void screen_dim_proc() {
   }
 }
 
-  /// Dimmer MENU ///
-  MENU dmenu[] = {
-    { "Back", screen_dim_time},
-    { "5 seconds", 5},
-    { "10 seconds", 10},
-    { "15 seconds", 15},
-    { "20 seconds", 20},
-    { "25 seconds", 25},
-    { "30 seconds", 30},
-  };
+/// Dimmer MENU ///
+MENU dmenu[] = {
+  { "Back", screen_dim_time},
+  { "5 seconds", 5},
+  { "10 seconds", 10},
+  { "15 seconds", 15},
+  { "20 seconds", 20},
+  { "25 seconds", 25},
+  { "30 seconds", 30},
+};
+int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
-  void dmenu_drawmenu() {
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 8, 1);
-    for ( int i = 0 ; i < ( sizeof(dmenu) / sizeof(MENU) ) ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(dmenu[i].name);
-    }
+void dmenu_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 5, 1);
+  DISP.println("SET AUTO DIM TIME");
+  delay(1000);
+  cursor = (screen_dim_time / 5) - 1;
+  rstOverride = true;
+  drawmenu(dmenu, dmenu_size);
+  delay(500); // Prevent switching after menu loads up
+}
+
+void dmenu_loop() {
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % dmenu_size;
+    drawmenu(dmenu, dmenu_size);
+    delay(250);
   }
-
-  void dmenu_setup() {
+  if (check_select_press()) {
+    screen_dim_time = dmenu[cursor].command;
+    #if defined(USE_EEPROM)
+      EEPROM.write(1, screen_dim_time);
+      EEPROM.commit();
+    #endif
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET AUTO DIM TIME");
+    DISP.println("SET BRIGHTNESS");
     delay(1000);
-    cursor = (screen_dim_time / 5) - 1;
-    rstOverride = true;
-    dmenu_drawmenu();
-    delay(500); // Prevent switching after menu loads up
-  }
-
-  void dmenu_loop() {
-    if (check_next_press()) {
-      cursor++;
-      cursor = cursor % ( sizeof(dmenu) / sizeof(MENU) );
-      dmenu_drawmenu();
-      delay(250);
+    cursor = brightness / 10;
+    number_drawmenu(11);
+    while( !check_select_press()) {
+      if (check_next_press()) {
+        cursor++;
+        cursor = cursor % 11 ;
+        number_drawmenu(11);
+        screenBrightness(10 * cursor);
+        delay(250);
+       }
     }
-    if (check_select_press()) {
-      screen_dim_time = dmenu[cursor].command;
-      #if defined(USE_EEPROM)
-        EEPROM.write(1, screen_dim_time);
-        EEPROM.commit();
-      #endif
-      DISP.fillScreen(BGCOLOR);
-      DISP.setCursor(0, 5, 1);
-      DISP.println("SET BRIGHTNESS");
-      delay(1000);
-      cursor = brightness / 10;
-      timeset_drawmenu(11);
-      while( !check_select_press()) {
-        if (check_next_press()) {
-          cursor++;
-          cursor = cursor % 11 ;
-          timeset_drawmenu(11);
-          screenBrightness(10 * cursor);
-          delay(250);
-         }
-      }
-      screenBrightness(10 * cursor);
-      #if defined(USE_EEPROM)
-        EEPROM.write(2, 10 * cursor);
-        EEPROM.commit();
-      #endif
-      rstOverride = false;
-      isSwitching = true;
-      current_proc = 2;
-    }
+    screenBrightness(10 * cursor);
+    #if defined(USE_EEPROM)
+      EEPROM.write(2, 10 * cursor);
+      EEPROM.commit();
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2;
   }
+}
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
@@ -409,29 +429,20 @@ MENU smenu[] = {
   { "Clear Settings", 99},
 #endif
 };
-
-void smenu_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(smenu) / sizeof(MENU) ) ; i++ ) {
-    DISP.print((cursor == i) ? ">" : " ");
-    DISP.println(smenu[i].name);
-  }
-}
+int smenu_size = sizeof(smenu) / sizeof (MENU);
 
 void smenu_setup() {
   cursor = 0;
   rstOverride = true;
-  smenu_drawmenu();
+  drawmenu(smenu, smenu_size);
   delay(500); // Prevent switching after menu loads up
 }
 
 void smenu_loop() {
   if (check_next_press()) {
     cursor++;
-    cursor = cursor % ( sizeof(smenu) / sizeof(MENU) );
-    smenu_drawmenu();
+    cursor = cursor % smenu_size;
+    drawmenu(smenu, smenu_size);
     delay(250);
   }
   if (check_select_press()) {
@@ -459,29 +470,20 @@ int rotation = 1;
     { "Right", 1},
     { "Left", 3},
   };
-
-  void rmenu_drawmenu() {
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 8, 1);
-    for ( int i = 0 ; i < ( sizeof(rmenu) / sizeof(MENU) ) ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(rmenu[i].name);
-    }
-  }
+  int rmenu_size = sizeof(rmenu) / sizeof (MENU);
 
   void rmenu_setup() {
     cursor = 0;
     rstOverride = true;
-    rmenu_drawmenu();
+    drawmenu(rmenu, rmenu_size);
     delay(500); // Prevent switching after menu loads up
   }
 
   void rmenu_loop() {
     if (check_next_press()) {
       cursor++;
-      cursor = cursor % ( sizeof(rmenu) / sizeof(MENU) );
-      rmenu_drawmenu();
+      cursor = cursor % rmenu_size;
+      drawmenu(rmenu, rmenu_size);
       delay(250);
     }
     if (check_select_press()) {
@@ -532,7 +534,7 @@ int rotation = 1;
     if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
-      current_proc = 1;
+     current_proc = 1;
     }
   }
 #endif // AXP
@@ -575,16 +577,7 @@ MENU tvbgmenu[] = {
   { "Americas / Asia", 0},
   { "EU/MidEast/Africa", 1},
 };
-
-void tvbgmenu_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(tvbgmenu) / sizeof(MENU) ) ; i++ ) {
-    DISP.print((cursor == i) ? ">" : " ");
-    DISP.println(tvbgmenu[i].name);
-  }
-}
+int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
 void tvbgmenu_setup() {  
   DISP.fillScreen(BGCOLOR);
@@ -596,14 +589,14 @@ void tvbgmenu_setup() {
   cursor = region % 2;
   rstOverride = true;
   delay(1000); 
-  tvbgmenu_drawmenu();
+  drawmenu(tvbgmenu, tvbgmenu_size);
 }
 
 void tvbgmenu_loop() {
   if (check_next_press()) {
     cursor++;
-    cursor = cursor % ( sizeof(tvbgmenu) / sizeof(MENU) );
-    tvbgmenu_drawmenu();
+    cursor = cursor % tvbgmenu_size;
+    drawmenu(tvbgmenu, tvbgmenu_size);
     delay(250);
   }
   if (check_select_press()) {
@@ -708,25 +701,7 @@ void sendAllCodes() {
 }
 
 /// CLOCK ///
-  /// TIMESET ///
-  void timeset_drawmenu(int nums) {
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
-    // scrolling menu
-    if (cursor > 5) {
-      for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
-        DISP.print((cursor == i) ? ">" : " ");
-        DISP.println(i);
-      }
-    } else {
-      for (
-        int i = 0 ; i < nums ; i++ ) {
-        DISP.print((cursor == i) ? ">" : " ");
-        DISP.println(i);
-      }
-    }
-  }
+/// TIMESET ///
 
 #if defined(RTC)
   void clock_setup() {
@@ -753,12 +728,12 @@ void sendAllCodes() {
   void timeset_loop() {
     M5.Rtc.GetBm8563Time();
     cursor = M5.Rtc.Hour;
-    timeset_drawmenu(24);
+    number_drawmenu(24);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
         cursor++;
         cursor = cursor % 24 ;
-        timeset_drawmenu(24);
+        number_drawmenu(24);
         delay(100);
       }
     }
@@ -768,12 +743,12 @@ void sendAllCodes() {
     DISP.println("SET MINUTE");
     delay(2000);
     cursor = M5.Rtc.Minute;
-    timeset_drawmenu(60);
+    number_drawmenu(60);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
         cursor++;
         cursor = cursor % 60 ;
-        timeset_drawmenu(60);
+        number_drawmenu(60);
         delay(100);
       }
     }
@@ -803,16 +778,7 @@ MENU btmenu[] = {
   { "SourApple Crash", 2},
   { "BT Maelstrom", 3},
 };
-
-void btmenu_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(btmenu) / sizeof(MENU) ) ; i++ ) {
-    DISP.print((cursor == i) ? ">" : " ");
-    DISP.println(btmenu[i].name);
-  }
-}
+int btmenu_size = sizeof(btmenu) / sizeof (MENU);
 
 void btmenu_setup() {
   cursor = 0;
@@ -821,15 +787,15 @@ void btmenu_setup() {
   maelstrom = false;
   androidPair = false;
   rstOverride = true;
-  btmenu_drawmenu();
+  drawmenu(btmenu, btmenu_size);
   delay(500); // Prevent switching after menu loads up
 }
 
 void btmenu_loop() {
   if (check_next_press()) {
     cursor++;
-    cursor = cursor % ( sizeof(btmenu) / sizeof(MENU) );
-    btmenu_drawmenu();
+    cursor = cursor % btmenu_size;
+    drawmenu(btmenu, btmenu_size);
     delay(250);
   }
   if (check_select_press()) {
@@ -922,25 +888,7 @@ MENU ajmenu[] = {
   { "TV Color Balance", 26},
   { "Setup New Phone", 28},
 };
-
-void aj_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
-  // scrolling menu
-  if (cursor > 5) {
-    for ( int i = 0 + (cursor - 5) ; i < ( sizeof(ajmenu) / sizeof(MENU) ) ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(ajmenu[i].name);
-    }
-  } else {
-    for (
-      int i = 0 ; i < ( sizeof(ajmenu) / sizeof(MENU) ) ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(ajmenu[i].name);
-    }
-  }
-}
+int ajmenu_size = sizeof(ajmenu) / sizeof (MENU);
 
 void aj_setup(){
   DISP.fillScreen(BGCOLOR);
@@ -953,15 +901,15 @@ void aj_setup(){
   swiftPair = false;
   maelstrom = false;
   rstOverride = true;
-  aj_drawmenu();
+  drawmenu(ajmenu, ajmenu_size);
 }
 
 void aj_loop(){
   if (!maelstrom){
     if (check_next_press()) {
       cursor++;
-      cursor = cursor % ( sizeof(ajmenu) / sizeof(MENU) );
-      aj_drawmenu();
+      cursor = cursor % ajmenu_size;
+      drawmenu(ajmenu, ajmenu_size);
       delay(100);
     }
   }
@@ -1197,11 +1145,11 @@ void aj_adv(){
     if (sourApple || swiftPair || androidPair || maelstrom){
       isSwitching = true;
       current_proc = 16;
-      btmenu_drawmenu();
+      drawmenu(btmenu, btmenu_size);
     } else {
       isSwitching = true;
       current_proc = 8;      
-      aj_drawmenu();
+      drawmenu(ajmenu, ajmenu_size);
     }
     sourApple = false;
     swiftPair = false;
@@ -1367,29 +1315,20 @@ MENU wsmenu[] = {
   { "Spam Rickroll", 2},
   { "Spam Random", 3},
 };
-
-void wsmenu_drawmenu() {
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 8, 1);
-  for ( int i = 0 ; i < ( sizeof(wsmenu) / sizeof(MENU) ) ; i++ ) {
-    DISP.print((cursor == i) ? ">" : " ");
-    DISP.println(wsmenu[i].name);
-  }
-}
+int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
 void wsmenu_setup() {
   cursor = 0;
   rstOverride = true;
-  wsmenu_drawmenu();
+  drawmenu(wsmenu, wsmenu_size);
   delay(500); // Prevent switching after menu loads up
 }
 
 void wsmenu_loop() {
   if (check_next_press()) {
     cursor++;
-    cursor = cursor % ( sizeof(wsmenu) / sizeof(MENU) );
-    wsmenu_drawmenu();
+    cursor = cursor % wsmenu_size;
+    drawmenu(wsmenu, wsmenu_size);
     delay(250);
   }
   if (check_select_press()) {
@@ -1547,7 +1486,7 @@ void bootScreen(){
   while(true){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
-      mmenu_drawmenu();
+      drawmenu(mmenu, mmenu_size);
       delay(250);
       break;
     }
