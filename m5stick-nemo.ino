@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.1.2";
+String buildver="2.1.3";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -438,6 +438,17 @@ void smenu_setup() {
   delay(500); // Prevent switching after menu loads up
 }
 
+void clearSettings(){
+  #if defined(USE_EEPROM)
+  EEPROM.write(0, 255); // Rotation
+  EEPROM.write(1, 255); // dim time
+  EEPROM.write(2, 255); // brightness
+  EEPROM.write(3, 255); // TV-B-Gone Region
+  EEPROM.commit();
+  #endif
+  ESP.restart();
+}
+
 void smenu_loop() {
   if (check_next_press()) {
     cursor++;
@@ -449,14 +460,7 @@ void smenu_loop() {
     rstOverride = false;
     isSwitching = true;
     if(smenu[cursor].command == 99){
-#if defined(USE_EEPROM)
-      EEPROM.write(0, 255); // Rotation
-      EEPROM.write(1, 255); // dim time
-      EEPROM.write(2, 255); // brightness
-      EEPROM.write(2, 255); // TV-B-Gone Region
-      EEPROM.commit();
-#endif
-      ESP.restart();
+      clearSettings();
     }
     current_proc = smenu[cursor].command;
   }
@@ -1474,6 +1478,9 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  if(check_next_press()){
+    clearSettings();
+  }
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
