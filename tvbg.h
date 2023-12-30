@@ -11,9 +11,6 @@ By Anton Grimpelhuber (anton.grimpelhuber@gmail.com)
 #define NA 0 //set by a HIGH on REGIONSWITCH pin
 #define EU 1 //set by a LOW on REGIONSWITCH pin
 
-// What pins do what
-#define LED 10 //LED indicator pin (built-in LED)
-
 // Lets us calculate the size of the NA/EU databases
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)));
 
@@ -91,9 +88,11 @@ void delay_ten_us(uint16_t us) {
 }
 
 void quickflashLED( void ) {
-  digitalWrite(LED, LOW);
+#if defined(M5LED)
+  digitalWrite(M5_LED, LOW);
   delay_ten_us(3000);   // 30 ms ON-time delay
-  digitalWrite(LED, HIGH);
+  digitalWrite(M5_LED, HIGH);
+#endif
 }
 
 void quickflashLEDx( uint8_t x ) {
