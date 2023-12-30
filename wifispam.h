@@ -1,5 +1,5 @@
 // ===== Settings ===== //
-const uint8_t channels[] = {1, 6, 11}; // used Wi-Fi channels (available: 1-14)
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // used Wi-Fi channels (available: 1-14)
 const bool wpa2 = true; // WPA2 networks
 int spamtype = 1; // 1 = funny, 2 = rickroll, maybe more later
 
@@ -19,50 +19,6 @@ const char funnyssids[] PROGMEM = {
   "Martin Router King\n"
   "John Wilkes Bluetooth\n"
   "Pretty Fly for a Wi-Fi\n"
-  "Bill Wi the Science Fi\n"
-  "I Believe Wi Can Fi\n"
-  "Tell My Wi-Fi Love Her\n"
-  "No More Mister Wi-Fi\n"
-  "LAN Solo\n"
-  "The LAN Before Time\n"
-  "Silence of the LANs\n"
-  "House LANister\n"
-  "Winternet Is Coming\n"
-  "Ping’s Landing\n"
-  "The Ping in the North\n"
-  "This LAN Is My LAN\n"
-  "Get Off My LAN\n"
-  "The Promised LAN\n"
-  "The LAN Down Under\n"
-  "FBI Surveillance Van 4\n"
-  "Area 51 Test Site\n"
-  "Drive-By Wi-Fi\n"
-  "Planet Express\n"
-  "Wu Tang LAN\n"
-  "Darude LANstorm\n"
-  "Never Gonna Give You Up\n"
-  "Hide Yo Kids, Hide Yo Wi-Fi\n"
-  "Loading…\n"
-  "Searching…\n"
-  "VIRUS.EXE\n"
-  "Virus-Infected Wi-Fi\n"
-  "Starbucks Wi-Fi\n"
-  "Text ###-#### for Password\n"
-  "Yell ____ for Password\n"
-  "The Password Is 1234\n"
-  "Free Public Wi-Fi\n"
-  "No Free Wi-Fi Here\n"
-  "Get Your Own Damn Wi-Fi\n"
-  "It Hurts When IP\n"
-  "Dora the Internet Explorer\n"
-  "404 Wi-Fi Unavailable\n"
-  "Porque-Fi\n"
-  "Titanic Syncing\n"
-  "Test Wi-Fi Please Ignore\n"
-  "Drop It Like It’s Hotspot\n"
-  "Life in the Fast LAN\n"
-  "The Creep Next Door\n"
-  "Ye Olde Internet\n"
 };
 
 const char rickrollssids[] PROGMEM = {
@@ -198,46 +154,20 @@ void nextChannel() {
   }
 }
 
-void beaconSpam(const char ESSID[]){
-  Serial.printf("WiFi SSID: %s\n", ESSID);
-  int set_channel = random(1,12);
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  delay(1);
-  packet[10] = packet[16] = random(256);
-  packet[11] = packet[17] = random(256);
-  packet[12] = packet[18] = random(256);
-  packet[13] = packet[19] = random(256);
-  packet[14] = packet[20] = random(256);
-  packet[15] = packet[21] = random(256);
-
-  int realLen = strlen(ESSID);
-  int ssidLen = random(realLen, 33);
-  int numSpace = ssidLen - realLen;
-  //int rand_len = sizeof(rand_reg);
-  int fullLen = ssidLen;
-  packet[37] = fullLen;
-
-  for(int i = 0; i < realLen; i++)
-    packet[38 + i] = ESSID[i];
-
-  for(int i = 0; i < numSpace; i++)
-    packet[38 + realLen + i] = 0x20;
-
-  packet[50 + fullLen] = set_channel;
-
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-}
-
 void beaconSpamList(const char list[]){
-  // Parses the char array and splits it into SSIDs
+  attackTime = currentTime;
+
+  // temp variables
   int i = 0;
   int j = 0;
   int ssidNum = 1;
   char tmp;
   int ssidsLen = strlen_P(list);
   bool sent = false;
+
+  // go to next channel
+  nextChannel();
+
   while (i < ssidsLen) {
     // read out next SSID
     j = 0;
@@ -245,10 +175,31 @@ void beaconSpamList(const char list[]){
       tmp = pgm_read_byte(list + i + j);
       j++;
     } while (tmp != '\n' && j <= 32 && i + j < ssidsLen);
+
     uint8_t ssidLen = j - 1;
-    memcpy_P(&beaconSSID, &list[i], ssidLen);
-    beaconSpam(beaconSSID);
-    memcpy_P(&beaconSSID, &emptySSID, 32);
+
+    // set MAC address
+    macAddr[5] = ssidNum;
+    ssidNum++;
+
+    // write MAC address into beacon frame
+    memcpy(&beaconPacket[10], macAddr, 6);
+    memcpy(&beaconPacket[16], macAddr, 6);
+
+    // reset SSID
+    memcpy(&beaconPacket[38], emptySSID, 32);
+
+    // write new SSID into beacon frame
+    memcpy_P(&beaconPacket[38], &list[i], ssidLen);
+
+    // set channel for beacon frame
+    beaconPacket[82] = wifi_channel;
+
+    // send packet
+    for (int k = 0; k < 3; k++) {
+      packetCounter += esp_wifi_80211_tx(WIFI_IF_STA, beaconPacket, packetSize, 0) == 0;
+      delay(1);
+    }
     i += j;
   }
 }
