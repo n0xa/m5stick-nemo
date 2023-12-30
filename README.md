@@ -34,6 +34,15 @@ There are three main controls:
   * Next/Prev: Tap the Down-Arrow/. key and Up-Arrow/; keys to navigate
   * Select: Tap the OK/Enter key or Right-Arrow/? key  
 
+## NEMO Portal
+In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" (configurable in portal.h) with DNS, DHCP and Web servers activated. 
+* NEMO Portal serves a fake login page that claims to provide internet access if you log in.
+* This is a social engineering attack, and will log the username and passwords entered on the page. 
+* You can view these credentials by connecting to the portal from your own device and browsing to http://172.0.0.1/creds
+* If your device has an SD Card reader with a FAT filesystem formatted card inserted, the usernames and passwords will be logged to nemo-portal-creds.txt on the SD Card for you to peruse later. 
+* SD Card support is only enabled by default on the M5Stack Cardputer platform. It can be enabled on M5Stick devices but an SD Card reader must be built and attached to the front panel pin header.
+* NEMO Portal is only for use on professional engagements with a valid scope of work, educational or demonstration purposes. Storage, sale, or use of personal information without consent is against the law. 🤓
+
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO
 * [M5Stick C Plus Quick Start](https://docs.m5stack.com/en/quick_start/m5stickc_plus/uiflow) has links to the M5Burner app for Linux, MacOS and Windows. This is the official tool to install UIFlow and other official firmware. I provide up-to-date binaries for NEMO there.
