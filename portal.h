@@ -157,7 +157,7 @@ void setupWebServer() {
   webServer.on("/post", []() {
     totalCapturedCredentials = totalCapturedCredentials + 1;
     webServer.send(HTTP_CODE, "text/html", index_POST());
-#if defined(STICK_C_PLUS) || defined(STICK_C) || defined(STICK_C_PLUS2)
+#if defined(STICK_C_PLUS)
     SPEAKER.tone(4000);
     delay(50);
     SPEAKER.mute();

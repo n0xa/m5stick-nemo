@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
-//#define STICK_C
+#define STICK_C
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.2.1";
+String buildver="2.2.2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -52,8 +52,8 @@ String buildver="2.2.1";
   // -=-=- FEATURES -=-=-
   #define ACTIVE_LOW_IR
   #define ROTATION
-  #define USE_EEPROM  
-  //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.  
+  #define USE_EEPROM
+  //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
   //#define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
@@ -63,7 +63,6 @@ String buildver="2.2.1";
   #define M5_BUTTON_RST 39
   //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
   #define BACKLIGHT 27 // best I can tell from the schematics?
-  #define SPEAKER M5.Beep
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -87,7 +86,6 @@ String buildver="2.2.1";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
-  #define SPEAKER M5.Beep
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -127,7 +125,7 @@ String buildver="2.2.1";
 // USE_EEPROM - Store settings in EEPROM
 // ROTATION   - Allow screen to be rotated
 // DISP       - Set to the API's Display class
-// SDCARD     - Device has an SD Card Reader attached 
+// SDCARD     - Device has an SD Card Reader attached
 // SPEAKER    - Aliased to the prefix used for making noise
 
 /// SWITCHER ///
@@ -142,7 +140,7 @@ String buildver="2.2.1";
 // 7  - screen rotation
 // 8  - AppleJuice Menu
 // 9  - AppleJuice Advertisement
-// 10 - Credits 
+// 10 - Credits
 // 11 - Wifi beacon spam
 // 12 - Wifi tools menu
 // 13 - TV-B-Gone Region Setting
@@ -175,7 +173,7 @@ bool sourApple = false;     // Internal flag to place AppleJuice into SourApple 
 bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
 bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
 bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
-bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly 
+bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
 const byte PortalTickTimer = 1000;
 
 #if defined(USE_EEPROM)
@@ -1599,7 +1597,7 @@ void qrmenu_loop() {
 void portal_setup(){
   setupWiFi();
   setupWebServer();
-  portal_active = true;    
+  portal_active = true;
   cursor = 0;
   rstOverride = true;
   printHomeToScreen();
