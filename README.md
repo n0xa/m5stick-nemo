@@ -14,7 +14,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * WiFi NEMO Portal - A captive portal that tries to social engineer email credentials - saves usernames and passwords to SD Card (if inserted into a supported reader)
 * WiFi SSID Scanner - Display 2.4 GHz SSIDs nearby and get information about them
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
-* EEPROM-backed Settings for rotation, brightness and, automatic dimming
+* EEPROM-backed Settings for rotation, brightness, automatic dimming and NEMO Portal SSID
 * Battery level and credits in settings menu
 
 ## User Interface
@@ -39,6 +39,7 @@ In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" 
 * NEMO Portal serves a fake login page that claims to provide internet access if you log in.
 * This is a social engineering attack, and will log the username and passwords entered on the page. 
 * You can view these credentials by connecting to the portal from your own device and browsing to http://172.0.0.1/creds
+* You can set a custom SSID by connecting to the portal from your own device and browsing to http://172.0.0.1/ssid
 * If your device has an SD Card reader with a FAT filesystem formatted card inserted, the usernames and passwords will be logged to nemo-portal-creds.txt on the SD Card for you to peruse later. 
 * SD Card support is only enabled by default on the M5Stack Cardputer platform. It can be enabled on M5Stick devices but an SD Card reader must be built and attached to the front panel pin header.
 * NEMO Portal is only for use on professional engagements with a valid scope of work, educational or demonstration purposes. Storage, sale, or use of personal information without consent is against the law. 🤓
