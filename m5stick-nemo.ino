@@ -5,7 +5,7 @@
 #define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//define CARDPUTER
+//#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.0";
@@ -50,7 +50,7 @@ String buildver="2.3.0";
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define ACTIVE_LOW_IR
+  //#define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
   //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
