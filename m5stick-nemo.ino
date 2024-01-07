@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
+#define STICK_C_PLUS
 //#define STICK_C_PLUS2
-#define STICK_C
+//#define STICK_C
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.2.2";
+String buildver="2.3.0";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -50,7 +50,7 @@ String buildver="2.2.2";
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define ACTIVE_LOW_IR
+  //#define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
   //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
@@ -151,6 +151,32 @@ String buildver="2.2.2";
 // 18 - QR Codes
 // 19 - NEMO Portal
 
+int advtime = 0; 
+int cursor = 0;
+int wifict = 0;
+int brightness = 100;
+int ajDelay = 1000;
+int apSsidOffset = 16;
+int apSsidMaxLen = 32;
+bool rstOverride = false;   // Reset Button Override. Set to true when navigating menus.
+bool sourApple = false;     // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
+bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
+bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
+bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
+bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
+const byte PortalTickTimer = 1000;
+String apSsidName = String("");
+bool isSwitching = true;
+#if defined(RTC)
+  int current_proc = 0; // Start in Clock Mode
+#else
+  int current_proc = 1; // Start in Main Menu mode if no RTC
+#endif
+
+#if defined(USE_EEPROM)
+  #include <EEPROM.h>
+  #define EEPROM_SIZE 64
+#endif
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <DNSServer.h>
@@ -162,24 +188,6 @@ String buildver="2.2.2";
 #include "portal.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
-
-int advtime = 0; 
-int cursor = 0;
-int wifict = 0;
-int brightness = 100;
-int ajDelay = 1000;
-bool rstOverride = false;   // Reset Button Override. Set to true when navigating menus.
-bool sourApple = false;     // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
-bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
-bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
-bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
-bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
-const byte PortalTickTimer = 1000;
-
-#if defined(USE_EEPROM)
-  #include <EEPROM.h>
-  #define EEPROM_SIZE 4
-#endif
 
 struct MENU {
   char name[19];
@@ -198,12 +206,6 @@ QRCODE qrcodes[] = {
   { "ZomboCom", "https://html5zombo.com/"},
 };
 
-bool isSwitching = true;
-#if defined(RTC)
-  int current_proc = 0; // Start in Clock Mode
-#else
-  int current_proc = 1; // Start in Main Menu mode if no RTC
-#endif
 
 void drawmenu(MENU thismenu[], int size) {
   DISP.setTextSize(SMALL_TEXT);
@@ -285,7 +287,7 @@ bool check_next_press(){
     dimtimer();
     return true;
   }
-  M5Cardputer.update();
+  //M5Cardputer.update();
   if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
     dimtimer();
     return true;
@@ -467,6 +469,7 @@ MENU smenu[] = {
   { "Rotation", 7},
 #endif
   { "About", 10},
+  { "Reboot", 98},
 #if defined(USE_EEPROM)
   { "Clear Settings", 99},
 #endif
@@ -482,12 +485,19 @@ void smenu_setup() {
 
 void clearSettings(){
   #if defined(USE_EEPROM)
-  EEPROM.write(0, 255); // Rotation
-  EEPROM.write(1, 255); // dim time
-  EEPROM.write(2, 255); // brightness
-  EEPROM.write(3, 255); // TV-B-Gone Region
+  for(int i = 0; i < EEPROM_SIZE; i++) {
+    EEPROM.write(i, 255);
+  }
   EEPROM.commit();
   #endif
+  screenBrightness(100);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(40, 0);
+  DISP.println("M5-NEMO");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.println("Restoring Default\nSettings...");
+  delay(5000);
   ESP.restart();
 }
 
@@ -501,6 +511,9 @@ void smenu_loop() {
   if (check_select_press()) {
     rstOverride = false;
     isSwitching = true;
+    if(smenu[cursor].command == 98){
+      ESP.restart();
+    }
     if(smenu[cursor].command == 99){
       clearSettings();
     }
@@ -1494,6 +1507,12 @@ void wscan_result_loop(){
     DISP.printf("Crypt: %s\n", encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
     DISP.printf("\nNext: Back\n");
+    DISP.printf("Hold Select: Clone\n");
+   if(check_select_press()){
+      apSsidName=WiFi.SSID(cursor);
+      isSwitching=true;
+      current_proc=19;
+    }
   }
 }
 
@@ -1524,9 +1543,6 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
-  if(check_next_press()){
-    clearSettings();
-  }
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
@@ -1633,6 +1649,9 @@ void setup() {
 #else
   M5.begin();
 #endif
+  if(check_next_press()){
+    clearSettings();
+  }
   #if defined(USE_EEPROM)
     EEPROM.begin(EEPROM_SIZE);
     Serial.printf("EEPROM 0 - Rotation:   %d\n", EEPROM.read(0));
@@ -1657,12 +1676,8 @@ void setup() {
     brightness = EEPROM.read(2);
     region = EEPROM.read(3);
   #endif
-  screenBrightness(brightness);
-  dimtimer();
-  DISP.setRotation(rotation);
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  bootScreen();
-
+  getSSID();
+  
   // Pin setup
 #if defined(M5LED)
   pinMode(M5_LED, OUTPUT);
@@ -1687,6 +1702,12 @@ void setup() {
   // Nemo Portal Init
   setupSdCard();
   bootTime = lastActivity = millis();
+
+  screenBrightness(brightness);
+  dimtimer();
+  DISP.setRotation(rotation);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  bootScreen();
 }
 
 void loop() {
