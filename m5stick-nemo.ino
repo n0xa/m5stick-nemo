@@ -5,10 +5,10 @@
 #define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+//define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.2.4";
+String buildver="2.3.0";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -1507,6 +1507,12 @@ void wscan_result_loop(){
     DISP.printf("Crypt: %s\n", encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
     DISP.printf("\nNext: Back\n");
+    DISP.printf("Hold Select: Clone\n");
+   if(check_select_press()){
+      apSsidName=WiFi.SSID(cursor);
+      isSwitching=true;
+      current_proc=19;
+    }
   }
 }
 

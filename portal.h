@@ -211,6 +211,8 @@ void shutdownWebServer() {
   webServer.stop();
   Serial.println("Setting WiFi to STA mode");
   WiFi.mode(WIFI_MODE_STA);
+  Serial.println("Resetting SSID");
+  getSSID();
 }
 
 void setupWebServer() {
