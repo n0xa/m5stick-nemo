@@ -212,6 +212,9 @@ void drawmenu(MENU thismenu[], int size) {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 5, 1);
   // scrolling menu
+  if (cursor < 0) {
+    cursor = size - 1;  // rollover hack for up-arrow on cardputer
+  }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
       DISP.print((cursor == i) ? ">" : " ");
