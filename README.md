@@ -102,6 +102,10 @@ Contributions are welcome.
 * Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
 
 Things I'd like help on:
+* Improved localization/translations of the menu, not just NEMO Portal HTML.
+  * Probably needs a new .h file
+  * Be configurable in settings and use an eeprom byte to save the setting
+  * Make gratuitous use of `const` in the implementation so that localization strings are stored only in, and referenced directly from, the flash storage as opposed to using lots of SRAM.
 * Infrared
   * A new "Region" of TV-B-Gone that's full of additional IR codes that can turn RGB LED strips, air conditioners, fans, sound bars and the like on and off
   * A way to convert or use flipper zero IR codes from within NEMO's code-base
