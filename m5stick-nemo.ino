@@ -8,7 +8,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.1";
+String buildver="2.3.2";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -491,10 +491,13 @@ void clearSettings(){
   EEPROM.commit();
   #endif
   screenBrightness(100);
-  DISP.fillScreen(BGCOLOR);
+  DISP.fillScreen(BLUE);
   DISP.setTextSize(BIG_TEXT);
+  DISP.setRotation(1);
+  DISP.setTextColor(BLUE, WHITE);
   DISP.setCursor(40, 0);
   DISP.println("M5-NEMO");
+  DISP.setTextColor(WHITE, BLUE);
   DISP.setTextSize(SMALL_TEXT);
   DISP.println("Restoring Default\nSettings...");
   delay(5000);
