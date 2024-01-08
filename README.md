@@ -96,11 +96,17 @@ Please report bugs via GitHub Issues. These are easier to track than comments on
 * If you figure out how to fix a bug you identified, PRs are welcome!
 
 ## Contributing
-Contributions are welcome. Please look at the GitHub Issues for ideas to help enhance the project. When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.  Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns.
+Contributions are welcome. 
+* Pliease look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
+* When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.
+* Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
 
 Things I'd like help on:
-* A new "Region" of TV-B-Gone that's full of additional IR codes that can turn RGB LED strips, air conditioners, fans, sound bars and the like on and off
-* Help refactoring how menus work. The way it was built was fine when it was one main menu with a few options. Now, adding a new sub-menu involves a lot of duplicated code.   
+* Infrared
+  * A new "Region" of TV-B-Gone that's full of additional IR codes that can turn RGB LED strips, air conditioners, fans, sound bars and the like on and off
+  * A way to convert or use flipper zero IR codes from within NEMO's code-base
+* Figure out a way to read and display battery level on the Cardputer and StickC-Plus2 models that lack an AXP192 PMU. The [battery code in the Cardputer factory demo](https://github.com/m5stack/M5Cardputer-UserDemo/tree/main/main/hal/bat) might be a good place to start.
+* TARGETED Deauthentication against a specific access point only. Deauth spamming PRs will be rejected.
 
 Things I probably won't merge in:
 * Bulk wifi deauthentication spamming
