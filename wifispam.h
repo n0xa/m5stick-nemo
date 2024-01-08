@@ -1,5 +1,5 @@
 // ===== Settings ===== //
-const uint8_t channels[] = {1, 6, 11}; // used Wi-Fi channels (available: 1-14)
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // used Wi-Fi channels (available: 1-14)
 const bool wpa2 = true; // WPA2 networks
 int spamtype = 1; // 1 = funny, 2 = rickroll, maybe more later
 
@@ -198,46 +198,20 @@ void nextChannel() {
   }
 }
 
-void beaconSpam(const char ESSID[]){
-  Serial.printf("WiFi SSID: %s\n", ESSID);
-  int set_channel = random(1,12);
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  delay(1);
-  packet[10] = packet[16] = random(256);
-  packet[11] = packet[17] = random(256);
-  packet[12] = packet[18] = random(256);
-  packet[13] = packet[19] = random(256);
-  packet[14] = packet[20] = random(256);
-  packet[15] = packet[21] = random(256);
-
-  int realLen = strlen(ESSID);
-  int ssidLen = random(realLen, 33);
-  int numSpace = ssidLen - realLen;
-  //int rand_len = sizeof(rand_reg);
-  int fullLen = ssidLen;
-  packet[37] = fullLen;
-
-  for(int i = 0; i < realLen; i++)
-    packet[38 + i] = ESSID[i];
-
-  for(int i = 0; i < numSpace; i++)
-    packet[38 + realLen + i] = 0x20;
-
-  packet[50 + fullLen] = set_channel;
-
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
-}
-
 void beaconSpamList(const char list[]){
-  // Parses the char array and splits it into SSIDs
+  attackTime = currentTime;
+
+  // temp variables
   int i = 0;
   int j = 0;
   int ssidNum = 1;
   char tmp;
   int ssidsLen = strlen_P(list);
   bool sent = false;
+
+  // go to next channel
+  nextChannel();
+
   while (i < ssidsLen) {
     // read out next SSID
     j = 0;
@@ -245,10 +219,31 @@ void beaconSpamList(const char list[]){
       tmp = pgm_read_byte(list + i + j);
       j++;
     } while (tmp != '\n' && j <= 32 && i + j < ssidsLen);
+
     uint8_t ssidLen = j - 1;
-    memcpy_P(&beaconSSID, &list[i], ssidLen);
-    beaconSpam(beaconSSID);
-    memcpy_P(&beaconSSID, &emptySSID, 32);
+
+    // set MAC address
+    macAddr[5] = ssidNum;
+    ssidNum++;
+
+    // write MAC address into beacon frame
+    memcpy(&beaconPacket[10], macAddr, 6);
+    memcpy(&beaconPacket[16], macAddr, 6);
+
+    // reset SSID
+    memcpy(&beaconPacket[38], emptySSID, 32);
+
+    // write new SSID into beacon frame
+    memcpy_P(&beaconPacket[38], &list[i], ssidLen);
+
+    // set channel for beacon frame
+    beaconPacket[82] = wifi_channel;
+
+    // send packet
+    for (int k = 0; k < 3; k++) {
+      packetCounter += esp_wifi_80211_tx(WIFI_IF_STA, beaconPacket, packetSize, 0) == 0;
+      delay(1);
+    }
     i += j;
   }
 }
