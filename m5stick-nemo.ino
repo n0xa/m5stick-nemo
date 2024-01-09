@@ -354,7 +354,6 @@ void mmenu_loop() {
   }
 }
 
-//Screen dimming needs both AXP and RTC features
 bool screen_dim_dimmed = false;
 int screen_dim_time = 30;
 int screen_dim_current = 0;
@@ -382,9 +381,6 @@ void dimtimer(){
 
 void screen_dim_proc() {
   if(screen_dim_time > 0){
-    check_menu_press();
-    check_next_press();
-    check_select_press();
     if (screen_dim_dimmed == false) {
       if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
         screenBrightness(10);
