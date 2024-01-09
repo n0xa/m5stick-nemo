@@ -2,13 +2,13 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.2";
+String buildver="2.3.3";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -186,6 +186,7 @@ bool isSwitching = true;
 #include "wifispam.h"
 #include "sd.h"
 #include "portal.h"
+#include "NEMOMatrix.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
@@ -1250,6 +1251,7 @@ void credits_setup(){
   DISP.setCursor(155, 25);
   DISP.println("Source:");
   DISP.setTextColor(FGCOLOR, BGCOLOR);
+  delay(250);
 }
 
 /// WiFiSPAM ///
@@ -1545,6 +1547,8 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  DISP.drawBmp(NEMOMatrix, 97338);
+  delay(3000);
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
@@ -1835,7 +1839,8 @@ void loop() {
       aj_adv();
       break;
     case 10:
-      // noop - just let the credits stay on screen
+      // easter egg?
+      if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
       break;
     case 11:
       wifispam_loop();
