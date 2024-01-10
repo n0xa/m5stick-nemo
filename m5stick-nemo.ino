@@ -13,8 +13,77 @@ String buildver="2.3.3";
 #define FGCOLOR GREEN
 
 // -=-=- NEMO Portal Language -=- Thanks, @marivaaldo! -=-=-
-#define LANGUAGE_EN_US
-//#define LANGUAGE_PT_BR
+//define LANGUAGE_EN_US
+#define LANGUAGE_PT_BR
+
+
+#if defined(LANGUAGE_EN_US)
+  #define TXT_BACK "Back"
+  #define TXT_CLOCK "Clock"
+  #define TXT_SETTINGS "Settings"
+  #define TXT_NEVER "Never"
+  #define TXT_SEC "seconds"
+  #define TXT_MIN	"minutes"
+  #define TXT_AUTO_DIM "SET AUTO DIM TIME"
+  #define TXT_SET_BRIGHT "SET BRIGHTNESS"
+  #define TXT_BATT_INFO "Battery Info"
+  #define TXT_BRIGHT "Brightness"
+  #define TXT_SET_CLOCK "Set Clock"
+  #define TXT_ROTATION "Rotation"
+  #define TXT_ABOUT "About"
+  #define TXT_REBOOT "Reboot"
+  #define TXT_CLR_SETTINGS "Clear Settings"
+  #define TXT_CLRING_SETTINGS "Restoring Default\nSettings..."
+  #define TXT_RIGHT "Right"
+  #define TXT_LEFT "Left"
+  #define TXT_BATT "Battery: "
+  #define TXT_EXIT "Press any button to exit"
+  #define TXT_RG_AMERICAS "Region:\nAmericas / Asia\n"
+  #define TXT_RG_EMEA "Region: EMEA"
+  #define TXT_SEL_GO_PAUSE "Select: Go/Pause"
+  #define TXT_SEL_EXIT "Next: Exit"
+  #define TXT_TRIG_TV "triggered TVBG"
+  #define TXT_MN_AMERICA "Americas / Asia"
+  #define TXT_MN_EMEA "EU/MidEast/Africa"
+  #define TXT_REGION "Region"
+  #define TXT_FK_GP "Front Key: Go/Pause"
+  #define TXT_SET_HOUR "SET HOUR"
+  #define TXT_SET_MIN "SET MINUTE"
+#endif
+
+#if defined(LANGUAGE_PT_BR)
+  #define TXT_BACK "Voltar"
+  #define TXT_CLOCK "Relogio"
+  #define TXT_SETTINGS "Configuracoes"
+  #define TXT_NEVER "Nunca"
+  #define TXT_SEC "segundos"
+  #define TXT_MIN	"minutos"
+  #define TXT_AUTO_DIM "AJUSTAR LUZ DE FUNDO"
+  #define TXT_SET_BRIGHT "BRILHO DA TELA"
+  #define TXT_BATT_INFO "Estado da Bateria"
+  #define TXT_BRIGHT "Brilho"
+  #define TXT_SET_CLOCK "Ajustar Relogio"
+  #define TXT_ROTATION "Rotacao"
+  #define TXT_ABOUT "Sobre"
+  #define TXT_REBOOT "Reiniciar M5"
+  #define TXT_CLR_SETTINGS "Resetar Ajustes"
+  #define TXT_CLRING_SETTINGS "Aplicando Ajustes\nPadrao..."
+  #define TXT_RIGHT "Direita"
+  #define TXT_LEFT "Esquerda"
+  #define TXT_BATT "Bateria: "
+  #define TXT_EXIT "Pressione qualquer botao para sair"
+  #define TXT_RG_AMERICAS "Regiao:\nAmericas / Asia\n"
+  #define TXT_RG_EMEA "Regiao: EMEA"
+  #define TXT_SEL_GO_PAUSE "Select:Iniciar/Parar"
+  #define TXT_SEL_EXIT "Next: Sair"
+  #define TXT_TRIG_TV "TVBG em funcionamento..."
+  #define TXT_MN_AMERICA "Americas/Asia"
+  #define TXT_MN_EMEA "EU/MidEast/Africa"
+  #define TXT_REGION "Regiao"
+  #define TXT_FK_GP "Botao Frontal:Iniciar/Pausar"
+  #define TXT_SET_HOUR "AJUSTAR HORA"
+  #define TXT_SET_MIN "AJUSTAR MINUTO"
+#endif
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -187,6 +256,7 @@ bool isSwitching = true;
 #include "sd.h"
 #include "portal.h"
 #include "NEMOMatrix.h"
+#include "songs.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
@@ -201,7 +271,7 @@ struct QRCODE {
 };
 
 QRCODE qrcodes[] = {
-  { "Back", "" },
+  { TXT_BACK, "" },
   { "Rickroll", "https://youtu.be/dQw4w9WgXcQ"},
   { "HackerTyper", "https://hackertyper.net/"},
   { "ZomboCom", "https://html5zombo.com/"},
@@ -324,13 +394,13 @@ bool check_select_press(){
 /// MAIN MENU ///
 MENU mmenu[] = {
 #if defined(RTC)
-  { "Clock", 0},
+  { TXT_CLOCK, 0},
 #endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
   { "WiFi", 12},
   { "QR Codes", 18},
-  { "Settings", 2},
+  { TXT_SETTINGS, 2},
 };
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
@@ -393,22 +463,22 @@ void screen_dim_proc() {
 
 /// Dimmer MENU ///
 MENU dmenu[] = {
-  { "Back", screen_dim_time},
-  { "Never", 0},
-  { "5 seconds", 5},
-  { "10 seconds", 10},
-  { "15 seconds", 15},
-  { "30 seconds", 30},
-  { "1 minute", 60},
-  { "2 minutes", 120},
-  { "4 minutes", 240},
+  { TXT_BACK, screen_dim_time},
+  { TXT_NEVER, 0},
+  { ("5 " TXT_SEC), 5},
+  { ("10 " TXT_SEC), 10},
+  { ("15 " TXT_SEC), 15},
+  { ("30 " TXT_SEC), 30},
+  { ("60 " TXT_SEC), 60},
+  { ("120 " TXT_MIN), 120},
+  { ("240 " TXT_MIN), 240},
 };
 int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
 void dmenu_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 5, 1);
-  DISP.println("SET AUTO DIM TIME");
+  DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
   cursor = 0;
   rstOverride = true;
@@ -431,7 +501,7 @@ void dmenu_loop() {
     #endif
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET BRIGHTNESS");
+    DISP.println(String(TXT_SET_BRIGHT));
     delay(1000);
     cursor = brightness / 10;
     number_drawmenu(11);
@@ -457,24 +527,23 @@ void dmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
-  { "Back", 1},
+  { TXT_BACK, 1},
 #if defined(AXP)
-  { "Battery Info", 6},
+  { TXT_BATT_INFO, 6},
 #endif
-  { "Brightness", 4},
+  { TXT_BRIGHT, 4},
 #if defined(RTC)
-  { "Set Clock", 3},
+  { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { "Rotation", 7},
+  { XT_ROTATION, 7},
 #endif
-  { "About", 10},
-  { "Reboot", 98},
+  { TXT_ABOUT, 10},
+  { TXT_REBOOT, 98},
 #if defined(USE_EEPROM)
-  { "Clear Settings", 99},
+  { TXT_CLR_SETTINGS, 99},
 #endif
-};
-int smenu_size = sizeof(smenu) / sizeof (MENU);
+};int smenu_size = sizeof(smenu) / sizeof (MENU);
 
 void smenu_setup() {
   cursor = 0;
@@ -499,7 +568,7 @@ void clearSettings(){
   DISP.println("M5-NEMO");
   DISP.setTextColor(WHITE, BLUE);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.println("Restoring Default\nSettings...");
+  DISP.println(TXT_CLRING_SETTINGS);
   delay(5000);
   ESP.restart();
 }
@@ -528,9 +597,9 @@ int rotation = 1;
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
-    { "Back", rotation},
-    { "Right", 1},
-    { "Left", 3},
+    { TXT_BACK, rotation},
+    { TXT_RIGHT, 1},
+    { TXT_LEFT, 3},
   };
   int rmenu_size = sizeof(rmenu) / sizeof (MENU);
 
@@ -569,7 +638,7 @@ int rotation = 1;
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
-    DISP.print("Battery: ");
+    DISP.print(TXT_BATT);
     DISP.print(battery);
     DISP.println("%");
     DISP.print("DeltaB: ");
@@ -577,7 +646,7 @@ int rotation = 1;
     DISP.print("DeltaC: ");
     DISP.println(c);
     DISP.println("");
-    DISP.println("Press any button to exit");
+    DISP.println(TXT_EXIT);
   }
   void battery_setup() {
     rstOverride = false;
@@ -618,13 +687,13 @@ void tvbgone_setup() {
 
   delay_ten_us(5000);
   if(region == NA) {
-    DISP.print("Region:\nAmericas / Asia\n");
+    DISP.print(TXT_RG_AMERICAS);
   }
   else {
-    DISP.println("Region: EMEA");
+    DISP.println(TXT_RG_EMEA);
   }
-  DISP.println("Select: Go/Pause");
-  DISP.println("Next: Exit");
+  DISP.println(TXT_SEL_GO_PAUSE);
+  DISP.println(TXT_SEL_EXIT);
   delay(1000);
 }
 
@@ -632,16 +701,16 @@ void tvbgone_loop()
 {
   if (check_select_press()) {
     delay(250);
-    Serial.println("triggered TVBG");
+    Serial.println(TXT_TRIG_TV);
     sendAllCodes();
   }
 }
 
 /// TVBG-Region MENU ///
 MENU tvbgmenu[] = {
-  { "Back", 3},
-  { "Americas / Asia", 0},
-  { "EU/MidEast/Africa", 1},
+  { TXT_BACK, 3},
+  { TXT_MN_AMERICA, 0},
+  { TXT_MN_EMEA, 1},
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -651,7 +720,7 @@ void tvbgmenu_setup() {
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.println("Region");
+  DISP.println(TXT_REGION);
   cursor = region % 2;
   rstOverride = true;
   delay(1000); 
@@ -707,7 +776,7 @@ void sendAllCodes() {
     DISP.setCursor(5, 1);
     DISP.println("TV-B-Gone");
     DISP.setTextSize(SMALL_TEXT);
-    DISP.println("Front Key: Go/Pause");
+    DISP.println(TXT_FK_GP);
     const uint8_t bitcompression = powerCode->bitcompression;
     code_ptr = 0;
     for (uint8_t k = 0; k < numpairs; k++) {
@@ -762,8 +831,8 @@ void sendAllCodes() {
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(SMALL_TEXT);
-  DISP.println("Select: Go/Pause");
-  DISP.println("Next: Exit");
+  DISP.println(TXT_SEL_GO_PAUSE);
+  DISP.println(TXT_SEL_EXIT);
 }
 
 /// CLOCK ///
@@ -787,7 +856,7 @@ void sendAllCodes() {
     rstOverride = true;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET HOUR");
+    DISP.println(TXT_SET_HOUR);
     delay(2000);
   }
 
@@ -806,7 +875,7 @@ void sendAllCodes() {
     int hour = cursor;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET MINUTE");
+    DISP.println(TXT_SET_MIN);
     delay(2000);
     cursor = M5.Rtc.Minute;
     number_drawmenu(60);
@@ -837,7 +906,7 @@ void sendAllCodes() {
 /// Bluetooth Spamming ///
 /// BTSPAM MENU ///
 MENU btmenu[] = {
-  { "Back", 5},
+  { TXT_BACK, 5},
   { "AppleJuice", 0},
   { "Swift Pair", 1},
   { "Android Spam", 4},
@@ -1376,7 +1445,7 @@ void btmaelstrom_loop(){
 
 /// WIFI MENU ///
 MENU wsmenu[] = {
-  { "Back", 5},
+  { TXT_BACK, 5},
   { "Scan Wifi", 0},
   { "Spam Funny", 1},
   { "Spam Rickroll", 2},
@@ -1449,7 +1518,7 @@ void wscan_drawmenu() {
   DISP.print((cursor == wifict) ? ">" : " ");
   DISP.println("[RESCAN]");
   DISP.print((cursor == wifict + 1) ? ">" : " ");
-  DISP.println("Back");
+  DISP.println(String(TXT_BACK));
 }
 
 void wscan_result_setup() {
@@ -1548,6 +1617,7 @@ void wscan_loop(){
 void bootScreen(){
   // Boot Screen
   DISP.drawBmp(NEMOMatrix, 97338);
+  setupSongs();
   delay(3000);
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
