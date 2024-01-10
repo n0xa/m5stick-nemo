@@ -2,10 +2,10 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
+#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-#define CARDPUTER
+//#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.3";
@@ -1547,8 +1547,10 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  #ifndef STICK_C
   DISP.drawBmp(NEMOMatrix, 97338);
   delay(3000);
+  #endif
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
@@ -1840,7 +1842,9 @@ void loop() {
       break;
     case 10:
       // easter egg?
+      #ifndef STICK_C
       if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
+      #endif
       break;
     case 11:
       wifispam_loop();
