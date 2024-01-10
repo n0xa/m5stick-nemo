@@ -30,12 +30,11 @@ bool sdcardMounted = false;
 bool setupSdCard() {
 #if defined(SDCARD)
   sdcardSemaphore = xSemaphoreCreateMutex();
-  SPIClass sdcardSPI; //declare object instead od pointer
-  sdcardSPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, -1); // start SPI communications
+  sdcardSPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN); // start SPI communications
 
   delay(10);
 
-  if (!SD.begin()) {     // from: if (!SD.begin(SD_CS_PIN, *sdcardSPI)) { to ...begin().. SD.h library manual
+  if (!SD.begin(SD_CS_PIN, sdcardSPI)) { //excluded * -> poiter indicator
     Serial.println("Failed to mount SDCARD");
     return false;
   } else {
@@ -46,4 +45,46 @@ bool setupSdCard() {
 #else
   return false;
 #endif
+}
+
+void testsd()
+{
+
+  sdcardSPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
+  delay(100);
+
+  if (!SD.begin(SD_CS_PIN, sdcardSPI)) {
+    Serial.println("Card Mount Failed");
+    DISP.println("Card Mount Failed");
+    return;
+  }
+  // 
+  uint8_t cardType = SD.cardType();
+  if (cardType == CARD_NONE) {
+    DISP.println("None SD Card");
+    Serial.println("None SD Card");
+    return;
+  }
+  DISP.print("SD Card Type: ");
+  if (cardType == CARD_MMC) {
+    DISP.println("MMC");
+    Serial.println("MMC");
+  } else if (cardType == CARD_SD) {
+    DISP.println("SDSC");
+    Serial.println("SDSC");
+  } else if (cardType == CARD_SDHC) {
+    DISP.println("SDHC");
+    Serial.println("SDHC");
+  } else {
+    DISP.println("UNKNOWN");
+    Serial.println("UNKNOWN");
+  }
+
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  DISP.printf("SD Card Size: %lluMB\n", cardSize);
+  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+
+  delay(5000);
+
+
 }
