@@ -4,7 +4,7 @@ bool sdcardMounted = false;
   #include <FS.h>
   #include <SD.h>
   #include <SPI.h>
-  SPIClass* sdcardSPI = NULL;
+  SPIClass sdcardSPI;
   SemaphoreHandle_t sdcardSemaphore;
 
   void appendToFile(fs::FS& fs, const char* path, const char* text) {
