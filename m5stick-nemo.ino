@@ -39,6 +39,7 @@ String buildver="2.3.3";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define SD_CS_PIN -1
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -66,6 +67,7 @@ String buildver="2.3.3";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define SD_CS_PIN -1
 #endif
 
 #if defined(STICK_C)
@@ -89,6 +91,7 @@ String buildver="2.3.3";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define SD_CS_PIN -1
 #endif
 
 #if defined(CARDPUTER)
