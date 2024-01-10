@@ -2,8 +2,8 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
-//#define STICK_C_PLUS2
+//#define STICK_C_PLUS
+#define STICK_C_PLUS2
 //#define STICK_C
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
@@ -54,7 +54,7 @@ String buildver="2.3.3";
   #define ROTATION
   #define USE_EEPROM
   //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
-  //#define SDCARD   //Requires a custom-built adapter
+  #define SDCARD   //Requires a custom-built adapter and sd_stick.h file
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -184,7 +184,11 @@ bool isSwitching = true;
 #include "applejuice.h"
 #include "WORLD_IR_CODES.h"
 #include "wifispam.h"
-#include "sd.h"
+#if defined(CARDPUTER)
+  #include "sd.h"  // Include de original file to Cardputer
+#else
+  #include "sd_stick.h" // Include modded file to M5StickC (didn't test in M5StickC an Plus.. but works on M5StickCPlus2)
+#endif
 #include "portal.h"
 #include "NEMOMatrix.h"
 #include <BLEUtils.h>
