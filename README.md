@@ -14,6 +14,9 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * Created new file to handle SPI/SD if not using CARDPUTER
 * SDCARD is now starting on M5StickC Plus2 (need minnor testing)
 
+## My Known Issues
+* on M5StickCplus2, because i'm using SD_CS_PIN=-1, there are lots of Serial messages of: E (1155) gpio: gpio_set_level(227): GPIO output gpio_num error, but writing on SDCARD is working nicely.
+
 ## My ToDo list
 * Add an option on settings to (on EEPROM flag, maybe?) to start/stop using SDCARD, without having to flash new firmware
 * ideas?
