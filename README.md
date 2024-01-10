@@ -10,6 +10,15 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ![M5-Nemo on M5StickC family and M5Cardputer](https://github.com/n0xa/m5stick-nemo/blob/main/M5-Nemo.jpg)
 
+## My changelog
+* Created new file to handle SPI/SD if not using CARDPUTER
+* SDCARD is now starting on M5StickC Plus2 (need minnor testing)
+
+## My ToDo list
+* Add an option on settings to (on EEPROM flag, maybe?) to start/stop using SDCARD, without having to flash new firmware
+* ideas?
+
+
 ## Features
 * [TV B-Gone](http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html) port (thanks to MrArm's [HAKRWATCH](https://github.com/MrARM/hakrwatch)) to shut off many infrared-controlled TVs, projectors and other devices
 * [AppleJuice](https://github.com/ECTO-1A/AppleJuice) iOS Bluetooth device pairing spam
