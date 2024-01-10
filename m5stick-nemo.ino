@@ -1715,6 +1715,7 @@ void setup() {
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
 
   // Nemo Portal Init
+  //testsd();
   setupSdCard();
   bootTime = lastActivity = millis();
 
