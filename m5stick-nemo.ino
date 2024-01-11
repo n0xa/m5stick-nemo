@@ -16,75 +16,6 @@ String buildver="2.3.3";
 //define LANGUAGE_EN_US
 #define LANGUAGE_PT_BR
 
-
-#if defined(LANGUAGE_EN_US)
-  #define TXT_BACK "Back"
-  #define TXT_CLOCK "Clock"
-  #define TXT_SETTINGS "Settings"
-  #define TXT_NEVER "Never"
-  #define TXT_SEC "seconds"
-  #define TXT_MIN	"minutes"
-  #define TXT_AUTO_DIM "SET AUTO DIM TIME"
-  #define TXT_SET_BRIGHT "SET BRIGHTNESS"
-  #define TXT_BATT_INFO "Battery Info"
-  #define TXT_BRIGHT "Brightness"
-  #define TXT_SET_CLOCK "Set Clock"
-  #define TXT_ROTATION "Rotation"
-  #define TXT_ABOUT "About"
-  #define TXT_REBOOT "Reboot"
-  #define TXT_CLR_SETTINGS "Clear Settings"
-  #define TXT_CLRING_SETTINGS "Restoring Default\nSettings..."
-  #define TXT_RIGHT "Right"
-  #define TXT_LEFT "Left"
-  #define TXT_BATT "Battery: "
-  #define TXT_EXIT "Press any button to exit"
-  #define TXT_RG_AMERICAS "Region:\nAmericas / Asia\n"
-  #define TXT_RG_EMEA "Region: EMEA"
-  #define TXT_SEL_GO_PAUSE "Select: Go/Pause"
-  #define TXT_SEL_EXIT "Next: Exit"
-  #define TXT_TRIG_TV "triggered TVBG"
-  #define TXT_MN_AMERICA "Americas / Asia"
-  #define TXT_MN_EMEA "EU/MidEast/Africa"
-  #define TXT_REGION "Region"
-  #define TXT_FK_GP "Front Key: Go/Pause"
-  #define TXT_SET_HOUR "SET HOUR"
-  #define TXT_SET_MIN "SET MINUTE"
-#endif
-
-#if defined(LANGUAGE_PT_BR)
-  #define TXT_BACK "Voltar"
-  #define TXT_CLOCK "Relogio"
-  #define TXT_SETTINGS "Configuracoes"
-  #define TXT_NEVER "Nunca"
-  #define TXT_SEC "segundos"
-  #define TXT_MIN	"minutos"
-  #define TXT_AUTO_DIM "AJUSTAR LUZ DE FUNDO"
-  #define TXT_SET_BRIGHT "BRILHO DA TELA"
-  #define TXT_BATT_INFO "Estado da Bateria"
-  #define TXT_BRIGHT "Brilho"
-  #define TXT_SET_CLOCK "Ajustar Relogio"
-  #define TXT_ROTATION "Rotacao"
-  #define TXT_ABOUT "Sobre"
-  #define TXT_REBOOT "Reiniciar M5"
-  #define TXT_CLR_SETTINGS "Resetar Ajustes"
-  #define TXT_CLRING_SETTINGS "Aplicando Ajustes\nPadrao..."
-  #define TXT_RIGHT "Direita"
-  #define TXT_LEFT "Esquerda"
-  #define TXT_BATT "Bateria: "
-  #define TXT_EXIT "Pressione qualquer botao para sair"
-  #define TXT_RG_AMERICAS "Regiao:\nAmericas / Asia\n"
-  #define TXT_RG_EMEA "Regiao: EMEA"
-  #define TXT_SEL_GO_PAUSE "Select:Iniciar/Parar"
-  #define TXT_SEL_EXIT "Next: Sair"
-  #define TXT_TRIG_TV "TVBG em funcionamento..."
-  #define TXT_MN_AMERICA "Americas/Asia"
-  #define TXT_MN_EMEA "EU/MidEast/Africa"
-  #define TXT_REGION "Regiao"
-  #define TXT_FK_GP "Botao Frontal:Iniciar/Pausar"
-  #define TXT_SET_HOUR "AJUSTAR HORA"
-  #define TXT_SET_MIN "AJUSTAR MINUTO"
-#endif
-
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
   // -=-=- Display -=-=-
@@ -257,6 +188,7 @@ bool isSwitching = true;
 #include "portal.h"
 #include "NEMOMatrix.h"
 #include "songs.h"
+#include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
@@ -910,7 +842,7 @@ MENU btmenu[] = {
   { "AppleJuice", 0},
   { "Swift Pair", 1},
   { "Android Spam", 4},
-  { "SourApple Crash", 2},
+  { TXT_SA_CRASH, 2},
   { "BT Maelstrom", 3},
 };
 int btmenu_size = sizeof(btmenu) / sizeof (MENU);
@@ -938,9 +870,9 @@ void btmenu_loop() {
     DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(MEDIUM_TEXT);
     DISP.setCursor(5, 1);
-    DISP.println("BT Spam");
+    DISP.println(TXT_BT_SPAM);
     DISP.setTextSize(SMALL_TEXT);
-    DISP.print("Advertising:\n");
+    DISP.print(TXT_ADV);
 
     switch(option) {
       case 0:
@@ -954,32 +886,32 @@ void btmenu_loop() {
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("Swift Pair Random");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_SP_RND);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 2:
         sourApple = true;
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("SourApple Crash");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_SA_CRASH);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 3:
         rstOverride = false;
         isSwitching = true;
         current_proc = 17; // Maelstrom
         DISP.print("Bluetooth Maelstrom\n");
-        DISP.print(" Combined BT Spam");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_CMB_BT_SPAM);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 4:
         androidPair = true;
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("Android Spam");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_AD_SPAM);
+        DISP.print(TXT_SEL_EXIT2);
         break;
 
       case 5:
@@ -993,9 +925,9 @@ void btmenu_loop() {
 }
 
 MENU ajmenu[] = {
-  { "Back", 29},
+  { TXT_BACK, 29},
   { "AirPods", 1},
-  { "Transfer Number", 27},
+  { TXT_AJ_TRANSF_NM, 27},
   { "AirPods Pro", 2},
   { "AirPods Max", 3},
   { "AirPods G2", 4},
@@ -1020,8 +952,8 @@ MENU ajmenu[] = {
   { "AppleTV HomeKit", 23},
   { "AppleTV Keyboard", 24},
   { "AppleTV Network", 25},
-  { "TV Color Balance", 26},
-  { "Setup New Phone", 28},
+  { TXT_AJ_TV_COLOR, 26},
+  { TXT_STP_NW_PH, 28},
 };
 int ajmenu_size = sizeof(ajmenu) / sizeof (MENU);
 
@@ -1150,9 +1082,9 @@ void aj_loop(){
       DISP.setCursor(5, 1);
       DISP.println("AppleJuice");
       DISP.setTextSize(SMALL_TEXT);
-      DISP.print("Advertising:\n");
+      DISP.print(TXT_ADV);
       DISP.print(ajmenu[cursor].name);
-      DISP.print("\n\nNext: Exit");
+      DISP.print(TXT_SEL_EXIT2);
       isSwitching = true;
       current_proc = 9; // Jump over to the AppleJuice BLE beacon loop
     }
@@ -1178,7 +1110,7 @@ void aj_adv(){
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
     if (sourApple){
-      Serial.print("SourApple Advertisement: ");
+      Serial.print(TXT_SA_ADV);
       // Some code borrowed from RapierXbox/ESP32-Sour-Apple
       // Original credits for algorithm ECTO-1A & WillyJL
       uint8_t packet[17];
@@ -1206,7 +1138,7 @@ void aj_adv(){
       Serial.println("");
     } else if (swiftPair) {
       const char* display_name = generateRandomName();
-      Serial.printf("SwiftPair Advertisement: '%s' - ", display_name);
+      Serial.printf(TXT_SP_ADV, display_name);
       uint8_t display_name_len = strlen(display_name);
       uint8_t size = 7 + display_name_len;
       uint8_t* packet = (uint8_t*)malloc(size);
@@ -1231,7 +1163,7 @@ void aj_adv(){
       free(packet);
       free((void*)display_name);
     } else if (androidPair) {
-      Serial.print("Android Spam Advertisement: ");
+      Serial.print(TXT_AD_SPAM_ADV);
       uint8_t packet[14];
       uint8_t i = 0;
       packet[i++] = 3;  // Packet Length
@@ -1256,7 +1188,7 @@ void aj_adv(){
       }
       Serial.println("");
     } else {
-      Serial.print("AppleJuice Advertisement: ");
+      Serial.print(TXT_AJ_ADV);
       if (deviceType >= 18){
         oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
       } else {
@@ -1349,12 +1281,12 @@ void wifispam_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("WiFi Spam");
+  DISP.println(TXT_WF_SP);
   delay(1000);
   DISP.setTextSize(TINY_TEXT);
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.print("WiFi Spam");
+  DISP.print(TXT_WF_SP);
     int ct = 0;
     const char *str;
     switch(spamtype) {
@@ -1369,7 +1301,7 @@ void wifispam_setup() {
       DISP.print(rickrollssids);
       break;
     case 3:
-      DISP.printf(" - Random SSIDs\n", ct);
+      DISP.printf(TXT_RND_SSID, ct);
       break;
   }
   DISP.setTextSize(SMALL_TEXT);
@@ -1446,10 +1378,10 @@ void btmaelstrom_loop(){
 /// WIFI MENU ///
 MENU wsmenu[] = {
   { TXT_BACK, 5},
-  { "Scan Wifi", 0},
-  { "Spam Funny", 1},
-  { "Spam Rickroll", 2},
-  { "Spam Random", 3},
+  { TXT_WF_SCAN, 0},
+  { TXT_WF_SPAM_FUN, 1},
+  { TXT_WF_SPAM_RR, 2},
+  { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
@@ -1516,7 +1448,7 @@ void wscan_drawmenu() {
     }
   }
   DISP.print((cursor == wifict) ? ">" : " ");
-  DISP.println("[RESCAN]");
+  DISP.println(TXT_WF_RESCAN);
   DISP.print((cursor == wifict + 1) ? ">" : " ");
   DISP.println(String(TXT_BACK));
 }
@@ -1564,7 +1496,7 @@ void wscan_result_loop(){
       encryptType = "WPA/WPA2/PSK";
       break ;
     case 0:
-      encryptType = "Open";
+      encryptType = TXT_WF_OPEN;
       break ;
     }
     
@@ -1576,11 +1508,11 @@ void wscan_result_loop(){
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
     DISP.setTextSize(SMALL_TEXT);
-    DISP.printf("Chan : %d\n", WiFi.channel(cursor));
-    DISP.printf("Crypt: %s\n", encryptType);
+    DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
+    DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
-    DISP.printf("\nNext: Back\n");
-    DISP.printf("Hold Select: Clone\n");
+    DISP.printf(TXT_SEL_BACK);
+    DISP.printf(TXT_HOLD_CLONE);
    if(check_select_press()){
       apSsidName=WiFi.SSID(cursor);
       isSwitching=true;
@@ -1595,7 +1527,7 @@ void wscan_setup(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("WiFi Scan");
+  DISP.println(TXT_WF_SCN);
   delay(2000);
 }
 
@@ -1603,7 +1535,7 @@ void wscan_loop(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("Scanning...");
+  DISP.println(TXT_WF_SCNING);
   wifict = WiFi.scanNetworks();
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(SMALL_TEXT);
@@ -1627,11 +1559,11 @@ void bootScreen(){
   DISP.setTextSize(SMALL_TEXT);
   DISP.printf("%s-%s\n",buildver,platformName);
 #if defined(CARDPUTER)
-  DISP.println("Next: Down Arrow");
-  DISP.println("Prev: Up Arrow");
-  DISP.println("Sel : Enter or ->");
-  DISP.println("Home: Esc   or <- ");
-  DISP.println("         Press a key");
+  DISP.println(TXT_INST_NXT);
+  DISP.println(TXT_INST_PRV);
+  DISP.println(TXT_INST_SEL);
+  DISP.println(TXT_INST_HOME);
+  DISP.println(TXT_INST_PRSS_KEY);
   while(true){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
@@ -1641,9 +1573,9 @@ void bootScreen(){
     }
   }
 #else
-  DISP.println("Next: Side Button");
-  DISP.println("Sel : M5 Button");
-  DISP.println("Home: Power Button");
+  DISP.println(TXT_STK_NXT);
+  DISP.println(TXT_STK_SEL);
+  DISP.println(TXT_STK_HOME);
   delay(3000);
 #endif
 }
