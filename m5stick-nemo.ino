@@ -361,7 +361,7 @@ void mmenu_loop() {
 
 bool screen_dim_dimmed = false;
 int screen_dim_time = 30;
-int screen_dim_current = 0;
+int screen_dim_current = 10;
 
 void screenBrightness(int bright){
   #if defined(AXP)
