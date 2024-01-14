@@ -27,10 +27,7 @@
 // change this to make the song slower or faster
 int tempo = 200;
 
-// change this to whichever pin you want to use
-int buzzer = 11;
-
-// notes of the moledy followed by the duration.
+// notes of the melody followed by the duration.
 // a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
 // !!negative numbers are used to represent dotted notes,
 // so -4 means a dotted quarter note, that is, a quarter plus an eighteenth!!
@@ -39,7 +36,6 @@ int melody[] = {
   // Super Mario Bros theme
   // Score available at https://musescore.com/user/2123/scores/2145
   // Theme by Koji Kondo
-  
   
   NOTE_E6,8, NOTE_E6,8, REST,8, NOTE_E6,8, REST,8, NOTE_C6,8, NOTE_E6,8, //WRITE YOUR MELODY HERE
   NOTE_G6,4, REST,4,
@@ -81,6 +77,5 @@ void setupSongs() {
     delay(noteDuration);
 #endif
     
-
   }
 }

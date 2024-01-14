@@ -114,6 +114,7 @@ String buildver="2.3.3";
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
+  #define VBAT_PIN 10
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
@@ -463,6 +464,9 @@ MENU smenu[] = {
 #if defined(AXP)
   { TXT_BATT_INFO, 6},
 #endif
+#if defined(CARDPUTER)
+  { TXT_BATT_INFO, 6},
+#endif
   { TXT_BRIGHT, 4},
 #if defined(RTC)
   { TXT_SET_CLOCK, 3},
@@ -605,6 +609,51 @@ int rotation = 1;
     oldbattery = battery;
   }
 #endif // AXP
+
+#if defined(CARDPUTER)
+  /// BATTERY INFO ///
+  int oldbattery=0;
+  void battery_drawmenu(int battery) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 8, 1);
+    DISP.print(TXT_BATT);
+    DISP.print(battery);
+    DISP.println("%");
+    DISP.println(TXT_EXIT);
+  }
+  void battery_setup() { // 
+    rstOverride = false;
+    pinMode(VBAT_PIN, INPUT);
+    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738); // 
+    int bat_ = analogRead(VBAT_PIN);
+    Serial.println("Battery level:");
+    Serial.println(battery);
+    battery_drawmenu(battery);
+    delay(500); // Prevent switching after menu loads up
+    /*
+      Used minimum 3,0V and maximum 4,2V for battery. So it may show wrong values. Needs testing.
+      It only shows decent values when disconnected from charger, due to HW limitations.
+      Equation: Bat% = ((Vadc - 1842) / (2580 - 1842)) * 100. Where: 4,2V = 2580, 3,0V = 1842.
+    */
+  }
+
+  void battery_loop() {
+    delay(300);
+    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
+    if (battery != oldbattery){
+      Serial.println("Battery level:");
+      Serial.println(battery);
+      battery_drawmenu(battery);
+    }
+    if (check_select_press()) {
+      rstOverride = false;
+      isSwitching = true;
+     current_proc = 1;
+    }
+    oldbattery = battery;
+  }
+#endif // Cardputer
 
 /// TV-B-GONE ///
 void tvbgone_setup() {
@@ -1500,14 +1549,14 @@ void wscan_result_loop(){
       break ;
     }
     
-    DISP.setTextSize(MEDIUM_TEXT);
+    DISP.setTextSize(SMALL_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(SMALL_TEXT);
+      DISP.setTextSize(TINY_TEXT);
     }       
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
-    DISP.setTextSize(SMALL_TEXT);
+    DISP.setTextSize(TINY_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
@@ -1550,7 +1599,6 @@ void bootScreen(){
   // Boot Screen
   DISP.drawBmp(NEMOMatrix, 97338);
   setupSongs();
-  delay(3000);
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
@@ -1563,6 +1611,7 @@ void bootScreen(){
   DISP.println(TXT_INST_PRV);
   DISP.println(TXT_INST_SEL);
   DISP.println(TXT_INST_HOME);
+  delay(1500);
   DISP.println(TXT_INST_PRSS_KEY);
   while(true){
     M5Cardputer.update();
@@ -1757,6 +1806,11 @@ void loop() {
         battery_setup();
         break;
 #endif
+#if defined(CARDPUTER)
+      case 6:
+        battery_setup();
+        break;
+#endif
 #if defined(ROTATION)
       case 7:
         rmenu_setup();
@@ -1825,6 +1879,11 @@ void loop() {
       tvbgone_loop();
       break;
 #if defined(AXP)
+    case 6:
+      battery_loop();
+      break;
+#endif
+#if defined(CARDPUTER)
     case 6:
       battery_loop();
       break;
