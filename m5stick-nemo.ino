@@ -73,7 +73,6 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define BATTERY_MAX_VOLTAGE 3.7
   #define M5_LED_PIN 19
   #define M5_LED_ON HIGH
   #define M5_LED_OFF LOW
@@ -587,7 +586,7 @@ int rotation = 1;
 
 /// BATTERY INFO ///
 
-#if defined(PWRMGMT) && defined(BATTERY_MAX_VOLTAGE) 
+#if defined(PWRMGMT)
   int old_battery = 0;
 
   void battery_drawmenu(int battery) {
@@ -601,15 +600,7 @@ int rotation = 1;
   }
 
   int get_battery_voltage() {
-    int current_voltage = M5.Power.getBatteryVoltage() / 1000;
-    int battery_percentage = (current_voltage / BATTERY_MAX_VOLTAGE) * 100;
-
-    if (battery_percentage > 100)
-      return 100;
-    if (battery_percentage < 0)
-      return 0;
-
-    return battery_percentage;
+    return M5.Power.getBatteryLevel();
   }
 
   void battery_setup() {
