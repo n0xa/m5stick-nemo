@@ -1601,21 +1601,25 @@ void qrmenu_setup() {
   delay(500); // Prevent switching after menu loads up
 }
 
+boolean isOn = false;
+
 void qrmenu_loop() {
   if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(qrcodes) / sizeof(QRCODE) );
     qrmenu_drawmenu();
+    isOn = false;
     delay(250);
   }
   if (check_select_press()) {
-    if(qrcodes[cursor].url.length() == 0){
-      rstOverride = false;
+@@ -1614,8 +1617,9 @@ void qrmenu_loop() {
       isSwitching = true;
       current_proc = 1;
     }else{
+      isOn = true;
       DISP.fillScreen(WHITE);
       DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
+      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
     }
   }
 }
