@@ -2,10 +2,10 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
+#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-#define CARDPUTER
+//#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.3";
@@ -36,6 +36,7 @@ String buildver="2.3.3";
   #define DISP M5.Lcd
   #define IRLED 9
   #define SPEAKER M5.Beep
+  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix)
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -58,6 +59,7 @@ String buildver="2.3.3";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
+  #define BITMAP M5.Lcd.drawBmp(NEMOMatrix, 97338)
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
@@ -86,6 +88,7 @@ String buildver="2.3.3";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
+  #define BITMAP Serial.println("unsupported")
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -110,6 +113,7 @@ String buildver="2.3.3";
   #define IRLED 44
   #define BACKLIGHT 38
   #define SPEAKER M5Cardputer.Speaker
+  #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
@@ -1597,8 +1601,11 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
-  DISP.drawBmp(NEMOMatrix, 97338);
   setupSongs();
+  #ifndef STICK_C
+  BITMAP;
+  delay(3000);
+  #endif
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
@@ -1901,7 +1908,9 @@ void loop() {
       break;
     case 10:
       // easter egg?
-      if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
+      #ifndef STICK_C
+      if(check_select_press()){BITMAP;}
+      #endif
       break;
     case 11:
       wifispam_loop();
