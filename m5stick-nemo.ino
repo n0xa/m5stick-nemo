@@ -168,6 +168,7 @@ bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair
 bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
 bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
+bool activeQR = false; 
 const byte PortalTickTimer = 1000;
 String apSsidName = String("");
 bool isSwitching = true;
@@ -1600,23 +1601,20 @@ void qrmenu_setup() {
   qrmenu_drawmenu();
   delay(500); // Prevent switching after menu loads up
 }
-
-boolean isOn = false;
-
 void qrmenu_loop() {
   if (check_next_press()) {
     cursor++;
     cursor = cursor % ( sizeof(qrcodes) / sizeof(QRCODE) );
     qrmenu_drawmenu();
-    isOn = false;
+    activeQR = false;
     delay(250);
   }
   if (check_select_press()) {
 @@ -1614,8 +1617,9 @@ void qrmenu_loop() {
       isSwitching = true;
       current_proc = 1;
-    }else{
-      isOn = true;
+    }else if ( activeQR == false ) {
+      activeQR = true;
       DISP.fillScreen(WHITE);
       DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
       DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
