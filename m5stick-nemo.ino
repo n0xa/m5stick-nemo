@@ -8,11 +8,11 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.3";
+String buildver="2.3.4";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
-// -=-=- NEMO Portal Language -=- Thanks, @marivaaldo! -=-=-
+// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
 #define LANGUAGE_EN_US
 //#define LANGUAGE_PT_BR
 
@@ -119,6 +119,7 @@ String buildver="2.3.3";
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
+  #define VBAT_PIN 10
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
@@ -169,6 +170,7 @@ bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair
 bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
 bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
+bool activeQR = false; 
 const byte PortalTickTimer = 1000;
 String apSsidName = String("");
 bool isSwitching = true;
@@ -192,6 +194,8 @@ bool isSwitching = true;
 #include "sd.h"
 #include "portal.h"
 #include "NEMOMatrix.h"
+#include "songs.h"
+#include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
@@ -206,7 +210,7 @@ struct QRCODE {
 };
 
 QRCODE qrcodes[] = {
-  { "Back", "" },
+  { TXT_BACK, "" },
   { "Rickroll", "https://youtu.be/dQw4w9WgXcQ"},
   { "HackerTyper", "https://hackertyper.net/"},
   { "ZomboCom", "https://html5zombo.com/"},
@@ -329,13 +333,13 @@ bool check_select_press(){
 /// MAIN MENU ///
 MENU mmenu[] = {
 #if defined(RTC)
-  { "Clock", 0},
+  { TXT_CLOCK, 0},
 #endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
   { "WiFi", 12},
   { "QR Codes", 18},
-  { "Settings", 2},
+  { TXT_SETTINGS, 2},
 };
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
@@ -398,22 +402,22 @@ void screen_dim_proc() {
 
 /// Dimmer MENU ///
 MENU dmenu[] = {
-  { "Back", screen_dim_time},
-  { "Never", 0},
-  { "5 seconds", 5},
-  { "10 seconds", 10},
-  { "15 seconds", 15},
-  { "30 seconds", 30},
-  { "1 minute", 60},
-  { "2 minutes", 120},
-  { "4 minutes", 240},
+  { TXT_BACK, screen_dim_time},
+  { TXT_NEVER, 0},
+  { ("5 " TXT_SEC), 5},
+  { ("10 " TXT_SEC), 10},
+  { ("15 " TXT_SEC), 15},
+  { ("30 " TXT_SEC), 30},
+  { ("60 " TXT_SEC), 60},
+  { ("120 " TXT_MIN), 120},
+  { ("240 " TXT_MIN), 240},
 };
 int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
 void dmenu_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 5, 1);
-  DISP.println("SET AUTO DIM TIME");
+  DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
   cursor = 0;
   rstOverride = true;
@@ -436,7 +440,7 @@ void dmenu_loop() {
     #endif
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET BRIGHTNESS");
+    DISP.println(String(TXT_SET_BRIGHT));
     delay(1000);
     cursor = brightness / 10;
     number_drawmenu(11);
@@ -462,24 +466,26 @@ void dmenu_loop() {
 
 /// SETTINGS MENU ///
 MENU smenu[] = {
-  { "Back", 1},
+  { TXT_BACK, 1},
 #if defined(AXP)
-  { "Battery Info", 6},
+  { TXT_BATT_INFO, 6},
 #endif
-  { "Brightness", 4},
+#if defined(CARDPUTER)
+  { TXT_BATT_INFO, 6},
+#endif
+  { TXT_BRIGHT, 4},
 #if defined(RTC)
-  { "Set Clock", 3},
+  { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { "Rotation", 7},
+  { XT_ROTATION, 7},
 #endif
-  { "About", 10},
-  { "Reboot", 98},
+  { TXT_ABOUT, 10},
+  { TXT_REBOOT, 98},
 #if defined(USE_EEPROM)
-  { "Clear Settings", 99},
+  { TXT_CLR_SETTINGS, 99},
 #endif
-};
-int smenu_size = sizeof(smenu) / sizeof (MENU);
+};int smenu_size = sizeof(smenu) / sizeof (MENU);
 
 void smenu_setup() {
   cursor = 0;
@@ -504,7 +510,7 @@ void clearSettings(){
   DISP.println("M5-NEMO");
   DISP.setTextColor(WHITE, BLUE);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.println("Restoring Default\nSettings...");
+  DISP.println(TXT_CLRING_SETTINGS);
   delay(5000);
   ESP.restart();
 }
@@ -533,9 +539,9 @@ int rotation = 1;
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
-    { "Back", rotation},
-    { "Right", 1},
-    { "Left", 3},
+    { TXT_BACK, rotation},
+    { TXT_RIGHT, 1},
+    { TXT_LEFT, 3},
   };
   int rmenu_size = sizeof(rmenu) / sizeof (MENU);
 
@@ -574,7 +580,7 @@ int rotation = 1;
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
-    DISP.print("Battery: ");
+    DISP.print(TXT_BATT);
     DISP.print(battery);
     DISP.println("%");
     DISP.print("DeltaB: ");
@@ -582,7 +588,7 @@ int rotation = 1;
     DISP.print("DeltaC: ");
     DISP.println(c);
     DISP.println("");
-    DISP.println("Press any button to exit");
+    DISP.println(TXT_EXIT);
   }
   void battery_setup() {
     rstOverride = false;
@@ -610,6 +616,53 @@ int rotation = 1;
   }
 #endif // AXP
 
+#if defined(CARDPUTER)
+  /// BATTERY INFO ///
+  int oldbattery=0;
+  void battery_drawmenu(int battery) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 8, 1);
+    DISP.print(TXT_BATT);
+    DISP.print(battery);
+    DISP.println("%");
+    DISP.println(TXT_EXIT);
+  }
+
+  void battery_setup() { // 
+    rstOverride = false;
+    pinMode(VBAT_PIN, INPUT);
+    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738); // 
+    int bat_ = analogRead(VBAT_PIN);
+    Serial.println("Battery level:");
+    Serial.println(battery);
+    battery_drawmenu(battery);
+    delay(500); // Prevent switching after menu loads up
+    /*
+      Used minimum 3,0V and maximum 4,2V for battery. So it may show wrong values. Needs testing.
+      It only shows decent values when disconnected from charger, due to HW limitations.
+      Equation: Bat% = ((Vadc - 1842) / (2580 - 1842)) * 100. Where: 4,2V = 2580, 3,0V = 1842.
+    */
+  }
+
+  void battery_loop() {
+    delay(300);
+    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
+    if (battery != oldbattery){
+      Serial.println("Battery level:");
+      Serial.println(battery);
+      Serial.printf("Raw: %d\n", analogRead(VBAT_PIN));
+      battery_drawmenu(battery);
+    }
+    if (check_select_press()) {
+      rstOverride = false;
+      isSwitching = true;
+     current_proc = 1;
+    }
+    oldbattery = battery;
+  }
+#endif // Cardputer
+
 /// TV-B-GONE ///
 void tvbgone_setup() {
   DISP.fillScreen(BGCOLOR);
@@ -623,13 +676,13 @@ void tvbgone_setup() {
 
   delay_ten_us(5000);
   if(region == NA) {
-    DISP.print("Region:\nAmericas / Asia\n");
+    DISP.print(TXT_RG_AMERICAS);
   }
   else {
-    DISP.println("Region: EMEA");
+    DISP.println(TXT_RG_EMEA);
   }
-  DISP.println("Select: Go/Pause");
-  DISP.println("Next: Exit");
+  DISP.println(TXT_SEL_GO_PAUSE);
+  DISP.println(TXT_SEL_EXIT);
   delay(1000);
 }
 
@@ -637,16 +690,16 @@ void tvbgone_loop()
 {
   if (check_select_press()) {
     delay(250);
-    Serial.println("triggered TVBG");
+    Serial.println(TXT_TRIG_TV);
     sendAllCodes();
   }
 }
 
 /// TVBG-Region MENU ///
 MENU tvbgmenu[] = {
-  { "Back", 3},
-  { "Americas / Asia", 0},
-  { "EU/MidEast/Africa", 1},
+  { TXT_BACK, 3},
+  { TXT_MN_AMERICA, 0},
+  { TXT_MN_EMEA, 1},
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -656,7 +709,7 @@ void tvbgmenu_setup() {
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.println("Region");
+  DISP.println(TXT_REGION);
   cursor = region % 2;
   rstOverride = true;
   delay(1000); 
@@ -712,7 +765,7 @@ void sendAllCodes() {
     DISP.setCursor(5, 1);
     DISP.println("TV-B-Gone");
     DISP.setTextSize(SMALL_TEXT);
-    DISP.println("Front Key: Go/Pause");
+    DISP.println(TXT_FK_GP);
     const uint8_t bitcompression = powerCode->bitcompression;
     code_ptr = 0;
     for (uint8_t k = 0; k < numpairs; k++) {
@@ -767,8 +820,8 @@ void sendAllCodes() {
   DISP.setCursor(5, 1);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(SMALL_TEXT);
-  DISP.println("Select: Go/Pause");
-  DISP.println("Next: Exit");
+  DISP.println(TXT_SEL_GO_PAUSE);
+  DISP.println(TXT_SEL_EXIT);
 }
 
 /// CLOCK ///
@@ -792,7 +845,7 @@ void sendAllCodes() {
     rstOverride = true;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET HOUR");
+    DISP.println(TXT_SET_HOUR);
     delay(2000);
   }
 
@@ -811,7 +864,7 @@ void sendAllCodes() {
     int hour = cursor;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    DISP.println("SET MINUTE");
+    DISP.println(TXT_SET_MIN);
     delay(2000);
     cursor = M5.Rtc.Minute;
     number_drawmenu(60);
@@ -842,11 +895,11 @@ void sendAllCodes() {
 /// Bluetooth Spamming ///
 /// BTSPAM MENU ///
 MENU btmenu[] = {
-  { "Back", 5},
+  { TXT_BACK, 5},
   { "AppleJuice", 0},
   { "Swift Pair", 1},
   { "Android Spam", 4},
-  { "SourApple Crash", 2},
+  { TXT_SA_CRASH, 2},
   { "BT Maelstrom", 3},
 };
 int btmenu_size = sizeof(btmenu) / sizeof (MENU);
@@ -874,9 +927,9 @@ void btmenu_loop() {
     DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(MEDIUM_TEXT);
     DISP.setCursor(5, 1);
-    DISP.println("BT Spam");
+    DISP.println(TXT_BT_SPAM);
     DISP.setTextSize(SMALL_TEXT);
-    DISP.print("Advertising:\n");
+    DISP.print(TXT_ADV);
 
     switch(option) {
       case 0:
@@ -890,32 +943,32 @@ void btmenu_loop() {
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("Swift Pair Random");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_SP_RND);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 2:
         sourApple = true;
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("SourApple Crash");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_SA_CRASH);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 3:
         rstOverride = false;
         isSwitching = true;
         current_proc = 17; // Maelstrom
         DISP.print("Bluetooth Maelstrom\n");
-        DISP.print(" Combined BT Spam");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_CMB_BT_SPAM);
+        DISP.print(TXT_SEL_EXIT2);
         break;
       case 4:
         androidPair = true;
         current_proc = 9; // jump straight to appleJuice Advertisement
         rstOverride = false;
         isSwitching = true;
-        DISP.print("Android Spam");
-        DISP.print("\n\nNext: Exit");
+        DISP.print(TXT_AD_SPAM);
+        DISP.print(TXT_SEL_EXIT2);
         break;
 
       case 5:
@@ -929,9 +982,9 @@ void btmenu_loop() {
 }
 
 MENU ajmenu[] = {
-  { "Back", 29},
+  { TXT_BACK, 29},
   { "AirPods", 1},
-  { "Transfer Number", 27},
+  { TXT_AJ_TRANSF_NM, 27},
   { "AirPods Pro", 2},
   { "AirPods Max", 3},
   { "AirPods G2", 4},
@@ -956,8 +1009,8 @@ MENU ajmenu[] = {
   { "AppleTV HomeKit", 23},
   { "AppleTV Keyboard", 24},
   { "AppleTV Network", 25},
-  { "TV Color Balance", 26},
-  { "Setup New Phone", 28},
+  { TXT_AJ_TV_COLOR, 26},
+  { TXT_STP_NW_PH, 28},
 };
 int ajmenu_size = sizeof(ajmenu) / sizeof (MENU);
 
@@ -1086,9 +1139,9 @@ void aj_loop(){
       DISP.setCursor(5, 1);
       DISP.println("AppleJuice");
       DISP.setTextSize(SMALL_TEXT);
-      DISP.print("Advertising:\n");
+      DISP.print(TXT_ADV);
       DISP.print(ajmenu[cursor].name);
-      DISP.print("\n\nNext: Exit");
+      DISP.print(TXT_SEL_EXIT2);
       isSwitching = true;
       current_proc = 9; // Jump over to the AppleJuice BLE beacon loop
     }
@@ -1114,7 +1167,7 @@ void aj_adv(){
                           // It allows the BLE beacon to run through the loop.
     BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
     if (sourApple){
-      Serial.print("SourApple Advertisement: ");
+      Serial.print(TXT_SA_ADV);
       // Some code borrowed from RapierXbox/ESP32-Sour-Apple
       // Original credits for algorithm ECTO-1A & WillyJL
       uint8_t packet[17];
@@ -1142,7 +1195,7 @@ void aj_adv(){
       Serial.println("");
     } else if (swiftPair) {
       const char* display_name = generateRandomName();
-      Serial.printf("SwiftPair Advertisement: '%s' - ", display_name);
+      Serial.printf(TXT_SP_ADV, display_name);
       uint8_t display_name_len = strlen(display_name);
       uint8_t size = 7 + display_name_len;
       uint8_t* packet = (uint8_t*)malloc(size);
@@ -1167,7 +1220,7 @@ void aj_adv(){
       free(packet);
       free((void*)display_name);
     } else if (androidPair) {
-      Serial.print("Android Spam Advertisement: ");
+      Serial.print(TXT_AD_SPAM_ADV);
       uint8_t packet[14];
       uint8_t i = 0;
       packet[i++] = 3;  // Packet Length
@@ -1192,7 +1245,7 @@ void aj_adv(){
       }
       Serial.println("");
     } else {
-      Serial.print("AppleJuice Advertisement: ");
+      Serial.print(TXT_AJ_ADV);
       if (deviceType >= 18){
         oAdvertisementData.addData(std::string((char*)data, sizeof(AppleTVPair)));
       } else {
@@ -1285,12 +1338,12 @@ void wifispam_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("WiFi Spam");
+  DISP.println(TXT_WF_SP);
   delay(1000);
   DISP.setTextSize(TINY_TEXT);
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.print("WiFi Spam");
+  DISP.print(TXT_WF_SP);
     int ct = 0;
     const char *str;
     switch(spamtype) {
@@ -1305,7 +1358,7 @@ void wifispam_setup() {
       DISP.print(rickrollssids);
       break;
     case 3:
-      DISP.printf(" - Random SSIDs\n", ct);
+      DISP.printf(TXT_RND_SSID, ct);
       break;
   }
   DISP.setTextSize(SMALL_TEXT);
@@ -1381,11 +1434,11 @@ void btmaelstrom_loop(){
 
 /// WIFI MENU ///
 MENU wsmenu[] = {
-  { "Back", 5},
-  { "Scan Wifi", 0},
-  { "Spam Funny", 1},
-  { "Spam Rickroll", 2},
-  { "Spam Random", 3},
+  { TXT_BACK, 5},
+  { TXT_WF_SCAN, 0},
+  { TXT_WF_SPAM_FUN, 1},
+  { TXT_WF_SPAM_RR, 2},
+  { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
@@ -1452,9 +1505,9 @@ void wscan_drawmenu() {
     }
   }
   DISP.print((cursor == wifict) ? ">" : " ");
-  DISP.println("[RESCAN]");
+  DISP.println(TXT_WF_RESCAN);
   DISP.print((cursor == wifict + 1) ? ">" : " ");
-  DISP.println("Back");
+  DISP.println(String(TXT_BACK));
 }
 
 void wscan_result_setup() {
@@ -1500,23 +1553,23 @@ void wscan_result_loop(){
       encryptType = "WPA/WPA2/PSK";
       break ;
     case 0:
-      encryptType = "Open";
+      encryptType = TXT_WF_OPEN;
       break ;
     }
     
-    DISP.setTextSize(MEDIUM_TEXT);
+    DISP.setTextSize(SMALL_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(SMALL_TEXT);
+      DISP.setTextSize(TINY_TEXT);
     }       
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.printf("Chan : %d\n", WiFi.channel(cursor));
-    DISP.printf("Crypt: %s\n", encryptType);
+    DISP.setTextSize(TINY_TEXT);
+    DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
+    DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
-    DISP.printf("\nNext: Back\n");
-    DISP.printf("Hold Select: Clone\n");
+    DISP.printf(TXT_SEL_BACK);
+    DISP.printf(TXT_HOLD_CLONE);
    if(check_select_press()){
       apSsidName=WiFi.SSID(cursor);
       isSwitching=true;
@@ -1531,7 +1584,7 @@ void wscan_setup(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("WiFi Scan");
+  DISP.println(TXT_WF_SCN);
   delay(2000);
 }
 
@@ -1539,7 +1592,7 @@ void wscan_loop(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setCursor(5, 1);
-  DISP.println("Scanning...");
+  DISP.println(TXT_WF_SCNING);
   wifict = WiFi.scanNetworks();
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(SMALL_TEXT);
@@ -1552,6 +1605,7 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  setupSongs();
   #ifndef STICK_C
   BITMAP;
   delay(3000);
@@ -1564,11 +1618,12 @@ void bootScreen(){
   DISP.setTextSize(SMALL_TEXT);
   DISP.printf("%s-%s\n",buildver,platformName);
 #if defined(CARDPUTER)
-  DISP.println("Next: Down Arrow");
-  DISP.println("Prev: Up Arrow");
-  DISP.println("Sel : Enter or ->");
-  DISP.println("Home: Esc   or <- ");
-  DISP.println("         Press a key");
+  DISP.println(TXT_INST_NXT);
+  DISP.println(TXT_INST_PRV);
+  DISP.println(TXT_INST_SEL);
+  DISP.println(TXT_INST_HOME);
+  delay(1500);
+  DISP.println(TXT_INST_PRSS_KEY);
   while(true){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
@@ -1578,9 +1633,9 @@ void bootScreen(){
     }
   }
 #else
-  DISP.println("Next: Side Button");
-  DISP.println("Sel : M5 Button");
-  DISP.println("Home: Power Button");
+  DISP.println(TXT_STK_NXT);
+  DISP.println(TXT_STK_SEL);
+  DISP.println(TXT_STK_HOME);
   delay(3000);
 #endif
 }
@@ -1607,16 +1662,22 @@ void qrmenu_loop() {
     cursor++;
     cursor = cursor % ( sizeof(qrcodes) / sizeof(QRCODE) );
     qrmenu_drawmenu();
+    activeQR = false;
     delay(250);
   }
   if (check_select_press()) {
-    if(qrcodes[cursor].url.length() == 0){
-      rstOverride = false;
-      isSwitching = true;
+    if (qrcodes[cursor].url.length() < 1){
       current_proc = 1;
-    }else{
+      isSwitching = true;
+    }else if ( activeQR == false ) {
+      activeQR = true;
       DISP.fillScreen(WHITE);
-      DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
+      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
+      delay(500);
+    } else {
+      isSwitching = true;
+      activeQR = false;
+      delay(250);
     }
   }
 }
@@ -1762,6 +1823,11 @@ void loop() {
         battery_setup();
         break;
 #endif
+#if defined(CARDPUTER)
+      case 6:
+        battery_setup();
+        break;
+#endif
 #if defined(ROTATION)
       case 7:
         rmenu_setup();
@@ -1830,6 +1896,11 @@ void loop() {
       tvbgone_loop();
       break;
 #if defined(AXP)
+    case 6:
+      battery_loop();
+      break;
+#endif
+#if defined(CARDPUTER)
     case 6:
       battery_loop();
       break;
