@@ -2,10 +2,10 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.3";
@@ -627,6 +627,7 @@ int rotation = 1;
     DISP.println("%");
     DISP.println(TXT_EXIT);
   }
+  
   void battery_setup() { // 
     rstOverride = false;
     pinMode(VBAT_PIN, INPUT);
@@ -649,6 +650,7 @@ int rotation = 1;
     if (battery != oldbattery){
       Serial.println("Battery level:");
       Serial.println(battery);
+      Serial.printf("Raw: %d\n", analogRead(VBAT_PIN));
       battery_drawmenu(battery);
     }
     if (check_select_press()) {
@@ -1663,13 +1665,19 @@ void qrmenu_loop() {
     delay(250);
   }
   if (check_select_press()) {
-    isSwitching = true;
-    current_proc = 1;
-  }else if ( activeQR == false ) {
-    activeQR = true;
-    DISP.fillScreen(WHITE);
-    DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
-    DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);    
+    if (qrcodes[cursor].url.length() < 1){
+      current_proc = 1;
+      isSwitching = true;
+    }else if ( activeQR == false ) {
+      activeQR = true;
+      DISP.fillScreen(WHITE);
+      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
+      delay(500);
+    } else {
+      isSwitching = true;
+      activeQR = false;
+      delay(250);
+    }
   }
 }
 
