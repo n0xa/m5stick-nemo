@@ -17,7 +17,7 @@
   #define TXT_CLRING_SETTINGS "Restoring Default\nSettings..."
   #define TXT_RIGHT "Right"
   #define TXT_LEFT "Left"
-  #define TXT_BATT "Battery: "
+  #define TXT_BATT "Battery: " // needs to have exactly 9 characters
   #define TXT_EXIT "Press any button to exit"
   #define TXT_RG_AMERICAS "Region:\nAmericas / Asia\n"
   #define TXT_RG_EMEA "Region: EMEA"
@@ -66,6 +66,8 @@
   #define TXT_STK_NXT "Next: Side Button"
   #define TXT_STK_SEL "Sel : M5 Button"
   #define TXT_STK_HOME "Home: Power Button"
+  #define TXT_VBAT "Voltage: " // needs to have exactly 9 characters
+  
 
 #endif
 
@@ -88,23 +90,23 @@
   #define TXT_CLRING_SETTINGS "Aplicando Ajustes\nPadrao..."
   #define TXT_RIGHT "Direita"
   #define TXT_LEFT "Esquerda"
-  #define TXT_BATT "Bateria: "
+  #define TXT_BATT "Bateria: " // needs to have exactly 9 characters
   #define TXT_EXIT "Pressione qualquer  botao para sair"
   #define TXT_RG_AMERICAS "Regiao:\nAmericas / Asia\n"
   #define TXT_RG_EMEA "Regiao: EMEA"
   #define TXT_SEL_GO_PAUSE "Ok: Iniciar/Parar"
-  #define TXT_SEL_EXIT "Seta 'v' : Sair"
+  #define TXT_SEL_EXIT "Seta Baixo : Sair"
   #define TXT_TRIG_TV "TVBG em funcionamento..."
   #define TXT_MN_AMERICA "Americas/Asia"
   #define TXT_MN_EMEA "EU/MidEast/Africa"
-  #define TXT_REGION "Regiao"
-  #define TXT_FK_GP "Botao Frontal:Iniciar/Pausar"
+  #define TXT_REGION "Escolha Regiao"
+  #define TXT_FK_GP "Botao > :Iniciar/Parar"
   #define TXT_SET_HOUR "AJUSTAR HORA"
   #define TXT_SET_MIN "AJUSTAR MINUTO"
   #define TXT_ADV "Aviso:\n"  
   #define TXT_SP_RND "Swift Pair Aleatorio"
   #define TXT_SEL_EXIT2 "\n\nProx: Sair"
-  #define TXT_BT_SPAM "Bluetooth Spam"
+  #define TXT_BT_SPAM "BluetoothSpam"
   #define TXT_SA_CRASH "SourApple Crash"
   #define TXT_CMB_BT_SPAM "BT Spam Combinado"
   #define TXT_AD_SPAM "Android Spam"
@@ -137,4 +139,5 @@
   #define TXT_STK_NXT "Prox: Botao do Lado"
   #define TXT_STK_SEL "Sel : Botao M5"
   #define TXT_STK_HOME "Home: Botao Power"
+  #define TXT_VBAT "Tensao:  " // needs to have exactly 9 characters
 #endif
