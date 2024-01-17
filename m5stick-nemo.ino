@@ -12,9 +12,9 @@ String buildver="2.3.3";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
-// -=-=- NEMO Portal Language -=- Thanks, @marivaaldo! -=-=-
-//define LANGUAGE_EN_US
-#define LANGUAGE_PT_BR
+// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
+#define LANGUAGE_EN_US
+//#define LANGUAGE_PT_BR
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -1653,6 +1653,7 @@ void qrmenu_setup() {
   qrmenu_drawmenu();
   delay(500); // Prevent switching after menu loads up
 }
+
 void qrmenu_loop() {
   if (check_next_press()) {
     cursor++;
@@ -1662,15 +1663,13 @@ void qrmenu_loop() {
     delay(250);
   }
   if (check_select_press()) {
-@@ -1614,8 +1617,9 @@ void qrmenu_loop() {
-      isSwitching = true;
-      current_proc = 1;
-    }else if ( activeQR == false ) {
-      activeQR = true;
-      DISP.fillScreen(WHITE);
-      DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
-      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
-    }
+    isSwitching = true;
+    current_proc = 1;
+  }else if ( activeQR == false ) {
+    activeQR = true;
+    DISP.fillScreen(WHITE);
+    DISP.qrcode(qrcodes[cursor].url, 0, 0, 80, 5);
+    DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);    
   }
 }
 
