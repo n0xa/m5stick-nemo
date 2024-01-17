@@ -193,6 +193,7 @@ bool isSwitching = true;
 #include "portal.h"
 #include "NEMOMatrix.h"
 #include "localization.h"
+#include "songs.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
@@ -1630,6 +1631,7 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  setupSongs();
   #ifndef STICK_C
   BITMAP;
   delay(3000);
@@ -1936,7 +1938,9 @@ void loop() {
       break;
     case 10:
       // easter egg?
+      #ifndef STICK_C
       if(check_select_press()){BITMAP;}
+      #endif
       break;
     case 11:
       wifispam_loop();
