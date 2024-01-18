@@ -40,9 +40,6 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define M5_LED_PIN 10
-  #define M5_LED_ON LOW
-  #define M5_LED_OFF HIGH
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -73,9 +70,6 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define M5_LED_PIN 19
-  #define M5_LED_ON HIGH
-  #define M5_LED_OFF LOW
 #endif
 
 #if defined(STICK_C)
@@ -100,9 +94,6 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define M5_LED_PIN 10
-  #define M5_LED_ON LOW
-  #define M5_LED_OFF HIGH
 #endif
 
 #if defined(CARDPUTER)
@@ -133,7 +124,7 @@ String buildver="2.3.4";
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
-// M5LED      - An LED exposed as M5_LED_PIN
+// M5LED      - An LED exposed as IRLED
 // RTC        - Real-time clock exposed as M5.Rtc 
 // AXP        - AXP192 Power Management exposed as M5.Axp
 // PWRMGMT    - StickC+2 Power Management exposed as M5.Power
@@ -489,7 +480,7 @@ MENU smenu[] = {
   { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { XT_ROTATION, 7},
+  { TXT_ROTATION, 7},
 #endif
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
@@ -593,10 +584,10 @@ int rotation = 1;
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 8, 1);
-    DISP.print("Battery: ");
+    DISP.print(TXT_BATT);
     DISP.print(battery);
     DISP.println("%");
-    DISP.println("Press any button to exit");
+    DISP.println(TXT_EXIT);
   }
 
   int get_battery_voltage() {
@@ -1311,9 +1302,9 @@ void aj_adv(){
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
 #if defined(M5LED)
-    digitalWrite(M5_LED_PIN, M5_LED_ON); //LED ON on Stick C Plus
+    digitalWrite(IRLED, LOW); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(M5_LED_PIN, M5_LED_OFF); //LED OFF on Stick C Plus
+     digitalWrite(IRLED, HIGH); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -1420,9 +1411,9 @@ void wifispam_loop() {
   int i = 0;
   int len = 0;
 #if defined(M5LED)
-  digitalWrite(M5_LED_PIN, M5_LED_ON); //LED ON on Stick C Plus
+  digitalWrite(IRLED, LOW); //LED ON on Stick C Plus
   delay(1);
-  digitalWrite(M5_LED_PIN, M5_LED_OFF); //LED OFF on Stick C Plus
+  digitalWrite(IRLED, HIGH); //LED OFF on Stick C Plus
 #endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
@@ -1805,8 +1796,8 @@ void setup() {
   
   // Pin setup
 #if defined(M5LED)
-  pinMode(M5_LED_PIN, OUTPUT);
-  digitalWrite(M5_LED_PIN, M5_LED_OFF); //LEDOFF
+  pinMode(IRLED, OUTPUT);
+  digitalWrite(IRLED, M5_LED_OFF); //LEDOFF
 #endif
 #if !defined(KB)
   pinMode(M5_BUTTON_HOME, INPUT);

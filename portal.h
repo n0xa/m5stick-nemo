@@ -193,9 +193,9 @@ String clear_GET() {
 void blinkLed() {
   int count = 0;
   while (count < 5) {
-    digitalWrite(M5_LED_PIN, M5_LED_ON);
+    digitalWrite(IRLED, LOW);
     delay(500);
-    digitalWrite(M5_LED_PIN, M5_LED_OFF);
+    digitalWrite(IRLED, HIGH);
     delay(500);
     count = count + 1;
   }

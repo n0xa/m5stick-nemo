@@ -89,9 +89,9 @@ void delay_ten_us(uint16_t us) {
 
 void quickflashLED( void ) {
 #if defined(M5LED)
-  digitalWrite(M5_LED_PIN, M5_LED_ON);
+  digitalWrite(IRLED, LOW);
   delay_ten_us(3000);   // 30 ms ON-time delay
-  digitalWrite(M5_LED_PIN, M5_LED_OFF);
+  digitalWrite(IRLED, HIGH);
 #endif
 }
 
