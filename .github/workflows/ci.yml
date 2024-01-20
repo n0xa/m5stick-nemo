@@ -45,6 +45,7 @@ jobs:
           libraries: |
             - 
           enable-deltas-report: true
+          enable-warnings-report: true
 
       # For more information: https://github.com/arduino/compile-sketches#readme
       - name: Compile NEMO sketch
@@ -60,8 +61,10 @@ jobs:
           libraries: |
             - name: M5Cardputer
             - name: IRRemoteESP8266
-          cli-compile-flags: "-Wall -Werror=all"
+          cli-compile-flags: "build.extra_flags=-Wall -Werror=all"
           enable-deltas-report: true
+          enable-warnings-report: true
+          verbose: true
 
 
       # - name: Setup Arduino CLI
