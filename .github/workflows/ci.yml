@@ -45,7 +45,7 @@ jobs:
           libraries: |
             - 
           cli-compile-flags: |
-            - "-e" 
+            # - "-e" 
             - "--warnings none"
           enable-deltas-report: true
           enable-warnings-report: true
