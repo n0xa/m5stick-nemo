@@ -24,15 +24,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # For more information: https://github.com/arduino/compile-sketches#readme
-      - name: Compile sketch
+      - name: Compile demo sketch
         uses: arduino/compile-sketches@v1
         with:
-          # The default is to compile for the Arduino Uno board. If you want to compile for other boards, use the `fqbn` input.
-          # fqbn:
           sketch-paths: |
-            - ./
             - ./demo_sketch
           libraries: |
             -
 
+      # For more information: https://github.com/arduino/compile-sketches#readme
+      - name: Compile NEMO sketch
+        uses: arduino/compile-sketches@v1
+        with:
+          # The default is to compile for the Arduino Uno board. If you want to compile for other boards, use the `fqbn` input.
+          # fqbn:
+
+          platforms: | 
+            - name: m5stack:esp32
+              source-url: https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
+              version: 2.1.0
+          sketch-paths: |
+            - ./
+          libraries: |
+            -
+
+
+      # - name: Setup Arduino CLI
+      #   uses: arduino/setup-arduino-cli@v1
+
+      # # We then install the platform, which one will be determined
+      # # dynamically by the build matrix.
+      # - name: Install platform
+      #   run: |
+      #     arduino-cli core update-index
+      #     arduino-cli core install ${{ matrix.arduino-platform }}
+
+      # # Finally, we compile the sketch, using the FQBN that was set
+      # # in the build matrix.
+      # - name: Compile Sketch
+      #   run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./blink

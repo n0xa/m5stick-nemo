@@ -1,0 +1,9 @@
+on:
+  schedule:
+  - cron: '0 0 * * *'
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: arduino/report-size-deltas@vl
