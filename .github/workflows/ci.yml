@@ -31,7 +31,6 @@ jobs:
             - ./demo_sketch
           libraries: |
             - 
-          enable-deltas-report: true
 
       - name: Compile demo sketch on ESP32
         uses: arduino/compile-sketches@v1
@@ -45,9 +44,16 @@ jobs:
             - ./demo_sketch
           libraries: |
             - 
-          cli-compile-flags: "-e --warnings none"
           enable-deltas-report: true
           enable-warnings-report: true
+          sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
+      
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          # if-no-files-found: error
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: ${{ env.SKETCHES_REPORTS_ARTIFACT_NAME }}
 
       - name: List all files
         run: ls -a ./demo_sketch
@@ -66,13 +72,21 @@ jobs:
           libraries: |
             - name: M5Cardputer
             - name: IRRemoteESP8266
-          cli-compile-flags: "-e --warnings none"
+          cli-compile-flags: |
+            - "-e --warnings none"
           enable-deltas-report: true
           enable-warnings-report: true
           verbose: true
       
       - name: List all files
         run: ls -a
+        
+      - name: Save memory usage change report as artifact
+        # if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: ${{ env.SKETCHES_REPORTS_PATH }}
 
 
       # - name: Setup Arduino CLI
