@@ -31,20 +31,19 @@ jobs:
             - ./demo_sketch
           libraries: |
             - 
+          enable-deltas-report: true
 
       # For more information: https://github.com/arduino/compile-sketches#readme
       - name: Compile NEMO sketch
         uses: arduino/compile-sketches@v1
         with:
-          # The default is to compile for the Arduino Uno board. If you want to compile for other boards, use the `fqbn` input.
-
           platforms: | 
             - name: m5stack:esp32
               source-url: https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
               version: 2.1.0
-          fqbn: m5stack:esp32:m5stack-core-esp32
+          fqbn: m5stack:esp32:m5cardputer
           sketch-paths: |
-            - ./
+            - ./m5stick-nemo.ino
           libraries: |
             - name: M5Cardputer
             - name: IRRemoteESP8266
