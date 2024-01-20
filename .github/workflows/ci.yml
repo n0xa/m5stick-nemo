@@ -36,11 +36,11 @@ jobs:
       - name: Compile demo sketch on ESP32
         uses: arduino/compile-sketches@v1
         with:
-          platforms: | 
-            - name: esp32
-              source-url: https://dl.espressif.com/dl/package_esp32_index.json
-              version: 1.0.6
-          fqbn: esp32:esp32:m5stack-core-esp32
+          # platforms: | 
+          #   - name: esp32
+          #     source-url: https://dl.espressif.com/dl/package_esp32_index.json
+          #     version: 1.0.6
+          # fqbn: esp32:esp32:m5stack-core-esp32
           sketch-paths: |
             - ./demo_sketch
           libraries: |
