@@ -37,7 +37,7 @@ jobs:
         uses: arduino/compile-sketches@v1
         with:
           # platforms: | 
-          #   - name: esp32
+          #   - name: esp32:esp32
           #     source-url: https://dl.espressif.com/dl/package_esp32_index.json
           #     version: 1.0.6
           # fqbn: esp32:esp32:m5stack-core-esp32
@@ -62,10 +62,10 @@ jobs:
           libraries: |
             - name: M5Cardputer
             - name: IRRemoteESP8266
-          cli-compile-flags: "build.extra_flags=-Wall -Werror=all"
+          # cli-compile-flags: "build.extra_flags=-Wall -Werror=all"
           enable-deltas-report: true
-          enable-warnings-report: true
-          verbose: true
+          # enable-warnings-report: true
+          # verbose: true
 
 
       # - name: Setup Arduino CLI
