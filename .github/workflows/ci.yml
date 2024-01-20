@@ -30,7 +30,7 @@ jobs:
           sketch-paths: |
             - ./demo_sketch
           libraries: |
-            -
+            - 
 
       # For more information: https://github.com/arduino/compile-sketches#readme
       - name: Compile NEMO sketch
@@ -46,7 +46,9 @@ jobs:
           sketch-paths: |
             - ./
           libraries: |
-            -
+            - name: M5Cardputer
+            - name: IRRemoteESP8266
+          enable-deltas-report: true
 
 
       # - name: Setup Arduino CLI
