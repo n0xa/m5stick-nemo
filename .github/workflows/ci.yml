@@ -45,7 +45,8 @@ jobs:
           libraries: |
             - 
           cli-compile-flags: |
-            - "-e --warnings none"
+            - "-e" 
+            - "--warnings none"
           enable-deltas-report: true
           enable-warnings-report: true
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
