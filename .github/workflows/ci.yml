@@ -51,12 +51,12 @@ jobs:
           enable-warnings-report: true
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
       
-      - name: Upload Report
-        uses: actions/upload-artifact@v3
-        with:
-          # if-no-files-found: error
-          path: ${{ env.SKETCHES_REPORTS_PATH }}
-          name: ${{ env.SKETCHES_REPORTS_ARTIFACT_NAME }}
+      # - name: Upload Report
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     # if-no-files-found: error
+      #     path: ${{ env.SKETCHES_REPORTS_PATH }}
+      #     name: ${{ env.SKETCHES_REPORTS_ARTIFACT_NAME }}
 
       - name: List all files
         run: ls -a ./demo_sketch
