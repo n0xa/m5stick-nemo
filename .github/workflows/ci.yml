@@ -37,12 +37,12 @@ jobs:
         uses: arduino/compile-sketches@v1
         with:
           # The default is to compile for the Arduino Uno board. If you want to compile for other boards, use the `fqbn` input.
-          # fqbn:
 
           platforms: | 
             - name: m5stack:esp32
               source-url: https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
               version: 2.1.0
+          fqbn: m5stack:esp32:m5stack-core-esp32
           sketch-paths: |
             - ./
           libraries: |
