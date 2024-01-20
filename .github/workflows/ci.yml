@@ -27,10 +27,6 @@ jobs:
       - name: Compile demo sketch on Arduino
         uses: arduino/compile-sketches@v1
         with:
-          platforms: | 
-            - name: esp32
-              source-url: https://dl.espressif.com/dl/package_esp32_index.json
-          fqbn: esp32:esp32:m5stack-core-esp32
           sketch-paths: |
             - ./demo_sketch
           libraries: |
@@ -54,7 +50,7 @@ jobs:
             - name: m5stack:esp32
               source-url: https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json
               version: 2.1.0
-          fqbn: m5stack:esp32:m5cardputer
+          fqbn: m5stack:esp32:m5stack_cardputer
           sketch-paths: |
             - ./m5stick-nemo.ino
           libraries: |
