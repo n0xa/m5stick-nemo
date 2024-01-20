@@ -1,0 +1,19 @@
+---
+name: Arduino_CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  arduino_ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Arduino-CI/action@stable-1.x
+        # env:

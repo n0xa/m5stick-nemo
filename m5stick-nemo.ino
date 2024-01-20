@@ -2,10 +2,10 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+//#define STICK_C_PLUS
 //#define STICK_C_PLUS2
 //#define STICK_C
-//#define CARDPUTER
+#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.4";
@@ -1613,7 +1613,7 @@ void bootScreen(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
-  DISP.println("M5-NEMO");
+  DISP.println("M5-VIZ");
   DISP.setCursor(10, 30);
   DISP.setTextSize(SMALL_TEXT);
   DISP.printf("%s-%s\n",buildver,platformName);
