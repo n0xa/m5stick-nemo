@@ -3,7 +3,7 @@
 // Retaining the Portuguese translations since this project has a large
 // fan base in Brazil. Shouts to CyberJulio as well.
 
-#define DEFAULT_AP_SSID_NAME "Nemo Free WiFi"
+
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
 #if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR)
@@ -11,6 +11,7 @@
 #endif
 
 #if defined(LANGUAGE_EN_US)
+#define DEFAULT_AP_SSID_NAME "Nemo Free WiFi"
 #define LOGIN_TITLE "Sign in"
 #define LOGIN_SUBTITLE "Sign In With Google"
 #define LOGIN_EMAIL_PLACEHOLDER "Email"
@@ -19,6 +20,7 @@
 #define LOGIN_BUTTON "Next"
 #define LOGIN_AFTER_MESSAGE "Please wait a few minutes. Soon you will be able to access the internet."
 #elif defined(LANGUAGE_PT_BR)
+#define DEFAULT_AP_SSID_NAME "WiFi Gratis"
 #define LOGIN_TITLE "Fazer login"
 #define LOGIN_SUBTITLE "Use sua Conta do Google"
 #define LOGIN_EMAIL_PLACEHOLDER "E-mail"

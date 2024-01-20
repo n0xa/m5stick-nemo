@@ -8,7 +8,7 @@
 #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.3";
+String buildver="2.3.5";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -476,7 +476,7 @@ MENU smenu[] = {
   { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { XT_ROTATION, 7},
+  { TXT_ROTATION, 7},
 #endif
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
@@ -635,7 +635,7 @@ int rotation = 1;
     DISP.fillScreen(BGCOLOR);
     pinMode(VBAT_PIN, INPUT);
     int bat_ = analogRead(VBAT_PIN);
-    int battery = (((bat_ - 1712) * 100) / 786); 
+    int battery = (((bat_ - 1712) * 100) / 823); 
     if (battery > 100) {
       battery = 100;
     }
@@ -656,7 +656,7 @@ int rotation = 1;
       Used minimum 3,0V and maximum 4,2V for battery. So it may show wrong values. Needs testing.
       It only shows decent values when disconnected from charger, due to HW limitations.
       Ideal equation: Bat% = ((Vadc - 1842) / (2580 - 1842)) * 100. Where: 4,2V = 2580, 3,0V = 1842.
-      Adjusted mine to: 2498 maximum / 1712 minimum / delta = 786
+      Adjusted mine to: 2535 maximum / 1712 minimum / delta = 823
     */
   }
 
@@ -665,7 +665,7 @@ int rotation = 1;
     if (currentMillis - lastBatteryTime >= batteryInterval) { // 1s delay for displaying things, maintaining buttons available
       lastBatteryTime = currentMillis;
       int bat_ = analogRead(VBAT_PIN);
-      int battery = (((bat_ - 1712) * 100) / 786);
+      int battery = (((bat_ - 1712) * 100) / 823);
       if (battery > 100) {
         battery = 100;
       }
