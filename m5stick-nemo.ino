@@ -1600,7 +1600,7 @@ void wscan_result_loop(){
     DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
-    DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
+    DISP.print("BSSID:\n" + WiFi.BSSIDstr(cursor));
     DISP.printf(TXT_SEL_BACK);
 
     if (target_deauth_flg==false) { 
