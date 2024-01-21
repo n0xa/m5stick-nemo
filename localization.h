@@ -66,6 +66,9 @@
   #define TXT_STK_NXT "Next: Side Button"
   #define TXT_STK_SEL "Sel : M5 Button"
   #define TXT_STK_HOME "Home: Power Button"
+  #define TXT_DEAUTH_START "Select>Start DEAUTH\n"
+  #define TXT_DEAUTH_STOP "Select>Stop DEAUTH \n"
+  #define TXT_TOGGLE_SDCARD "Toggle SDCARD"
 
 #endif
 
@@ -135,6 +138,9 @@
   #define TXT_INST_HOME "Home: Esc ou Seta <"
   #define TXT_INST_PRSS_KEY "Pressione uma tecla"
   #define TXT_STK_NXT "Prox: Botao do Lado"
+  #define TXT_DEAUTH_START "Sel: Iniciar DEAUTH\n"
+  #define TXT_DEAUTH_STOP "Sel: Parar DEAUTH  \n"
+  #define TXT_TOGGLE_SDCARD "Alternar SDCARD"
   #define TXT_STK_SEL "Sel : Botao M5"
   #define TXT_STK_HOME "Home: Botao Power"
 #endif
