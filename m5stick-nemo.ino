@@ -38,11 +38,11 @@ String buildver="2.3.4";
   #define SPEAKER M5.Beep
 //  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix) // This doesn't work, generates static.
   #define BITMAP Serial.println("unsupported")
+
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14 // pin 14 work and dont flood Serial monitor with errors...
-                       // If needed to something else, that i dind't realise, change to -1
+  #define SD_CS_PIN 14
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -62,7 +62,6 @@ String buildver="2.3.4";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
-  #define BITMAP M5.Lcd.drawBmp(NEMOMatrix, 97338)
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
@@ -71,8 +70,7 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14 // pin 14 work and dont flood Serial monitor with errors...
-                       // If needed to something else, that i dind't realise, change to -1
+  #define SD_CS_PIN 14 //usar -1
 #endif
 
 #if defined(STICK_C)
@@ -93,12 +91,10 @@ String buildver="2.3.4";
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
-  #define BITMAP Serial.println("unsupported")
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14 // pin 14 work and dont flood Serial monitor with errors...
-                       // If needed to something else, that i dind't realise, change to -1
+  #define SD_CS_PIN 14
 #endif
 
 #if defined(CARDPUTER)
@@ -120,7 +116,6 @@ String buildver="2.3.4";
   #define IRLED 44
   #define BACKLIGHT 38
   #define SPEAKER M5Cardputer.Speaker
-  #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
@@ -179,6 +174,11 @@ bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cl
 bool activeQR = false; 
 const byte PortalTickTimer = 1000;
 String apSsidName = String("");
+//uint8_t* bssid;
+uint8_t channel = 0;
+bool target_deauth_flg = false;
+bool target_deauth = false;
+bool clone_flg = false;
 bool isSwitching = true;
 #if defined(RTC)
   int current_proc = 0; // Start in Clock Mode
@@ -208,6 +208,10 @@ bool isSwitching = true;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include "deauth.h"                                                             //DEAUTH
+#include "esp_wifi.h"                                                             //DEAUTH
+wifi_ap_record_t ap_record;                                                             //DEAUTH
+
 
 struct MENU {
   char name[19];
@@ -495,6 +499,13 @@ MENU smenu[] = {
 #if defined(USE_EEPROM)
   { TXT_CLR_SETTINGS, 99},
 #endif
+
+#if defined(SDCARD)
+    { "Toggle SDCARD", 97},
+#endif
+};
+int smenu_size = sizeof(smenu) / sizeof (MENU);
+=======
 };int smenu_size = sizeof(smenu) / sizeof (MENU);
 
 void smenu_setup() {
@@ -541,6 +552,12 @@ void smenu_loop() {
     if(smenu[cursor].command == 99){
       clearSettings();
     }
+    if(smenu[cursor].command == 97){                               // SDCARD M5Stick
+      DISP.fillScreen(BGCOLOR);                                    // SDCARD M5Stick
+      DISP.setCursor(5, 1);                                        // SDCARD M5Stick
+      ToggleSDCard();                                              // SDCARD M5Stick
+      current_proc=2;                                              // SDCARD M5Stick
+    }                                                              // SDCARD M5Stick
     current_proc = smenu[cursor].command;
   }
 }
@@ -1450,6 +1467,7 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
+  { "Targ. Deauth", 6},                                         //DEAUTH
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1476,6 +1494,7 @@ void wsmenu_loop() {
       case 0:
         rstOverride = false;
         isSwitching = true;
+        target_deauth_flg=false;
         current_proc = 14;
         break;
       case 1:
@@ -1492,6 +1511,12 @@ void wsmenu_loop() {
         break;
       case 5:
         current_proc = 1;
+        break;
+      case 6:
+        rstOverride = false;
+        isSwitching = true;
+        target_deauth_flg = true;
+        current_proc = 14;
         break;
     }
   }
@@ -1535,7 +1560,7 @@ void wscan_result_loop(){
     delay(250);
   }
   if (check_select_press()) {
-    delay(250);
+    delay(50);
     if(cursor == wifict){
       rstOverride = false;
       current_proc = 14;
@@ -1578,14 +1603,41 @@ void wscan_result_loop(){
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
+
+    DISP.printf("\nNext: Back\n");
+
+    if (target_deauth_flg==false) { 
+      DISP.printf("Hold Select: Clone\n"); 
+    } else {                 // DEAUTH - save channel
+      if(target_deauth==false) { 
+        DISP.printf("Select: Start DEAUTH\n");
+      } else { DISP.printf("Select: STOP DEAUTH \n"); } 
+    }                                   // DEAUTH - save channel
+    delay(200);
+    if(check_select_press()){
+
     DISP.printf(TXT_SEL_BACK);
     DISP.printf(TXT_HOLD_CLONE);
    if(check_select_press()){
       apSsidName=WiFi.SSID(cursor);
-      isSwitching=true;
-      current_proc=19;
+      uint8_t channel = static_cast<uint8_t>(WiFi.channel(cursor));                    // DEAUTH - save channel
+      uint8_t* bssid = WiFi.BSSID(cursor);                                             // DEAUTH - save BSSID (AP MAC)
+      memcpy(ap_record.bssid, bssid, 6);                                               // DEAUTH - cpy bssid to memory
+      if (target_deauth_flg==true) {
+        target_deauth = !target_deauth;                                                           // DEAUTH - set deauth flag
+      } 
+      else {
+        target_deauth = false;                                                           // DEAUTH - set deauth flag
+        clone_flg = true;                                                                // DEAUTH - set clone flag
+        isSwitching=true;
+        current_proc=19;
+      }  
     }
   }
+  if (target_deauth_flg==true && target_deauth == true) {
+    wsl_bypasser_send_deauth_frame(&ap_record, channel);                             // DEAUTH
+    delay(200);
+  } 
 }
 
 void wscan_setup(){
@@ -1617,7 +1669,7 @@ void bootScreen(){
   // Boot Screen
   setupSongs();
   #ifndef STICK_C
-  BITMAP;
+  DISP.drawBmp(NEMOMatrix, 97338);
   delay(3000);
   #endif
   DISP.fillScreen(BGCOLOR);
@@ -1712,13 +1764,37 @@ void portal_loop(){
       printHomeToScreen();
     }
   }
-  dnsServer.processNextRequest();
-  webServer.handleClient();
+  if (clone_flg==true) {
+    if (target_deauth == true) {                                                                 // DEAUTH
+      wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH
+      DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+      DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+      DISP.setCursor(1, 115);                                                                    // DEAUTH
+      DISP.println("Select> STOP deauth");                                                       // DEAUTH
+      DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+    } else{                                                                                      // DEAUTH
+      DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+      DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+      DISP.setCursor(1, 115);                                                                    // DEAUTH
+      DISP.println("Select>START deauth ");                                                      // DEAUTH
+      DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+    }                                                                                            // DEAUTH
+    dnsServer.processNextRequest();
+    webServer.handleClient();
+
+    if (check_select_press()){                                                                    // DEAUTH
+      if (target_deauth==true) { target_deauth = false; }                                         // DEAUTH
+      else {target_deauth = true; }                                                               // DEAUTH
+      delay(500);                                                                                 // DEAUTH
+    }                                                                                             // DEAUTH
+  }
   if (check_next_press()){
     shutdownWebServer();
     portal_active = false;
     rstOverride = false;
     isSwitching = true;
+    target_deauth = false;                                                                         // DEAUTH
+    clone_flg = false;                                                                             // DEAUTH
     current_proc = 12;
     delay(500);
   }
@@ -1726,13 +1802,13 @@ void portal_loop(){
 
 /// ENTRY ///
 void setup() {
-#if defined(CARDPUTER)
-  auto cfg = M5.config();
-  M5Cardputer.begin(cfg, true);
-  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
-#else
-  M5.begin();
-#endif
+  #if defined(CARDPUTER)
+    auto cfg = M5.config();
+    M5Cardputer.begin(cfg, true);
+    pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
+  #else
+    M5.begin();
+  #endif
   if(check_next_press()){
     clearSettings();
   }
@@ -1763,17 +1839,17 @@ void setup() {
   getSSID();
   
   // Pin setup
-#if defined(M5LED)
-  pinMode(M5_LED, OUTPUT);
-  digitalWrite(M5_LED, HIGH); //LEDOFF
-#endif
-#if !defined(KB)
-  pinMode(M5_BUTTON_HOME, INPUT);
-  pinMode(M5_BUTTON_RST, INPUT);
-#endif
-#if defined(M5_BUTTON_MENU)
-  pinMode(M5_BUTTON_MENU, INPUT);
-#endif
+  #if defined(M5LED)
+    pinMode(M5_LED, OUTPUT);
+    digitalWrite(M5_LED, HIGH); //LEDOFF
+  #endif
+  #if !defined(KB)
+    pinMode(M5_BUTTON_HOME, INPUT);
+    pinMode(M5_BUTTON_RST, INPUT);
+  #endif
+  #if defined(M5_BUTTON_MENU)
+    pinMode(M5_BUTTON_MENU, INPUT);
+  #endif
   // Random seed
   randomSeed(analogRead(0));
 
@@ -1930,7 +2006,7 @@ void loop() {
     case 10:
       // easter egg?
       #ifndef STICK_C
-      if(check_select_press()){BITMAP;}
+      if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
       #endif
       break;
     case 11:
