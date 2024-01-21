@@ -38,13 +38,13 @@ jobs:
           arduino-cli board listall
           arduino-cli board list
           
-          # arduino-cli core install m5stack:esp32
+          arduino-cli core install m5stack:esp32
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./demo_sketch
+        run: arduino-cli compile --fqbn esp32:esp32:esp32 -e ./demo_sketch
       
       - name: List all files
         run: ls -a
