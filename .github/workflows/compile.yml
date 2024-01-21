@@ -42,9 +42,11 @@ jobs:
           
           # arduino-cli lib install m5stack
           # arduino-cli core install m5stack
+          
+          arduino-cli lib search M5Cardputer
+          
           arduino-cli core install m5stack:esp32 --verbose
 
-          arduino-cli lib search M5Cardputer
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
