@@ -21,8 +21,19 @@ jobs:
 
       - name: Install platform
         run: |
+          set -x
+          arduino-cli core search 
+
           arduino-cli core update-index --additional-urls https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json --log-level warn --verbose
           
+          arduino-cli core search 
+
+          arduino-cli board list
+          arduino-cli board listall
+          arduino-cli board list
+
+          arduino-cli core install esp32:esp32
+
           arduino-cli board list
           arduino-cli board listall
           arduino-cli board list
