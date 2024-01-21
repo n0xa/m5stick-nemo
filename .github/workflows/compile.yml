@@ -42,8 +42,8 @@ jobs:
           pwd
           tree
         
-      # - name: Upload firmware
+      # - name: Upload M5Cardputer firmware
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     path: /home/runner/work/m5stick-nemo/m5stick-nemo/demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
-      #     name: demo_sketch_${{ github.run_number }}.bin
+      #     path: build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bin
+      #     name: m5stick-nemo-m5cardputer_${{ github.run_number }}.bin
