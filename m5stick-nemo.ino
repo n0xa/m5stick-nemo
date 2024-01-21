@@ -2,10 +2,10 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
-//#define STICK_C_PLUS2
-//#define STICK_C
-#define CARDPUTER
+// #define STICK_C_PLUS
+#define STICK_C_PLUS2
+// #define STICK_C
+// #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 String buildver="2.3.4";
