@@ -29,7 +29,7 @@ jobs:
           arduino-cli core search m5stack --additional-urls "file:///${PWD}/package_m5stack_index.json"
 
           # arduino-cli core install esp32:esp32
-          arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json" --verbose
+          arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json"
 
           arduino-cli core search m5stack
           arduino-cli board listall --additional-urls "file:///${PWD}/package_m5stack_index.json"
@@ -39,7 +39,7 @@ jobs:
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn esp32:esp32:esp32 -e ./demo_sketch
+        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./demo_sketch
       
       - name: List all files
         run: |
@@ -49,5 +49,5 @@ jobs:
       - name: Save memory usage change report as artifact
         uses: actions/upload-artifact@v2
         with:
-          path: demo_sketch\build\esp32.esp32.esp32\demo_sketch.ino.bin
-          name: demo_sketch_${{ github.run_number }}.ino.bin
+          path: demo_sketch\build\m5stack:esp32:m5stack_cardputer\demo_sketch.ino.bin
+          name: demo_sketch_${{ github.run_number }}.bin
