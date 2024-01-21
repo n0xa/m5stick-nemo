@@ -44,8 +44,8 @@ jobs:
           # arduino-cli core install m5stack
           
           arduino-cli lib search M5Cardputer
-          
-          arduino-cli core install m5stack:esp32 --verbose
+
+          arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json" --verbose
 
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
