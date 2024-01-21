@@ -48,5 +48,5 @@ jobs:
         with:
           # path: /home/runner/work/m5stick-nemo/m5stick-nemo/demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
           path: demo_sketch/build/m5stack.esp32.m5stack_cardputer/demo_sketch.ino.bin
-          name: demo_sketch_${{ github.run_number }}.bin
+          name: demo_sketch_${{ github.run_number }}
           # if-no-files-found: error
