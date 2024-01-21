@@ -1,17 +1,19 @@
 ---
-name: Compile M5Cardputer Sketch
+name: Demo Compile Sketch
 
 on:
   push:
     branches:
       - main
+    # paths:
+    #   - 'demo_sketch/**'
   pull_request:
     branches:
       - main
   
 
 jobs:
-  compile_m5cardputer_sketch:
+  compile_demo_sketch:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,8 +34,8 @@ jobs:
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
-      - name: Compile M5Cardputer Sketch
-        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./m5stick-nemo.ino
+      - name: Compile Sketch
+        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./demo_sketch
       
       - name: List all files
         run: |
@@ -41,8 +43,8 @@ jobs:
           pwd
           tree
         
-      # - name: Upload firmware
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     path: /home/runner/work/m5stick-nemo/m5stick-nemo/demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
-      #     name: demo_sketch_${{ github.run_number }}.bin
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          path: /home/runner/work/m5stick-nemo/m5stick-nemo/demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
+          name: demo_sketch_${{ github.run_number }}.bin
