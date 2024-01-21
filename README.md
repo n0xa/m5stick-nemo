@@ -12,6 +12,8 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ## My changelog
 * Added Deauthentication functionality to targetted APs when usin Nemo Portal in Clone mode and from Scanning
+* // Arduino IDE needs to be tweeked to work, follow the instructions: https://github.com/justcallmekoko/ESP32Marauder/wiki/arduino-ide-setup
+* // But change the file in: C:\Users\<YOur User>\AppData\Local\Arduino15\packages\m5stack\hardware\esp32\2.0.9\
 * Added option in Setup to Mount/Unmount SDCard when using M5StickC devices
 * Created new file to handle SPI/SD if not using CARDPUTER
 * SDCARD is now working on M5StickC Plus2
