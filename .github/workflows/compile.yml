@@ -60,5 +60,5 @@ jobs:
       - name: Save memory usage change report as artifact
         uses: actions/upload-artifact@v2
         with:
-          path: ${{ env.SKETCHES_REPORTS_PATH }}
-          name: ${{ env.SKETCHES_REPORTS_PATH }}
+          path: demo_sketch\build\esp32.esp32.m5stack-core-esp32\demo_sketch.ino.bin
+          name: demo_sketch_${{ github.run_number }}.ino.bin
