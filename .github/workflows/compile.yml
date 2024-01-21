@@ -1,5 +1,5 @@
 ---
-name: CI
+name: CLI Compile Sketch
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  compile_sketch:
+  cli_compile_sketch:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +27,7 @@ jobs:
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn esp32:esp32:m5stack-core-esp32 -e ./demo_sketch
+        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./demo_sketch
       
       - name: List all files
         run: ls -a
