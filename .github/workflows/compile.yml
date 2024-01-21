@@ -26,19 +26,21 @@ jobs:
           arduino-cli core update-index
 
           arduino-cli core search m5stack
-          arduino-cli lib search m5stack
+          # arduino-cli lib search m5stack
 
           arduino-cli core update-index --additional-urls https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json --log-level warn --verbose
 
+          arduino-cli core update-index
+          arduino-cli core install
           arduino-cli core search m5stack
 
           arduino-cli core install esp32:esp32
 
           arduino-cli board listall
           
-          arduino-cli lib install m5stack
-          
+          # arduino-cli lib install m5stack
           # arduino-cli core install m5stack
+          arduino-cli core install m5stack:esp32 --verbose
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
