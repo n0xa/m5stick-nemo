@@ -505,8 +505,6 @@ MENU smenu[] = {
 #endif
 };
 int smenu_size = sizeof(smenu) / sizeof (MENU);
-=======
-};int smenu_size = sizeof(smenu) / sizeof (MENU);
 
 void smenu_setup() {
   cursor = 0;
@@ -1614,7 +1612,6 @@ void wscan_result_loop(){
       } else { DISP.printf("Select: STOP DEAUTH \n"); } 
     }                                   // DEAUTH - save channel
     delay(200);
-    if(check_select_press()){
 
     DISP.printf(TXT_SEL_BACK);
     DISP.printf(TXT_HOLD_CLONE);
