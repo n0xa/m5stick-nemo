@@ -33,7 +33,7 @@ jobs:
 
           arduino-cli board listall
           
-          arduino-cli lib search m5stack
+          arduino-cli lib install m5stack
           
           # arduino-cli core install m5stack
 
@@ -44,7 +44,10 @@ jobs:
         run: arduino-cli compile --fqbn esp32:esp32:esp32 -e ./demo_sketch
       
       - name: List all files
-        run: ls -a
+        run: |
+          ls -all ./demo_sketch
+          ls -all ./demo_sketch/build
+          tree
         
       - name: Save memory usage change report as artifact
         uses: actions/upload-artifact@v2
