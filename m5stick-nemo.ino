@@ -501,7 +501,7 @@ MENU smenu[] = {
 #endif
 
 #if defined(SDCARD)
-    { "Toggle SDCARD", 97},
+    { TXT_TOGGLE_SDCARD, 97},
 #endif
 };
 int smenu_size = sizeof(smenu) / sizeof (MENU);
@@ -1601,20 +1601,19 @@ void wscan_result_loop(){
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
-
-    DISP.printf("\nNext: Back\n");
+    DISP.printf(TXT_SEL_BACK);
 
     if (target_deauth_flg==false) { 
-      DISP.printf("Hold Select: Clone\n"); 
+    DISP.printf(TXT_HOLD_CLONE);
     } else {                 // DEAUTH - save channel
       if(target_deauth==false) { 
-        DISP.printf("Select: Start DEAUTH\n");
-      } else { DISP.printf("Select: STOP DEAUTH \n"); } 
+        DISP.printf(TXT_DEAUTH_START);
+      } else { DISP.printf(TXT_DEAUTH_STOP); } 
     }                                   // DEAUTH - save channel
     delay(200);
 
-    DISP.printf(TXT_SEL_BACK);
-    DISP.printf(TXT_HOLD_CLONE);
+
+
    if(check_select_press()){
       apSsidName=WiFi.SSID(cursor);
       uint8_t channel = static_cast<uint8_t>(WiFi.channel(cursor));                    // DEAUTH - save channel
@@ -1767,13 +1766,13 @@ void portal_loop(){
       DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
       DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
       DISP.setCursor(1, 115);                                                                    // DEAUTH
-      DISP.println("Select> STOP deauth");                                                       // DEAUTH
+      DISP.println(TXT_DEAUTH_STOP);                                                       // DEAUTH
       DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
     } else{                                                                                      // DEAUTH
       DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
       DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
       DISP.setCursor(1, 115);                                                                    // DEAUTH
-      DISP.println("Select>START deauth ");                                                      // DEAUTH
+      DISP.println(TXT_DEAUTH_START);                                                      // DEAUTH
       DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
     }                                                                                            // DEAUTH
     dnsServer.processNextRequest();
