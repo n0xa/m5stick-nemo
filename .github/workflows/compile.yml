@@ -32,7 +32,7 @@ jobs:
           arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json"
 
           arduino-cli core search m5stack
-          arduino-cli board listall --additional-urls "file:///${PWD}/package_m5stack_index.json"
+          # arduino-cli board listall --additional-urls "file:///${PWD}/package_m5stack_index.json"
           arduino-cli board listall
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
@@ -49,5 +49,5 @@ jobs:
       - name: Save memory usage change report as artifact
         uses: actions/upload-artifact@v2
         with:
-          path: demo_sketch\build\m5stack:esp32:m5stack_cardputer\demo_sketch.ino.bin
+          path: demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
           name: demo_sketch_${{ github.run_number }}.bin
