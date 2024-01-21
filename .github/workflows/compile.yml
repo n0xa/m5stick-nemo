@@ -23,6 +23,7 @@ jobs:
         run: |
           set -x
           arduino-cli core search
+          arduino-cli core update-index
 
           arduino-cli core search m5stack
           arduino-cli lib search m5stack
