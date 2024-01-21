@@ -44,9 +44,10 @@ jobs:
       - name: List all files
         run: |
           set -x
+          pwd
           tree
         
-      - name: Save memory usage change report as artifact
+      - name: Upload firmware
         uses: actions/upload-artifact@v2
         with:
           path: demo_sketch/build/m5stack:esp32:m5stack_cardputer/demo_sketch.ino.bin
