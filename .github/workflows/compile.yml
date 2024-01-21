@@ -33,7 +33,12 @@ jobs:
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
       - name: Compile M5Cardputer Sketch
-        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property build.partitions=huge_app --build-property upload.maximum_size=3145728 ./m5stick-nemo.ino
+        run: |
+          arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e \
+                              --build-property build.partitions=huge_app \
+                              --build-property upload.maximum_size=3145728 \
+                              --libraries M5Cardputer,IRRemoteESP8266 \
+                              ./m5stick-nemo.ino
       
       - name: List all files
         if: always()
