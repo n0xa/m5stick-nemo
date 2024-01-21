@@ -33,7 +33,7 @@ jobs:
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
 
       - name: Compile M5Cardputer Sketch
-        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e ./m5stick-nemo.ino
+        run: arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer --build-property build.extra_flags=-DCARDPUTER -e  ./m5stick-nemo.ino
       
       - name: List all files
         if: always()
