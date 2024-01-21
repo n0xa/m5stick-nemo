@@ -247,3 +247,12 @@ void beaconSpamList(const char list[]){
     i += j;
   }
 }
+
+
+// Target Deauth Attacks
+
+
+
+
+
+

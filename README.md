@@ -10,15 +10,13 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ![M5-Nemo on M5StickC family and M5Cardputer](https://github.com/n0xa/m5stick-nemo/blob/main/M5-Nemo.jpg)
 
-## bmorc changelog
+## My changelog
+* Added Deauthentication functionality to targetted APs when usin Nemo Portal in Clone mode and from Scanning
+* Added option in Setup to Mount/Unmount SDCard when using M5StickC devices
 * Created new file to handle SPI/SD if not using CARDPUTER
-* SDCARD is now starting and working on M5StickC Plus2
+* SDCARD is now working on M5StickC Plus2
 
-## bmorc Known Issues
-* Nothing yet
-
-## bmorc ToDo list
-* Add an option on settings to (on EEPROM flag, maybe?) to start/stop using SDCARD, without having to flash new firmware
+## My ToDo list
 * ideas?
 
 
