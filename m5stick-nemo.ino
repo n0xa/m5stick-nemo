@@ -1590,14 +1590,14 @@ void wscan_result_loop(){
       break ;
     }
     
-    DISP.setTextSize(SMALL_TEXT);
+    DISP.setTextSize(MEDIUM_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(TINY_TEXT);
+      DISP.setTextSize(SMALL_TEXT);
     }       
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
-    DISP.setTextSize(TINY_TEXT);
+    DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
