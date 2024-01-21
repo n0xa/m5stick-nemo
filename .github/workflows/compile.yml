@@ -1,0 +1,40 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  compile_sketch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install platform
+        run: |
+          arduino-cli core update-index --additional-urls https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json --log-level warn --verbose
+
+          arduino-cli lib install M5Cardputer --log-level warn --verbose
+          arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
+
+      - name: Compile Sketch
+        run: arduino-cli compile --fqbn esp32:esp32:m5stack-core-esp32 -e ./demo_sketch
+      
+      - name: List all files
+        run: ls -a
+        
+      - name: Save memory usage change report as artifact
+        # if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: ${{ env.SKETCHES_REPORTS_PATH }}

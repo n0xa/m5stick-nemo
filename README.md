@@ -83,6 +83,22 @@ If you want to customize NEMO or contribute to the project, you should be famili
   * If for some reason the screen jumps from very dim at level 0 to almost fully bright at level 1 and further brightness levels don't affect anything, set the pct_brightness variable to false.
 * Compile and upload the project
 
+## Building from Source (with Arduino CLI)
+
+- Install Arduino CLI
+- Add M5Stack Index to Arduino Core
+- Add M5Stack Library
+
+```bash
+
+
+arduino-cli core update-index --additional-urls https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json --log-level warn --verbose
+
+arduino-cli lib install M5Cardputer --log-level warn --verbose
+arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose 
+
+```
+
 ## Troubleshooting
 * Several features output debugging information to the serial monitor. Use the Serial Monitor feature in Arduino IDE or M5Burner to gather this information. It may have useful hints. When filing a bug report, it often helps to include serial monitor output.
 * Reset the EEPROM. On models with EEPROM settings support, use "Clear Settings" from the settings menu, or hold the "Next" button (Side key on StickC models, Tab or Down Arrow on Cardputer) while powering on. 
