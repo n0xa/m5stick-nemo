@@ -69,7 +69,10 @@
   #define TXT_DEAUTH_START "Select>Start DEAUTH\n"
   #define TXT_DEAUTH_STOP "Select>Stop DEAUTH \n"
   #define TXT_TOGGLE_SDCARD "Toggle SDCARD"
-
+  #define TXT_HOLD_ATTACK "Hold Select: Attack\n"
+  #define TXT_WFA_PORTAL "Clone Portal"
+  #define TXT_WFA_DEAUTH "Deauth attack"
+  #define TXT_WFA_COMBINED "Deauth+Clone"
 #endif
 
 #if defined(LANGUAGE_PT_BR)
@@ -138,9 +141,13 @@
   #define TXT_INST_HOME "Home: Esc ou Seta <"
   #define TXT_INST_PRSS_KEY "Pressione uma tecla"
   #define TXT_STK_NXT "Prox: Botao do Lado"
+  #define TXT_STK_SEL "Sel : Botao M5"
+  #define TXT_STK_HOME "Home: Botao Power"
   #define TXT_DEAUTH_START "Sel: Iniciar DEAUTH\n"
   #define TXT_DEAUTH_STOP "Sel: Parar DEAUTH  \n"
   #define TXT_TOGGLE_SDCARD "Alternar SDCARD"
-  #define TXT_STK_SEL "Sel : Botao M5"
-  #define TXT_STK_HOME "Home: Botao Power"
+  #define TXT_HOLD_ATTACK "Segurar Ok: Atacar\n"
+  #define TXT_WFA_PORTAL "Clonar Portal"
+  #define TXT_WFA_DEAUTH "Ataque Deauth"
+  #define TXT_WFA_COMBINED "Deauth+Clone"
 #endif

@@ -30,9 +30,9 @@ bool sdcardMounted = false;
   bool setupSdCard() {
     sdcardSemaphore = xSemaphoreCreateMutex();
     sdcardSPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN); // start SPI communications
-  
+
     delay(10);
-  
+
     if (!SD.begin(SD_CS_PIN, sdcardSPI)) { //excluded * -> poiter indicator -
       Serial.println("Failed to mount SDCARD");
       sdcardSPI.end(); // Closes SPI connections and release header pins.
@@ -43,7 +43,7 @@ bool sdcardMounted = false;
       return true;
     }
   }
-  
+
   void ToggleSDCard()
   {
     if (sdcardMounted == true) {
@@ -57,12 +57,12 @@ bool sdcardMounted = false;
     } else {
       sdcardSPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
       delay(10);
-  
+
       if (!SD.begin(SD_CS_PIN, sdcardSPI)) {
         Serial.println("Card Mount Failed");
         DISP.println("Card Mount Failed");
         sdcardSPI.end();
-  
+
       } else {
         // 
         sdcardMounted = true;
@@ -85,14 +85,14 @@ bool sdcardMounted = false;
           DISP.println("UNKNOWN");
           Serial.println("UNKNOWN");
         }
-  
+
         uint64_t cardSize = SD.cardSize() / (1024 * 1024);
         DISP.printf("SD Card Size: %lluMB\n", cardSize);
         Serial.printf("SD Card Size: %lluMB\n", cardSize);
-  
+
       }
     }
     delay(5000);
-  
+
   }
 #endif
