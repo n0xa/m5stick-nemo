@@ -1667,8 +1667,10 @@ void bootScreen(){
   // Boot Screen
   setupSongs();
   #ifndef STICK_C
-  DISP.drawBmp(NEMOMatrix, 97338);
-  delay(3000);
+    #ifndef STICK_C_PLUS
+      DISP.drawBmp(NEMOMatrix, 97338);
+      delay(3000);
+    #endif
   #endif
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
@@ -1858,8 +1860,9 @@ void setup() {
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
 
   // Nemo Portal Init
-  //testsd();
-  setupSdCard();
+  #if defined(SDCARD)
+    setupSdCard();
+  #endif
   bootTime = lastActivity = millis();
 
   screenBrightness(brightness);
@@ -2004,7 +2007,9 @@ void loop() {
     case 10:
       // easter egg?
       #ifndef STICK_C
-      if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
+        #ifndef STICK_C_PLUS
+          if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
+        #endif
       #endif
       break;
     case 11:
