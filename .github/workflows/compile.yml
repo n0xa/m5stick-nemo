@@ -47,15 +47,14 @@ jobs:
                               --libraries M5Cardputer,IRRemoteESP8266 \
                               ./m5stick-nemo.ino
       
-      
       - name: Create firmware
         run: |
           set -x
 
           esptool.py --chip esp32s3 merge_bin --output m5stick-nemo.m5cardputer.bin \
-            0x0000 m5stick-nemo.ino.bootloader.bin \
-            0x8000 m5stick-nemo.ino.partitions.bin \
-            0x10000 m5stick-nemo.ino.bin
+            0x0000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bootloader.bin \
+            0x8000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.partitions.bin \
+            0x10000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bin
 
 
       - name: List all files
@@ -71,6 +70,6 @@ jobs:
       - name: Upload M5Cardputer firmware
         uses: actions/upload-artifact@v4
         with:
-          path: build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bin
+          path: m5stick-nemo.m5cardputer.bin
           name: m5stick-nemo.m5cardputer
           # if-no-files-found: error
