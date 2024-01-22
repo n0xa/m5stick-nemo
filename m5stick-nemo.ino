@@ -550,12 +550,14 @@ void smenu_loop() {
     if(smenu[cursor].command == 99){
       clearSettings();
     }
+    #if defined(SDCARD)
     if(smenu[cursor].command == 97){                               // SDCARD M5Stick
       DISP.fillScreen(BGCOLOR);                                    // SDCARD M5Stick
       DISP.setCursor(5, 1);                                        // SDCARD M5Stick
       ToggleSDCard();                                              // SDCARD M5Stick
       current_proc=2;                                              // SDCARD M5Stick
     }                                                              // SDCARD M5Stick
+    #endif
     current_proc = smenu[cursor].command;
   }
 }
