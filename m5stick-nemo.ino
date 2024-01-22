@@ -501,7 +501,9 @@ MENU smenu[] = {
 #endif
 
 #if defined(SDCARD)
+  #ifndef CARDPUTER
     { TXT_TOGGLE_SDCARD, 97},
+  #endif
 #endif
 };
 int smenu_size = sizeof(smenu) / sizeof (MENU);
@@ -551,12 +553,14 @@ void smenu_loop() {
       clearSettings();
     }
     #if defined(SDCARD)
-    if(smenu[cursor].command == 97){                               // SDCARD M5Stick
-      DISP.fillScreen(BGCOLOR);                                    // SDCARD M5Stick
-      DISP.setCursor(5, 1);                                        // SDCARD M5Stick
-      ToggleSDCard();                                              // SDCARD M5Stick
-      current_proc=2;                                              // SDCARD M5Stick
-    }                                                              // SDCARD M5Stick
+      #ifndef CARDPUTER
+        if(smenu[cursor].command == 97){                               // SDCARD M5Stick
+          DISP.fillScreen(BGCOLOR);                                    // SDCARD M5Stick
+          DISP.setCursor(5, 1);                                        // SDCARD M5Stick
+          ToggleSDCard();                                              // SDCARD M5Stick
+          current_proc=2;                                              // SDCARD M5Stick
+        }                                                              // SDCARD M5Stick
+      #endif
     #endif
     current_proc = smenu[cursor].command;
   }
