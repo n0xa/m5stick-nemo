@@ -31,7 +31,7 @@ String buildver="2.3.4";
   #define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
-  //#define SDCARD   //Requires a custom-built adapter
+  #define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
@@ -87,7 +87,7 @@ String buildver="2.3.4";
   #define AXP
   #define ROTATION
   #define USE_EEPROM
-  //#define SDCARD   //Requires a custom-built adapter
+  #define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
