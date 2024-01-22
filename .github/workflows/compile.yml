@@ -48,6 +48,8 @@ jobs:
           set -x -e
           pwd
           tree
+
+          pip install -U esptool
           esptool.py
           esptool
 
