@@ -33,6 +33,11 @@ jobs:
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
+          
+      - name: Install esptool
+        run: |
+          set -x
+          pip install -U esptool
 
       - name: Compile M5Cardputer Sketch
         run: |
@@ -42,16 +47,24 @@ jobs:
                               --libraries M5Cardputer,IRRemoteESP8266 \
                               ./m5stick-nemo.ino
       
+      
+      - name: Create firmware
+        run: |
+          set -x
+
+          esptool.py --chip esp32s3 merge_bin --output m5stick-nemo.m5cardputer.bin \
+            0x0000 m5stick-nemo.ino.bootloader.bin \
+            0x8000 m5stick-nemo.ino.partitions.bin \
+            0x10000 m5stick-nemo.ino.bin
+
+
       - name: List all files
         if: always()
+        continue-on-error: true
         run: |
           set -x -e
           pwd
           tree
-
-          pip install -U esptool
-          esptool.py
-          esptool
 
       # TODO: Validate the firmware
         

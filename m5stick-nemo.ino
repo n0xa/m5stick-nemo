@@ -1613,7 +1613,7 @@ void bootScreen(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
   DISP.setCursor(40, 0);
-  DISP.println("M5-VIZ");
+  DISP.println("M5-VIZ4");
   DISP.setCursor(10, 30);
   DISP.setTextSize(SMALL_TEXT);
   DISP.printf("%s-%s\n",buildver,platformName);
