@@ -1,5 +1,5 @@
 ---
-name: Compile M5Cardputer Sketch
+name: Compile NEMO Firmware
 
 on:
   push:
@@ -13,15 +13,21 @@ on:
   
 
 jobs:
-  compile_m5cardputer_sketch:
+  compile_sketch:
+    name: Run ${{ join(matrix.*, ' - ') }} - ${{ github.event_name }}
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 2
       matrix:
         include:
           - NAME: M5Cardputer
             FQBN: "m5stack:esp32:m5stack_cardputer"
             BOARD: "m5stack.esp32.m5stack_cardputer"
             LIBRARIES: "M5Cardputer,IRRemoteESP8266"
+          - NAME: M5StickCPlus2
+            FQBN: "m5stack:esp32:m5stack_stickc_plus2"
+            BOARD: "m5stack.esp32.m5stack_stickc_plus2"
+            LIBRARIES: "M5StickCPlus2,IRRemoteESP8266"
 
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +91,7 @@ jobs:
   create_release:
     runs-on: ubuntu-latest
     environment: release
-    needs: [compile_m5cardputer_sketch]
+    needs: [compile_sketch]
 
     steps:
     - uses: actions/download-artifact@v4
