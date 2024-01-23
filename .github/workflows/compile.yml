@@ -15,9 +15,13 @@ on:
 jobs:
   compile_m5cardputer_sketch:
     runs-on: ubuntu-latest
-    env:
-      FQBN: "m5stack:esp32:m5stack_cardputer"
-      BOARD: "m5stack.esp32.m5stack_cardputer"
+    strategy:
+      matrix:
+        include:
+          - NAME: M5Cardputer
+            FQBN: "m5stack:esp32:m5stack_cardputer"
+            BOARD: "m5stack.esp32.m5stack_cardputer"
+            LIBRARIES: "M5Cardputer,IRRemoteESP8266"
 
     steps:
       - uses: actions/checkout@v4
@@ -42,9 +46,9 @@ jobs:
           set -x
           pip install -U esptool
 
-      - name: Compile M5Cardputer Sketch
+      - name: Compile ${{ matrix.NAME }} Sketch
         run: |
-          arduino-cli compile --fqbn ${{ env.FQBN }} -e \
+          arduino-cli compile --fqbn ${{ matrix.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
                               --libraries M5Cardputer,IRRemoteESP8266 \
@@ -56,10 +60,10 @@ jobs:
 
           # TODO: get version from buildVer
 
-          esptool.py --chip esp32s3 merge_bin --output M5Nemo-M5Cardputer.bin  \
-            0x0000 build/${{ env.BOARD }}/m5stick-nemo.ino.bootloader.bin \
-            0x8000 build/${{ env.BOARD }}/m5stick-nemo.ino.partitions.bin \
-            0x10000 build/${{ env.BOARD }}/m5stick-nemo.ino.bin
+          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.NAME }}.bin  \
+            0x0000 build/${{ matrix.BOARD }}/m5stick-nemo.ino.bootloader.bin \
+            0x8000 build/${{ matrix.BOARD }}/m5stick-nemo.ino.partitions.bin \
+            0x10000 build/${{ matrix.BOARD }}/m5stick-nemo.ino.bin
 
       - name: List all files
         if: always()
@@ -71,12 +75,12 @@ jobs:
 
       # TODO: Validate the firmware
         
-      - name: Upload M5Cardputer firmware
+      - name: Upload ${{ matrix.NAME }} firmware
         uses: actions/upload-artifact@v4
         with:
-          path: M5Nemo-M5Cardputer.bin
-          name: M5Nemo-M5Cardputer
-          # if-no-files-found: error
+          path: M5Nemo-${{ matrix.NAME }}.bin
+          name: M5Nemo-${{ matrix.NAME }}
+          if-no-files-found: error
 
   create_release:
     runs-on: ubuntu-latest
@@ -86,27 +90,22 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: M5Nemo-M5Cardputer
+        name: M5Nemo-${{ matrix.NAME }}
         merge-multiple: true
 
-    - run: |
+    - name: List all files
+      if: always()
+      run: |
         set -x -e
         pwd
         ls -all
         tree
-    
-    # - uses: ncipollo/release-action@v1
-    #   with:
-    #     artifacts: "M5Nemo-M5Cardputer.bin"
-    #     name: "Test Release"
-    #     draft: true
-    #     generateReleaseNotes: true
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        name: test_name_release_1
-        tag_name: test_tag_release_1
+        name: NEMO Release v0.0.1
+        tag_name: v0.0.1
         files: |
           M5Nemo-M5Cardputer.bin
 
