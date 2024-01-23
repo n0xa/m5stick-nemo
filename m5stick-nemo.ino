@@ -37,7 +37,7 @@ String buildver="2.3.4b";
   #define DISP M5.Lcd
   #define IRLED 9
   #define SPEAKER M5.Beep
-//  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix) // This doesn't work, generates static.
+  #define BITMAP M5.Lcd.drawBitmap(0, 0, M5.Lcd.width(), M5.Lcd.height(), NEMOMatrix)
   #define BITMAP Serial.println("unsupported")
 
   #define SD_CLK_PIN 0
@@ -1773,10 +1773,8 @@ void bootScreen(){
   // Boot Screen
   setupSongs();
   #ifndef STICK_C
-    #ifndef STICK_C_PLUS
     DISP.drawBmp(NEMOMatrix, 97338);
     delay(3000);
-    #endif
   #endif
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
@@ -2125,9 +2123,7 @@ void loop() {
     case 10:
       // easter egg?
       #ifndef STICK_C
-        #ifndef STICK_C_PLUS
           if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
-        #endif
       #endif
       break;
     case 11:
