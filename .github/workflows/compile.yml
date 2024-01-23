@@ -105,7 +105,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        name: test_release_1
+        name: test_name_release_1
+        tag_name: test_tag_release_1
         files: |
           M5Nemo-M5Cardputer.bin
 
