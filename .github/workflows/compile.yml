@@ -73,3 +73,26 @@ jobs:
           path: m5stick-nemo.m5cardputer.bin
           name: m5stick-nemo.m5cardputer
           # if-no-files-found: error
+
+  create_release:
+    environment: release
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: m5stick-nemo.m5cardputer
+        merge-multiple: true
+
+    - run: |
+        set -x -e
+        pwd
+        ls -all
+        tree
+    
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "m5stick-nemo.m5cardputer"
+        draft: true
+        generateReleaseNotes: true
+
