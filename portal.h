@@ -77,28 +77,27 @@ void confirmOrTypeSSID(){
     M5Cardputer.update();
     if(M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
       Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
-      for(auto i : status.word) {
-        if(i != '?' && i != '$' && i != '\"' && i != '[' && i != '\\' && i != ']' && i != '+'){
-          currentSSID += i;
-        }
-      }
-      if(currentSSID.length() >= 32) {
-        continue;
-      }
       if(status.del) {
         currentSSID.remove(currentSSID.length() - 1);
       }
       if(status.enter) {
         ssid_ok = true;
       }
+      if(currentSSID.length() >= 32) {
+        continue;
+      }
+      for(auto i : status.word) {
+        if(i != '?' && i != '$' && i != '\"' && i != '[' && i != '\\' && i != ']' && i != '+'){
+          currentSSID += i;
+        }
+      }
       DISP.fillRect(0, ssidTextCursorY, DISP.width(), DISP.width()- ssidTextCursorY, BLACK);
       DISP.setCursor(0, ssidTextCursorY);
       DISP.printf("%s", currentSSID.c_str());
     }
-    delay(100);
   }
 
-  if(currentSSID.length() > 2){
+  if(currentSSID != apSsidName && currentSSID.length() > 2){
     setSSID(currentSSID);
   }
 }
