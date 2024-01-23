@@ -93,10 +93,16 @@ jobs:
         ls -all
         tree
     
-    - uses: ncipollo/release-action@v1
+    # - uses: ncipollo/release-action@v1
+    #   with:
+    #     artifacts: "M5Nemo-M5Cardputer.bin"
+    #     name: "Test Release"
+    #     draft: true
+    #     generateReleaseNotes: true
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        artifacts: "M5Nemo-M5Cardputer.bin"
-        name: "Test Release"
-        draft: true
-        generateReleaseNotes: true
+        files: |
+          M5Nemo-M5Cardputer.bin
 
