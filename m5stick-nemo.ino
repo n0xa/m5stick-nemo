@@ -478,7 +478,7 @@ MENU smenu[] = {
   { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { XT_ROTATION, 7},
+  { TXT_ROTATION, 7},
 #endif
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
