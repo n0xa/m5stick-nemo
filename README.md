@@ -12,9 +12,9 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ## My changelog
 * Added an "Attack Menu" when seeing details of an Access Point
-** Clone Portal (Creates an Evil portal with the same SSID of the target)
-** Deauth attack (broadcasts deauthentication frames to devices connected to this Access Point)
-** Deauth+Clone (Creates the evil portal with the same SSID and sends deauthentication frames to that AP)
+- Clone Portal (Creates an Evil portal with the same SSID of the target)
+- Deauth attack (broadcasts deauthentication frames to devices connected to this Access Point)
+- Deauth+Clone (Creates the evil portal with the same SSID and sends deauthentication frames to that AP)
 * Added option in Settings to Mount/Unmount SDCard when using M5StickC devices
 * Created new file to handle SPI/SD if not using CARDPUTER
 * SDCARD is now working on M5StickC Plus2

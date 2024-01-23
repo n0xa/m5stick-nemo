@@ -17,6 +17,9 @@ String buildver="2.3.4b";
 #define LANGUAGE_EN_US
 //#define LANGUAGE_PT_BR
 
+// -=-=- DEAUTHER -=-  @bmorcelli -=-=-
+#define DEAUTHER  //Need to make some changes in arduino IDE, refer to https://github.com/bmorcelli/m5stickC_Plus2-nemo/tree/main/DEAUTH%20Prerequisites
+
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
   // -=-=- Display -=-=-
@@ -39,7 +42,6 @@ String buildver="2.3.4b";
   #define SPEAKER M5.Beep
   #define BITMAP M5.Lcd.drawBitmap(0, 0, M5.Lcd.width(), M5.Lcd.height(), NEMOMatrix)
   //#define BITMAP Serial.println("unsupported")
-
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -71,7 +73,7 @@ String buildver="2.3.4b";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14 //usar -1
+  #define SD_CS_PIN 14 //can -1
 #endif
 
 #if defined(STICK_C)
@@ -88,14 +90,15 @@ String buildver="2.3.4b";
   #define AXP
   #define ROTATION
   #define USE_EEPROM
-  #define SDCARD   //Requires a custom-built adapter
+  //#define SDCARD   //Requires a custom-built adapter
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
+  #define BITMAP Serial.println("unsupported")
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14
+    #define SD_CS_PIN 14 //can -1 instead
 #endif
 
 #if defined(CARDPUTER)
@@ -117,6 +120,7 @@ String buildver="2.3.4b";
   #define IRLED 44
   #define BACKLIGHT 38
   #define SPEAKER M5Cardputer.Speaker
+  #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
@@ -213,9 +217,9 @@ bool isSwitching = true;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
-#include "deauth.h"                                                             //DEAUTH
+#include "deauth.h"                                                               //DEAUTH
 #include "esp_wifi.h"                                                             //DEAUTH
-wifi_ap_record_t ap_record;                                                             //DEAUTH
+wifi_ap_record_t ap_record;                                                       //DEAUTH
 
 
 struct MENU {
@@ -1616,7 +1620,7 @@ void wscan_result_loop(){
   if(check_select_press()){
       apMac=WiFi.BSSIDstr(cursor);
       apSsidName=WiFi.SSID(cursor);
-      channel = static_cast<uint8_t>(WiFi.channel(cursor));                    // DEAUTH - save channel
+      channel = static_cast<uint8_t>(WiFi.channel(cursor));                            // DEAUTH - save channel
       uint8_t* bssid = WiFi.BSSID(cursor);                                             // DEAUTH - save BSSID (AP MAC)
       memcpy(ap_record.bssid, bssid, 6);                                               // DEAUTH - cpy bssid to memory
       rstOverride = false;
@@ -1657,8 +1661,10 @@ void wscan_loop(){
 MENU wsAmenu[] = {
   { TXT_BACK, 5},
   { TXT_WFA_PORTAL, 0},
-  { TXT_WFA_DEAUTH, 1},
-  { TXT_WFA_COMBINED, 2},
+  #if defined(DEAUTHER)
+    { TXT_WFA_DEAUTH, 1},
+    { TXT_WFA_COMBINED, 2},
+  #endif
 };
 int wsAmenu_size = sizeof(wsAmenu) / sizeof (MENU);
 
@@ -1688,21 +1694,23 @@ void wsAmenu_loop() {
         target_deauth_flg=false;
         current_proc = 19;
         break;
-      case 1:                     //Go to Deauth
-        rstOverride = false;
-        isSwitching = true;
-        target_deauth_flg=false;
-        target_deauth=true;
-        current_proc = 21;                                                                 // iserir codigo do deauth aqui
-        break;
-      case 2:                     //Go to Nemo with Deauth
-        rstOverride = false;
-        isSwitching = true;
-        clone_flg=true;
-        target_deauth_flg=true;
-        target_deauth=true;
-        current_proc = 19;
-        break;
+      #if defined (DEAUTHER)
+        case 1:                     //Go to Deauth
+          rstOverride = false;
+          isSwitching = true;
+          target_deauth_flg=false;
+          target_deauth=true;
+          current_proc = 21;                                                                 // iserir codigo do deauth aqui
+          break;
+        case 2:                     //Go to Nemo with Deauth
+          rstOverride = false;
+          isSwitching = true;
+          clone_flg=true;
+          target_deauth_flg=true;
+          target_deauth=true;
+          current_proc = 19;
+          break;
+      #endif
       case 5:                     //Exit
         current_proc = 14;
         break;
@@ -1712,68 +1720,68 @@ void wsAmenu_loop() {
 
 // WIFI-Attack MENU and functions END
 // DEAUTH ATTACK START
+#if defined(DEAUTHER)
+  void deauth_setup(){
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 5, 1);
+    DISP.setTextSize(BIG_TEXT);
+    DISP.setTextColor(TFT_RED, BGCOLOR);
+    DISP.println("Deauth Atk");
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.print("\nSSID: " + apSsidName);
+    DISP.print("\n");
+    DISP.printf(TXT_WF_CHANN, channel);
+    DISP.print("> " + apMac);
 
-void deauth_setup(){
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
-  DISP.setTextSize(BIG_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
-  DISP.println("Deauth Atk");
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  DISP.print("\nSSID: " + apSsidName);
-  DISP.print("\n");
-  DISP.printf(TXT_WF_CHANN, channel);
-  DISP.print("> " + apMac);
-
-  cursor = 0;
-  rstOverride = false;
-  delay(500); // Prevent switching after menu loads up
-}
-
-void deauth_loop(){
-
-  if (target_deauth == true) {                                                                 // DEAUTH
-    wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH         CREATE AND SEND FRAME
-    DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
-    DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
-    DISP.setCursor(1, 115);                                                                    // DEAUTH
-    DISP.println(TXT_DEAUTH_STOP);                                                             // DEAUTH
-    DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
-  } else{                                                                                      // DEAUTH
-    DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
-    DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
-    DISP.setCursor(1, 115);                                                                    // DEAUTH
-    DISP.println(TXT_DEAUTH_START);                                                            // DEAUTH
-    DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
-  }                                                                                            // DEAUTH
-
-  delay(200);
-
-  if (check_select_press()){                                                                    // DEAUTH
-    target_deauth = !target_deauth;                                                             // DEAUTH
-    DISP.setCursor(1, 115);                                                                     // DEAUTH
-    DISP.println("......................");                                                     // DEAUTH
-    delay(500);                                                                                 // DEAUTH
-  }                                                                                             // DEAUTH
-
-  if (check_next_press()){
+    cursor = 0;
     rstOverride = false;
-    isSwitching = true;
-    target_deauth = false;                                                                         // DEAUTH
-    current_proc = 12;
-    delay(500);
+    delay(500); // Prevent switching after menu loads up
   }
-}
-// DEAUTH attack END
 
+  void deauth_loop(){
+
+    if (target_deauth == true) {                                                                 // DEAUTH
+      wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH         CREATE AND SEND FRAME
+      DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+      DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+      DISP.setCursor(1, 115);                                                                    // DEAUTH
+      DISP.println(TXT_DEAUTH_STOP);                                                             // DEAUTH
+      DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+    } else{                                                                                      // DEAUTH
+      DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+      DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+      DISP.setCursor(1, 115);                                                                    // DEAUTH
+      DISP.println(TXT_DEAUTH_START);                                                            // DEAUTH
+      DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+    }                                                                                            // DEAUTH
+
+    delay(200);
+
+    if (check_select_press()){                                                                    // DEAUTH
+      target_deauth = !target_deauth;                                                             // DEAUTH
+      DISP.setCursor(1, 115);                                                                     // DEAUTH
+      DISP.println("......................");                                                     // DEAUTH
+      delay(500);                                                                                 // DEAUTH
+    }                                                                                             // DEAUTH
+
+    if (check_next_press()){
+      rstOverride = false;
+      isSwitching = true;
+      target_deauth = false;                                                                      // DEAUTH
+      current_proc = 12;
+      delay(500);
+    }
+  }
+  // DEAUTH attack END
+#endif
 
 
 void bootScreen(){
   // Boot Screen
   setupSongs();
   #ifndef STICK_C
-    DISP.drawBmp(NEMOMatrix, 97338);
+    BITMAP;
     delay(3000);
   #endif
   DISP.fillScreen(BGCOLOR);
@@ -1869,34 +1877,35 @@ void portal_loop(){
     }
   }
   if (clone_flg==true) {
-    if (target_deauth_flg) {
-      if (target_deauth == true) {                                                                 // DEAUTH
-        if (deauth_tick==45) { // 30 is +-150ms
-          wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH   Add delay to attack, without reflection on portal
-          deauth_tick=0;
-        } else { 
-          deauth_tick=deauth_tick+1; 
+    #if defined(DEAUTHER)
+      if (target_deauth_flg) {
+        if (target_deauth == true) {                                                                 // DEAUTH
+          if (deauth_tick==45) {                // 45 is +-150ms   (Add delay to attack, without reflection on portal)
+            wsl_bypasser_send_deauth_frame(&ap_record, channel);                                     // DEAUTH   
+            deauth_tick=0;
+          } else { 
+            deauth_tick=deauth_tick+1; 
+          }
+          DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+          DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+          DISP.setCursor(1, 115);                                                                    // DEAUTH
+          DISP.println(TXT_DEAUTH_STOP);                                                             // DEAUTH
+          DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+        } else{                                                                                      // DEAUTH
+          DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
+          DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
+          DISP.setCursor(1, 115);                                                                    // DEAUTH
+          DISP.println(TXT_DEAUTH_START);                                                            // DEAUTH
+          DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
+        }                                                                                            // DEAUTH
+        if (check_select_press()){                                                                    // DEAUTH
+          target_deauth = !target_deauth;                                                             // DEAUTH
+          delay(500);                                                                                 // DEAUTH
         }
-        DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
-        DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
-        DISP.setCursor(1, 115);                                                                    // DEAUTH
-        DISP.println(TXT_DEAUTH_STOP);                                                             // DEAUTH
-        DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
-      } else{                                                                                      // DEAUTH
-        DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
-        DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
-        DISP.setCursor(1, 115);                                                                    // DEAUTH
-        DISP.println(TXT_DEAUTH_START);                                                            // DEAUTH
-        DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
-      }                                                                                            // DEAUTH
-      dnsServer.processNextRequest();
-      webServer.handleClient();
-
-      if (check_select_press()){                                                                    // DEAUTH
-        target_deauth = !target_deauth;                                                             // DEAUTH
-        delay(500);                                                                                 // DEAUTH
-      }                                                                                             // DEAUTH
-    }
+      }
+    #endif
+  dnsServer.processNextRequest();
+  webServer.handleClient();
   }
   if (check_next_press()){
     shutdownWebServer();
@@ -2070,9 +2079,11 @@ void loop() {
       case 20:
         wsAmenu_setup();
         break;
-      case 21:
-        deauth_setup();
-        break;
+      #if defined(DEAUTHER)
+        case 21:
+          deauth_setup();
+          break;
+      #endif
     }
   }
 
@@ -2123,7 +2134,7 @@ void loop() {
     case 10:
       // easter egg?
       #ifndef STICK_C
-          if(check_select_press()){DISP.drawBmp(NEMOMatrix, 97338);}
+          if(check_select_press()){BITMAP;}
       #endif
       break;
     case 11:
@@ -2156,8 +2167,10 @@ void loop() {
     case 20:
       wsAmenu_loop();
       break;
-    case 21:
-      deauth_loop();
-      break;
+    #if defined(DEAUTHER)
+      case 21:
+        deauth_loop();
+        break;
+    #endif
   }
 }
