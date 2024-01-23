@@ -38,7 +38,7 @@ String buildver="2.3.4b";
   #define IRLED 9
   #define SPEAKER M5.Beep
   #define BITMAP M5.Lcd.drawBitmap(0, 0, M5.Lcd.width(), M5.Lcd.height(), NEMOMatrix)
-  #define BITMAP Serial.println("unsupported")
+  //#define BITMAP Serial.println("unsupported")
 
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
