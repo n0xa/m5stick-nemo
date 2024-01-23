@@ -36,7 +36,8 @@ String buildver="2.3.5";
   #define DISP M5.Lcd
   #define IRLED 9
   #define SPEAKER M5.Beep
-  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix)
+//  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix) // This doesn't work, generates static.
+  #define BITMAP Serial.println("unsupported")
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -477,7 +478,7 @@ MENU smenu[] = {
   { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { XT_ROTATION, 7},
+  { TXT_ROTATION, 7},
 #endif
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
