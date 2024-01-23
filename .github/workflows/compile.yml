@@ -10,14 +10,13 @@ on:
   pull_request:
     branches:
       - main
-  
 
 jobs:
   compile_sketch:
     name: Run ${{ join(matrix.*, ' - ') }} - ${{ github.event_name }}
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 2
+      # max-parallel: 2
       matrix:
         include:
           - NAME: M5Cardputer
@@ -45,6 +44,7 @@ jobs:
           arduino-cli board listall
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
+          arduino-cli lib install M5StickCPlus2 --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
           
       - name: Install esptool
@@ -54,6 +54,7 @@ jobs:
 
       - name: Compile ${{ matrix.NAME }} Sketch
         run: |
+          set -x
           arduino-cli compile --fqbn ${{ matrix.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
@@ -63,7 +64,6 @@ jobs:
       - name: Create firmware
         run: |
           set -x
-
           # TODO: get version from buildVer
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.NAME }}.bin  \
@@ -77,6 +77,7 @@ jobs:
         run: |
           set -x -e
           pwd
+          ls -all
           tree
 
       # TODO: Validate the firmware
@@ -96,7 +97,7 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: M5Nemo-${{ matrix.NAME }}
+        name: M5Nemo-M5Cardputer
         merge-multiple: true
 
     - name: List all files
