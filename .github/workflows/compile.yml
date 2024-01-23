@@ -15,6 +15,8 @@ on:
 jobs:
   compile_m5cardputer_sketch:
     runs-on: ubuntu-latest
+    env:
+      FQBN: "m5stack.esp32.m5stack_cardputer"
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +43,7 @@ jobs:
 
       - name: Compile M5Cardputer Sketch
         run: |
-          arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e \
+          arduino-cli compile --fqbn ${{ env.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
                               --libraries M5Cardputer,IRRemoteESP8266 \
@@ -51,13 +53,12 @@ jobs:
         run: |
           set -x
 
-          # TODO: get version from buildVer 
+          # TODO: get version from buildVer
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-M5Cardputer.bin  \
-            0x0000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bootloader.bin \
+            0x0000 build/${{ env.FQBN }}/m5stick-nemo.ino.bootloader.bin \
             0x8000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.partitions.bin \
             0x10000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bin
-
 
       - name: List all files
         if: always()
@@ -103,6 +104,7 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
+        tag: test1
         files: |
           M5Nemo-M5Cardputer.bin
 
