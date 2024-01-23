@@ -16,7 +16,8 @@ jobs:
   compile_m5cardputer_sketch:
     runs-on: ubuntu-latest
     env:
-      FQBN: "m5stack.esp32.m5stack_cardputer"
+      FQBN: "m5stack:esp32:m5stack_cardputer"
+      BOARD: "m5stack.esp32.m5stack_cardputer"
 
     steps:
       - uses: actions/checkout@v4
@@ -56,9 +57,9 @@ jobs:
           # TODO: get version from buildVer
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-M5Cardputer.bin  \
-            0x0000 build/${{ env.FQBN }}/m5stick-nemo.ino.bootloader.bin \
-            0x8000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.partitions.bin \
-            0x10000 build/m5stack.esp32.m5stack_cardputer/m5stick-nemo.ino.bin
+            0x0000 build/${{ env.BOARD }}/m5stick-nemo.ino.bootloader.bin \
+            0x8000 build/${{ env.BOARD }}/m5stick-nemo.ino.partitions.bin \
+            0x10000 build/${{ env.BOARD }}/m5stick-nemo.ino.bin
 
       - name: List all files
         if: always()
