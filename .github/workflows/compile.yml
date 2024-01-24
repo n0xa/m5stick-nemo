@@ -19,11 +19,6 @@ on:
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
-env:
-  SHORT_SHA: ${GITHUB_SHA::7}
-
-  # NEMO_VERSION: ${{ github.ref_type == 'tag' && github.event_name == 'push' ? github.ref : github.sha }}
-
 jobs:
   compile_sketch:
     name: Run ${{ join(matrix.*, ' - ') }} - ${{ github.event_name }}
@@ -108,7 +103,7 @@ jobs:
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             version=${{ github.ref }}
           else
-            version=$SHORT_SHA
+            version="${GITHUB_SHA::7}"
           fi
           
           extra_flags=${{ matrix.extra_flags }} -DNEMO_VERSION=${version}
@@ -127,7 +122,7 @@ jobs:
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             version=${{ github.ref }}
           else
-            version=$SHORT_SHA
+            version="${GITHUB_SHA::7}"
           fi
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.name }}.bin  \
