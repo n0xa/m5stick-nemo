@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       # max-parallel: 2
+      fail-fast: false
       matrix:
         include:
           - NAME: M5Cardputer
@@ -58,7 +59,7 @@ jobs:
           arduino-cli compile --fqbn ${{ matrix.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property build.extra_flags=-DCARDPUTER \
+                              # --build-property build.extra_flags=-DCARDPUTER \
                               --libraries M5Cardputer,IRRemoteESP8266 \
                               ./m5stick-nemo.ino
       
