@@ -187,7 +187,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ github.ref_name }}.${{ github.sha[:-7] }}
+        name: NEMO Release ${{ github.ref_name }}.${{ github.sha }}
         tag_name: ${{ github.ref_name }}.${{ github.run_id }}
         files: |
           M5Nemo-M5Cardputer.bin
