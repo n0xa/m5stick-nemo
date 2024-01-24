@@ -24,22 +24,22 @@ jobs:
             FQBN: "m5stack:esp32:m5stack_cardputer"
             BOARD: "m5stack.esp32.m5stack_cardputer"
             FLAG: CARDPUTER
-            LIBRARIES: "M5Cardputer,IRRemoteESP8266"
+            LIBRARIES: "M5Cardputer IRRemoteESP8266"
           - NAME: M5StickCPlus2
             FQBN: "m5stack:esp32:m5stack_stickc_plus2"
             BOARD: "m5stack.esp32.m5stack_stickc_plus2"
             FLAG: STICK_C_PLUS2
-            LIBRARIES: "M5StickCPlus2,IRRemoteESP8266"
+            LIBRARIES: "M5StickCPlus2 IRRemoteESP8266"
           - NAME: M5StickCPlus
             FQBN: "m5stack:esp32:m5stack_stickc_plus"
             BOARD: "m5stack.esp32.m5stack_stickc_plus"
             FLAG: STICK_C_PLUS
-            LIBRARIES: "M5StickCPlus,IRRemoteESP8266"
-          # - NAME: M5StickC
-          #   FQBN: "m5stack:esp32:m5stack_stickc"
-          #   BOARD: "m5stack.esp32.m5stack_stickc"
-          #   FLAG: STICK_C
-          #   LIBRARIES: "M5StickC,IRRemoteESP8266"
+            LIBRARIES: "M5StickCPlus IRRemoteESP8266"
+          - NAME: M5StickC
+            FQBN: "m5stack:esp32:m5stack_stickc"
+            BOARD: "m5stack.esp32.m5stack_stickc"
+            FLAG: STICK_C
+            LIBRARIES: "M5StickC IRRemoteESP8266 M5Hat-JoyC"
 
     steps:
       - uses: actions/checkout@v4
@@ -56,11 +56,7 @@ jobs:
           arduino-cli core search m5stack
           arduino-cli board listall
 
-          arduino-cli lib install M5Cardputer --log-level warn --verbose
-          arduino-cli lib install M5StickCPlus2 --log-level warn --verbose
-          arduino-cli lib install M5StickCPlus --log-level warn --verbose
-          # arduino-cli lib install M5StickC --log-level warn --verbose
-          arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
+          arduino-cli lib install ${{ matrix.LIBRARIES }} --log-level warn --verbose
           
       - name: Install esptool
         run: |
