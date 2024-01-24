@@ -106,12 +106,12 @@ jobs:
             version="${GITHUB_SHA::7}"
           fi
           
-          # extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=${version}"
+          extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=\"${version}\""
 
           arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property compiler.cpp.extra_flags=${{ matrix.extra_flags }} \
+                              --build-property compiler.cpp.extra_flags="${extra_flags}" \
                               ./m5stick-nemo.ino
       
       - name: Create Firmware Binary
@@ -187,8 +187,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ github.ref_name }}
-        tag_name: ${{ github.sha }}
+        name: NEMO Release ${{ github.ref_name }}.${{ github.sha[:-7] }}
+        tag_name: ${{ github.sha[:-7] }}
         files: |
           M5Nemo-M5Cardputer.bin
           M5Nemo-M5StickCPlus2.bin
