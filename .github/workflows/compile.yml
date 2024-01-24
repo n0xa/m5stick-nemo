@@ -21,7 +21,7 @@ on:
 
 jobs:
   compile_sketch:
-    name: Run ${{ join(matrix.*, ' - ') }} - ${{ github.event_name }}
+    name: Run ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
       # max-parallel: 2
@@ -106,7 +106,7 @@ jobs:
             version="${GITHUB_SHA::7}"
           fi
           
-          extra_flags=${{ matrix.extra_flags }} -DNEMO_VERSION=${version}
+          extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=${version}"
 
           arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
                               --build-property build.partitions=huge_app \
