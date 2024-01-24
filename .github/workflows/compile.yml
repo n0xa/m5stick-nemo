@@ -188,7 +188,7 @@ jobs:
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
         name: NEMO Release ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}
+        tag_name: ${{ github.sha }}
         files: |
           M5Nemo-M5Cardputer.bin
           M5Nemo-M5StickCPlus2.bin
