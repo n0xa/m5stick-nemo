@@ -58,6 +58,8 @@ jobs:
 
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install M5StickCPlus2 --log-level warn --verbose
+          arduino-cli lib install M5StickCPlus --log-level warn --verbose
+          arduino-cli lib install M5StickC --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
           
       - name: Install esptool
@@ -118,15 +120,20 @@ jobs:
       if: always()
       run: |
         set -x -e
+        echo ${{ github.ref_name }}
         pwd
         ls -all
         tree
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
+      # if: eqals(github.ref, 'refs/tags/${{ github.ref_name }}')
       with:
-        name: NEMO Release v0.0.1
-        tag_name: v0.0.1
+        name: NEMO Release ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
         files: |
           M5Nemo-M5Cardputer.bin
+          M5Nemo-M5StickCPlus2.bin
+          M5Nemo-M5StickCPlus.bin
+          M5Nemo-M5StickC.bin
 
