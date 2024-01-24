@@ -35,11 +35,11 @@ jobs:
             BOARD: "m5stack.esp32.m5stack_stickc_plus"
             FLAG: STICK_C_PLUS
             LIBRARIES: "M5StickCPlus,IRRemoteESP8266"
-          - NAME: M5StickC
-            FQBN: "m5stack:esp32:m5stack_stickc"
-            BOARD: "m5stack.esp32.m5stack_stickc"
-            FLAG: STICK_C
-            LIBRARIES: "M5StickC,IRRemoteESP8266"
+          # - NAME: M5StickC
+          #   FQBN: "m5stack:esp32:m5stack_stickc"
+          #   BOARD: "m5stack.esp32.m5stack_stickc"
+          #   FLAG: STICK_C
+          #   LIBRARIES: "M5StickC,IRRemoteESP8266"
 
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
           arduino-cli lib install M5Cardputer --log-level warn --verbose
           arduino-cli lib install M5StickCPlus2 --log-level warn --verbose
           arduino-cli lib install M5StickCPlus --log-level warn --verbose
-          arduino-cli lib install M5StickC --log-level warn --verbose
+          # arduino-cli lib install M5StickC --log-level warn --verbose
           arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
           
       - name: Install esptool
@@ -127,7 +127,7 @@ jobs:
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
-      # if: eqals(github.ref, 'refs/tags/${{ github.ref_name }}')
+      # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
         name: NEMO Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}
@@ -135,5 +135,4 @@ jobs:
           M5Nemo-M5Cardputer.bin
           M5Nemo-M5StickCPlus2.bin
           M5Nemo-M5StickCPlus.bin
-          M5Nemo-M5StickC.bin
 
