@@ -3,7 +3,7 @@
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 // #define STICK_C_PLUS
- #define STICK_C_PLUS2
+// #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
@@ -478,7 +478,7 @@ MENU smenu[] = {
   { TXT_SET_CLOCK, 3},
 #endif
 #if defined(ROTATION)
-  { XT_ROTATION, 7},
+  { TXT_ROTATION, 7},
 #endif
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
