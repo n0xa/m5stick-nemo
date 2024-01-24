@@ -59,9 +59,9 @@ jobs:
           arduino-cli compile --fqbn ${{ matrix.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
+                              ./m5stick-nemo.ino
                               # --build-property build.extra_flags=-DCARDPUTER \
                               # --libraries M5Cardputer,IRRemoteESP8266 \
-                              ./m5stick-nemo.ino
       
       - name: Create firmware
         run: |
