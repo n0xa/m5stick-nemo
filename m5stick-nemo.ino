@@ -127,7 +127,7 @@ String buildver="2.3.5";
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
-  #define VBAT_PIN 10
+  #define VBAT_PIN 10  
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
@@ -207,7 +207,9 @@ bool isSwitching = true;
 #include "songs.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
-
+#if defined(CARDPUTER)
+  #include "SSHClient.h"
+#endif
 struct MENU {
   char name[19];
   int command;
@@ -1517,6 +1519,9 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
+#if defined(CARDPUTER)
+  { "SSH Client", 6},
+#endif  
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1560,6 +1565,11 @@ void wsmenu_loop() {
       case 5:
         current_proc = 1;
         break;
+#if defined(CARDPUTER)
+      case 6:
+        current_proc = 20;
+        break;
+#endif  
     }
   }
 }
@@ -1634,14 +1644,14 @@ void wscan_result_loop(){
       break ;
     }
     
-    DISP.setTextSize(SMALL_TEXT);
+    DISP.setTextSize(MEDIUM_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(TINY_TEXT);
+      DISP.setTextSize(SMALL_TEXT);
     }       
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
-    DISP.setTextSize(TINY_TEXT);
+    DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
@@ -1946,6 +1956,11 @@ void loop() {
       case 19:
         portal_setup();
         break;
+#if defined(CARDPUTER)
+      case 20:
+        ssh_setup();
+        break;
+#endif
     }
   }
 
@@ -2026,5 +2041,10 @@ void loop() {
     case 19:
       portal_loop();
       break;
+#if defined(CARDPUTER)
+    case 20:
+      ssh_loop();
+      break;
+#endif
   }
 }
