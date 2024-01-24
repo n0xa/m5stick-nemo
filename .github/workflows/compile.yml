@@ -19,6 +19,11 @@ on:
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
+env:
+  SHORT_SHA: ${GITHUB_SHA::7}
+
+  # NEMO_VERSION: ${{ github.ref_type == 'tag' && github.event_name == 'push' ? github.ref : github.sha }}
+
 jobs:
   compile_sketch:
     name: Run ${{ join(matrix.*, ' - ') }} - ${{ github.event_name }}
@@ -98,16 +103,32 @@ jobs:
       - name: Compile ${{ matrix.name }} Sketch
         run: |
           set -x
+
+          # If we are building a tag, use that as the version, otherwise use the short SHA
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            version=${{ github.ref }}
+          else
+            version=$SHORT_SHA
+          fi
+          
+          extra_flags=${{ matrix.extra_flags }} -DNEMO_VERSION=${version}
+
           arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property compiler.cpp.extra_flags=${{ matrix.extra_flags }} \
+                              --build-property compiler.cpp.extra_flags=extra_flags \
                               ./m5stick-nemo.ino
       
-      - name: Create firmware
+      - name: Create Firmware Binary
         run: |
           set -x
-          # TODO: get version from buildVer
+
+          # If we are building a tag, use that as the version, otherwise use the short SHA
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            version=${{ github.ref }}
+          else
+            version=$SHORT_SHA
+          fi
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.name }}.bin  \
             ${{ matrix.partitions.bootloader_addr }} build/${{ matrix.board }}/m5stick-nemo.ino.bootloader.bin \
@@ -125,7 +146,7 @@ jobs:
 
       # TODO: Validate the firmware
         
-      - name: Upload ${{ matrix.name }} firmware
+      - name: Upload ${{ matrix.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
           path: M5Nemo-${{ matrix.name }}.bin
@@ -141,6 +162,21 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         name: M5Nemo-M5Cardputer
+        merge-multiple: true
+    
+    - uses: actions/download-artifact@v4
+      with:
+        name: M5Nemo-M5StickCPlus2
+        merge-multiple: true
+    
+    - uses: actions/download-artifact@v4
+      with:
+        name: M5Nemo-M5StickCPlus
+        merge-multiple: true
+    
+    - uses: actions/download-artifact@v4
+      with:
+        name: M5Nemo-M5StickC
         merge-multiple: true
 
     - name: List all files
