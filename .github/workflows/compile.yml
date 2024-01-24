@@ -14,6 +14,7 @@ on:
     inputs:
       board:
         description: 'Board to Compile'
+        type: choice
         required: true
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
@@ -26,27 +27,39 @@ jobs:
       # max-parallel: 2
       fail-fast: false
       matrix:
+        locale:
+          - LANGUAGE_EN_US
+          - LANGUAGE_PT_BR
         include:
           - { 
               name: "M5Cardputer",
               fqbn: "m5stack:esp32:m5stack_cardputer",
               board: "m5stack.esp32.m5stack_cardputer",
               extra_flags: "-DCARDPUTER",
-              libraries: "M5Cardputer IRRemoteESP8266"
+              libraries: "M5Cardputer IRRemoteESP8266",
+              partitions: {
+                bootloader_addr: "0x0000",
+              },
             }
           - {
               name: "M5StickCPlus2",
               fqbn: "m5stack:esp32:m5stack_stickc_plus2",
               board: "m5stack.esp32.m5stack_stickc_plus2",
               extra_flags: "-DSTICK_C_PLUS2",
-              libraries: "M5StickCPlus2 IRRemoteESP8266"
+              libraries: "M5StickCPlus2 IRRemoteESP8266",
+              partitions: {
+                bootloader_addr: "0x1000",
+              },
             }
           - {
               name: "M5StickCPlus",
               fqbn: "m5stack:esp32:m5stack_stickc_plus",
               board: "m5stack.esp32.m5stack_stickc_plus",
               extra_flags: "-DSTICK_C_PLUS",
-              libraries: "M5StickCPlus IRRemoteESP8266"
+              libraries: "M5StickCPlus IRRemoteESP8266",
+              partitions: {
+                bootloader_addr: "0x1000",
+              },
             }
           - {
               name: "M5StickC",
@@ -54,7 +67,10 @@ jobs:
               board: "m5stack.esp32.m5stack_stickc",
               extra_flags: "-DSTICK_C",
               # TODO: M5StickC's latest version has some dependency issues with M5Hat-JoyC library
-              libraries: "M5StickC@0.2.8 IRRemoteESP8266"
+              libraries: "M5StickC@0.2.8 IRRemoteESP8266",
+              partitions: {
+                bootloader_addr: "0x1000",
+              },
             }
 
     steps:
@@ -94,7 +110,7 @@ jobs:
           # TODO: get version from buildVer
 
           esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.name }}.bin  \
-            0x0000 build/${{ matrix.board }}/m5stick-nemo.ino.bootloader.bin \
+            ${{ matrix.partitions.bootloader_addr }} build/${{ matrix.board }}/m5stick-nemo.ino.bootloader.bin \
             0x8000 build/${{ matrix.board }}/m5stick-nemo.ino.partitions.bin \
             0x10000 build/${{ matrix.board }}/m5stick-nemo.ino.bin
 
@@ -124,7 +140,7 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: M5Nemo-*
+        name: M5Nemo-M5Cardputer
         merge-multiple: true
 
     - name: List all files
