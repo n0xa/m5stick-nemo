@@ -23,11 +23,23 @@ jobs:
           - NAME: M5Cardputer
             FQBN: "m5stack:esp32:m5stack_cardputer"
             BOARD: "m5stack.esp32.m5stack_cardputer"
+            FLAG: CARDPUTER
             LIBRARIES: "M5Cardputer,IRRemoteESP8266"
           - NAME: M5StickCPlus2
             FQBN: "m5stack:esp32:m5stack_stickc_plus2"
             BOARD: "m5stack.esp32.m5stack_stickc_plus2"
+            FLAG: STICK_C_PLUS2
             LIBRARIES: "M5StickCPlus2,IRRemoteESP8266"
+          - NAME: M5StickCPlus
+            FQBN: "m5stack:esp32:m5stack_stickc_plus"
+            BOARD: "m5stack.esp32.m5stack_stickc_plus"
+            FLAG: STICK_C_PLUS
+            LIBRARIES: "M5StickCPlus,IRRemoteESP8266"
+          - NAME: M5StickC
+            FQBN: "m5stack:esp32:m5stack_stickc"
+            BOARD: "m5stack.esp32.m5stack_stickc"
+            FLAG: STICK_C
+            LIBRARIES: "M5StickC,IRRemoteESP8266"
 
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +71,7 @@ jobs:
           arduino-cli compile --fqbn ${{ matrix.FQBN }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property compiler.cpp.extra_flags=-DCARDPUTER \
+                              --build-property compiler.cpp.extra_flags=-D${{ matrix.FLAG }} \
                               ./m5stick-nemo.ino
                               # --libraries M5Cardputer,IRRemoteESP8266 \
       
