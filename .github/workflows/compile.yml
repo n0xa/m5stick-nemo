@@ -19,6 +19,11 @@ on:
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
+env:
+  NEMO_VERSION: ${{ github.sha }}
+  MY_ENV_VAR: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
+  MY2_ENV_VAR: ${{ format('{0}', github.event_name == 'push' && contains(github.ref, 'refs/tags/' && github.ref || 'commit_hash'} }}
+
 jobs:
   compile_sketch:
     name: Build ${{ matrix.name }}
@@ -78,6 +83,11 @@ jobs:
 
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1
+
+      - run: |
+          set -x -e
+
+          echo "VARSS: ${MY2_ENV_VAR}"
 
       - name: Install platform
         run: |
@@ -187,8 +197,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ github.ref_name }}.${{ github.sha }}
-        tag_name: ${{ github.ref_name }}.${{ github.run_id }}
+        name: NEMO Release ${{ github.ref_name }}-${{ github.sha }}
+        tag_name: ${{ github.ref_name }}-${{ github.run_id }}
         files: |
           M5Nemo-M5Cardputer.bin
           M5Nemo-M5StickCPlus2.bin
