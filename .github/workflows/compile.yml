@@ -21,7 +21,7 @@ on:
 
 jobs:
   compile_sketch:
-    name: Run ${{ matrix.name }}
+    name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
       # max-parallel: 2
@@ -106,12 +106,13 @@ jobs:
             version="${GITHUB_SHA::7}"
           fi
           
-          extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=${version}"
+          # extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=${version}"
 
           arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property compiler.cpp.extra_flags=extra_flags \
+                              --build-property compiler.cpp.extra_flags=${{ matrix.extra_flags }} \
+                              --build-property compiler.cpp.extra_flags=-DNEMO_VERSION=${version} \
                               ./m5stick-nemo.ino
       
       - name: Create Firmware Binary
