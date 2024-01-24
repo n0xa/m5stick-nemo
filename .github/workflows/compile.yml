@@ -60,7 +60,7 @@ jobs:
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
                               # --build-property build.extra_flags=-DCARDPUTER \
-                              --libraries M5Cardputer,IRRemoteESP8266 \
+                              # --libraries M5Cardputer,IRRemoteESP8266 \
                               ./m5stick-nemo.ino
       
       - name: Create firmware
