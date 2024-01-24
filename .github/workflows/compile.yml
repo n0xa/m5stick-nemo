@@ -78,7 +78,7 @@ jobs:
           arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
-                              --build-property compiler.cpp.extra_flags=${{ matrix.extra_flags }} \
+                              --build-property compiler.cpp.extra_flags="-UCARDPUTER -USTICK_C_PLUS2 -USTICK_C_PLUS -USTICK_C ${{ matrix.extra_flags }}" \
                               ./m5stick-nemo.ino
       
       - name: Create firmware
