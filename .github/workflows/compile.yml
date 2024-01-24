@@ -27,9 +27,9 @@ jobs:
       # max-parallel: 2
       fail-fast: false
       matrix:
-        locale:
-          - LANGUAGE_EN_US
-          - LANGUAGE_PT_BR
+        # locale:
+        #   - LANGUAGE_EN_US
+        #   - LANGUAGE_PT_BR
         include:
           - { 
               name: "M5Cardputer",
