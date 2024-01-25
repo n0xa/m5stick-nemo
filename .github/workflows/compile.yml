@@ -21,7 +21,8 @@ on:
 
 env:
   NEMO_VERSION: ${{ github.sha }}
-  MY_ENV_VAR: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || "NEMO_VERSION" }}
+  MY1_ENV_VAR: ${{ github.ref }}
+  MY2_ENV_VAR: ${{ github.ref_name }}
   # MY2_ENV_VAR: ${{ format('{0}', contains(github.ref, 'refs/tags/') && github.ref || "NEMO_VERSION") }}
 
 jobs:
@@ -83,7 +84,7 @@ jobs:
       - run: |
           set -x
 
-          echo "MY_ENV_VAR: ${MY_ENV_VAR}"
+          echo "MY1_ENV_VAR: ${MY1_ENV_VAR}"
           echo "MY2_ENV_VAR: ${MY2_ENV_VAR}"
 
       - name: Install platform
