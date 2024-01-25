@@ -32,9 +32,9 @@ jobs:
       # max-parallel: 2
       fail-fast: false
       matrix:
-        language:
-          - LANGUAGE_EN_US
-          - LANGUAGE_PT_BR
+        locale:
+          - en-us
+          - pt-br
         board:
           - { 
               name: "M5Cardputer",
@@ -81,7 +81,7 @@ jobs:
         uses: arduino/setup-arduino-cli@v1
 
       - run: |
-          set -x -e
+          set -x
 
           echo "MY_ENV_VAR: ${MY_ENV_VAR}"
           echo "MY2_ENV_VAR: ${MY2_ENV_VAR}"
@@ -112,8 +112,11 @@ jobs:
           else
             version="${GITHUB_SHA::7}"
           fi
+
+          locale=${{ matrix.locale }}
+          language=echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]'
           
-          extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${{ matrix.language }}"
+          extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language}"
 
           arduino-cli compile --fqbn ${{ matrix.board.fqbn }} -e \
                               --build-property build.partitions=huge_app \
@@ -121,24 +124,14 @@ jobs:
                               --build-property compiler.cpp.extra_flags="${extra_flags}" \
                               ./m5stick-nemo.ino
       
-      - name: Create Firmware Binary
+      - name: Create ${{ matrix.board.name }} Firmware Binary
         run: |
           set -x
 
           fqbn=${{ matrix.board.fqbn }}
           directory="${fqbn//:/.}"
 
-          # If we are building a tag, use that as the version, otherwise use the short SHA
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            version=${{ github.ref }}
-          else
-            version="${GITHUB_SHA::7}"
-          fi
-
-          # Convert the language to a locale, e.g. LANGUAGE_EN_US to en-us
-          locale=$(echo "${{ matrix.language }}" | awk -F'_' '{print tolower($2)"-"tolower($3)}')
-
-          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}.${locale}.bin  \
+          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}.bin  \
             ${{ matrix.board.partitions.bootloader_addr }} build/${directory}/m5stick-nemo.ino.bootloader.bin \
             0x8000 build/${directory}/m5stick-nemo.ino.partitions.bin \
             0x10000 build/${directory}/m5stick-nemo.ino.bin
@@ -147,7 +140,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          set -x -e
+          set -x
           pwd
           ls -all
           tree
@@ -190,7 +183,7 @@ jobs:
     - name: List all files
       if: always()
       run: |
-        set -x -e
+        set -x
         echo ${{ github.ref_name }}
         pwd
         ls -all
