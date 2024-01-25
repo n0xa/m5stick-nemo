@@ -34,10 +34,10 @@ jobs:
       max-parallel: 4
       fail-fast: false
       matrix:
-        # locale:
-        #   - en-us
-        #   - pt-br
-        locale: ${{ fromJson(format('[{0}]', env.locale)) }}
+        locale:
+          - en-us
+          - pt-br
+        # locale: ${{ fromJson(format('[{0}]', env.locale)) }}
         board:
           - { 
               name: "M5Cardputer",
