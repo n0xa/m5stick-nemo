@@ -22,7 +22,7 @@ on:
 env:
   NEMO_VERSION: ${{ github.sha }}
   MY_ENV_VAR: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
-  MY2_ENV_VAR: ${{ format('{0}', github.event_name == 'push' && contains(github.ref, 'refs/tags/') && github.ref || "NEMO_VERSION") }}
+  MY2_ENV_VAR: ${{ format('{0}', contains(github.ref, 'refs/tags/') && github.ref || "NEMO_VERSION") }}
 
 jobs:
   compile_sketch:
