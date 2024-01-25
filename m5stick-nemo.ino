@@ -64,6 +64,7 @@ String buildver="2.3.4b";
   #define SDCARD   //Requires a custom-built adapter and sd_stick.h file
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
+  #define SPEAKER M5.Speaker
   #define BITMAP M5.Lcd.drawBmp(NEMOMatrix, 97338)
   #define IRLED 19
   #define M5_BUTTON_MENU 35
@@ -307,6 +308,11 @@ void check_menu_press() {
       // just in case we escape the portal with the main menu button
       shutdownWebServer();
       portal_active = false;
+      target_deauth = false;
+    }
+    if(target_deauth) {
+      WiFi.mode(WIFI_MODE_STA);
+      target_deauth = false;
     }
     isSwitching = true;
     rstOverride = false;
@@ -1723,9 +1729,11 @@ void wsAmenu_loop() {
 // DEAUTH ATTACK START
 #if defined(DEAUTHER)
   void deauth_setup(){
-    setupWiFi();
-    setupWebServer();
-    portal_active = false;
+    // Start the Access point service as Hidden
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(apSsidName, emptyString, channel, 1, 4, false);
+    IPAddress apIP = WiFi.softAPIP();
+
 
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
@@ -1770,7 +1778,7 @@ void wsAmenu_loop() {
     }                                                                                             // DEAUTH
 
     if (check_next_press()){
-      shutdownWebServer();
+      WiFi.mode(WIFI_MODE_STA);
       rstOverride = false;
       isSwitching = true;
       target_deauth = false;                                                                      // DEAUTH

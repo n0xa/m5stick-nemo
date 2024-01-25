@@ -65,6 +65,8 @@ void setupSongs() {
       noteDuration = (wholenote) / abs(divider);
       noteDuration *= 1.5; // increases the duration in half for dotted notes
     }
+
+
 #if defined(STICK_C_PLUS)
     SPEAKER.tone(4000);
     delay(noteDuration * 0.9);
@@ -75,6 +77,11 @@ void setupSongs() {
     SPEAKER.tone(melody[thisNote], noteDuration * 0.9);
     // Wait for the specief duration before playing the next note.
     delay(noteDuration);
+#elif defined(STICK_C_PLUS2)
+    SPEAKER.tone(4000);
+    delay(noteDuration * 0.9);
+    delay(noteDuration);
+    SPEAKER.stop();
 #endif
     
   }
