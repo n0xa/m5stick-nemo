@@ -22,7 +22,7 @@ on:
 env:
   NEMO_VERSION: ${{ github.sha }}
   MY_ENV_VAR: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
-  MY2_ENV_VAR: ${{ format('{0}', github.event_name == 'push' && contains(github.ref, 'refs/tags/') && github.ref || 'commit_hash') }}
+  MY2_ENV_VAR: ${{ format('{0}', github.event_name == 'push' && contains(github.ref, 'refs/tags/') && github.ref || env.NEMO_VERSION) }}
 
 jobs:
   compile_sketch:
@@ -32,14 +32,13 @@ jobs:
       # max-parallel: 2
       fail-fast: false
       matrix:
-        # locale:
-        #   - LANGUAGE_EN_US
-        #   - LANGUAGE_PT_BR
-        include:
+        language:
+          - LANGUAGE_EN_US
+          - LANGUAGE_PT_BR
+        board:
           - { 
               name: "M5Cardputer",
               fqbn: "m5stack:esp32:m5stack_cardputer",
-              board: "m5stack.esp32.m5stack_cardputer",
               extra_flags: "-DCARDPUTER",
               libraries: "M5Cardputer IRRemoteESP8266",
               partitions: {
@@ -49,7 +48,6 @@ jobs:
           - {
               name: "M5StickCPlus2",
               fqbn: "m5stack:esp32:m5stack_stickc_plus2",
-              board: "m5stack.esp32.m5stack_stickc_plus2",
               extra_flags: "-DSTICK_C_PLUS2",
               libraries: "M5StickCPlus2 IRRemoteESP8266",
               partitions: {
@@ -59,7 +57,6 @@ jobs:
           - {
               name: "M5StickCPlus",
               fqbn: "m5stack:esp32:m5stack_stickc_plus",
-              board: "m5stack.esp32.m5stack_stickc_plus",
               extra_flags: "-DSTICK_C_PLUS",
               libraries: "M5StickCPlus IRRemoteESP8266",
               partitions: {
@@ -69,7 +66,6 @@ jobs:
           - {
               name: "M5StickC",
               fqbn: "m5stack:esp32:m5stack_stickc",
-              board: "m5stack.esp32.m5stack_stickc",
               extra_flags: "-DSTICK_C",
               # TODO: M5StickC's latest version has some dependency issues with M5Hat-JoyC library
               libraries: "M5StickC@0.2.8 IRRemoteESP8266",
@@ -87,7 +83,8 @@ jobs:
       - run: |
           set -x -e
 
-          echo "VARSS: ${MY2_ENV_VAR}"
+          echo "MY_ENV_VAR: ${MY_ENV_VAR}"
+          echo "MY2_ENV_VAR: ${MY2_ENV_VAR}"
 
       - name: Install platform
         run: |
@@ -98,14 +95,14 @@ jobs:
           arduino-cli core search m5stack
           arduino-cli board listall
 
-          arduino-cli lib install ${{ matrix.libraries }} --log-level warn --verbose
+          arduino-cli lib install ${{ matrix.board.libraries }} --log-level warn --verbose
           
       - name: Install esptool
         run: |
           set -x
           pip install -U esptool
 
-      - name: Compile ${{ matrix.name }} Sketch
+      - name: Compile ${{ matrix.board.name }} Sketch
         run: |
           set -x
 
@@ -116,9 +113,9 @@ jobs:
             version="${GITHUB_SHA::7}"
           fi
           
-          extra_flags="${{ matrix.extra_flags }} -DNEMO_VERSION=\"${version}\""
+          extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${{ matrix.language }}"
 
-          arduino-cli compile --fqbn ${{ matrix.fqbn }} -e \
+          arduino-cli compile --fqbn ${{ matrix.board.fqbn }} -e \
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
                               --build-property compiler.cpp.extra_flags="${extra_flags}" \
@@ -128,6 +125,9 @@ jobs:
         run: |
           set -x
 
+          fqbn=${{ matrix.board.fqbn }}
+          directory="${fqbn//:/.}"
+
           # If we are building a tag, use that as the version, otherwise use the short SHA
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             version=${{ github.ref }}
@@ -135,10 +135,13 @@ jobs:
             version="${GITHUB_SHA::7}"
           fi
 
-          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.name }}.bin  \
-            ${{ matrix.partitions.bootloader_addr }} build/${{ matrix.board }}/m5stick-nemo.ino.bootloader.bin \
-            0x8000 build/${{ matrix.board }}/m5stick-nemo.ino.partitions.bin \
-            0x10000 build/${{ matrix.board }}/m5stick-nemo.ino.bin
+          # Convert the language to a locale, e.g. LANGUAGE_EN_US to en-us
+          locale=$(echo "${{ matrix.language }}" | awk -F'_' '{print tolower($2)"-"tolower($3)}')
+
+          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}.${locale}.bin  \
+            ${{ matrix.board.partitions.bootloader_addr }} build/${directory}/m5stick-nemo.ino.bootloader.bin \
+            0x8000 build/${directory}/m5stick-nemo.ino.partitions.bin \
+            0x10000 build/${directory}/m5stick-nemo.ino.bin
 
       - name: List all files
         if: always()
@@ -151,11 +154,11 @@ jobs:
 
       # TODO: Validate the firmware
         
-      - name: Upload ${{ matrix.name }} Firmware Binary
+      - name: Upload ${{ matrix.board.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
-          path: M5Nemo-${{ matrix.name }}.bin
-          name: M5Nemo-${{ matrix.name }}
+          path: M5Nemo-${{ matrix.board.name }}.bin
+          name: M5Nemo-${{ matrix.board.name }}
           if-no-files-found: error
 
   create_release:
@@ -200,8 +203,6 @@ jobs:
         name: NEMO Release ${{ github.ref_name }}-${{ github.sha }}
         tag_name: ${{ github.ref_name }}-${{ github.run_id }}
         files: |
-          M5Nemo-M5Cardputer.bin
-          M5Nemo-M5StickCPlus2.bin
-          M5Nemo-M5StickCPlus.bin
-          M5Nemo-M5StickC.bin
+          M5Nemo-*.bin
+
 
