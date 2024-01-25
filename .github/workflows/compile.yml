@@ -165,23 +165,23 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: M5Nemo-M5Cardputer
+        # name: M5Nemo-M5Cardputer
         merge-multiple: true
     
-    - uses: actions/download-artifact@v4
-      with:
-        name: M5Nemo-M5StickCPlus2
-        merge-multiple: true
+    # - uses: actions/download-artifact@v4
+    #   with:
+    #     name: M5Nemo-M5StickCPlus2
+    #     merge-multiple: true
     
-    - uses: actions/download-artifact@v4
-      with:
-        name: M5Nemo-M5StickCPlus
-        merge-multiple: true
+    # - uses: actions/download-artifact@v4
+    #   with:
+    #     name: M5Nemo-M5StickCPlus
+    #     merge-multiple: true
     
-    - uses: actions/download-artifact@v4
-      with:
-        name: M5Nemo-M5StickC
-        merge-multiple: true
+    # - uses: actions/download-artifact@v4
+    #   with:
+    #     name: M5Nemo-M5StickC
+    #     merge-multiple: true
 
     - name: List all files
       if: always()
