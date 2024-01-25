@@ -20,6 +20,7 @@ on:
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
 env:
+  locale: "en-us,pt-br"
   NEMO_VERSION: ${{ github.sha }}
   MY1_ENV_VAR: ${{ github.ref }}
   MY2_ENV_VAR: ${{ github.ref_name }}
@@ -30,12 +31,13 @@ jobs:
     name: Build ${{ matrix.board.name }} (${{ matrix.locale }})
     runs-on: ubuntu-latest
     strategy:
-      # max-parallel: 2
+      max-parallel: 4
       fail-fast: false
       matrix:
-        locale:
-          - en-us
-          - pt-br
+        # locale:
+        #   - en-us
+        #   - pt-br
+        locale: ${{ fromJson(format('[{0}]', env.locale)) }}
         board:
           - { 
               name: "M5Cardputer",
@@ -90,6 +92,7 @@ jobs:
       - name: Install platform
         run: |
           set -x
+          
           # arduino-cli core install esp32:esp32
           arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json"
 
@@ -100,7 +103,6 @@ jobs:
           
       - name: Install esptool
         run: |
-          set -x
           pip install -U esptool
 
       - name: Compile ${{ matrix.board.name }} Sketch
@@ -115,7 +117,7 @@ jobs:
           fi
 
           locale=${{ matrix.locale }}
-          language=echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]'
+          language=$(echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]')
           
           extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language}"
 
