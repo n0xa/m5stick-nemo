@@ -73,18 +73,6 @@ void waitForInput(String& input) {
                 break;
             }
         }
-
-        if (millis() - startTime > 180000) { // Timeout after 3 minutes
-            DISP.println("\nInput timeout. Rebooting...");
-            delay(1000); // Delay for 1 second to allow the message to be displayed
-            ESP.restart(); // Reboot the ESP32
-        }
-        if (M5Cardputer.BtnA.isPressed()){
-            rstOverride = false;
-            isSwitching = true;
-            current_proc = 12;
-            return;
-        }
     }
 }
 
@@ -107,18 +95,27 @@ void ssh_setup() {
     // Connect to WiFi
     DISP.print("Connecting");
     WiFi.begin(ssh_wifi_ssid, ssh_wifi_password);
+    char wifi_connect_cont = 0;
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         DISP.print(".");
         Serial.print(".");
-        if (M5Cardputer.BtnA.isPressed()){
-            delay(200);
-            rstOverride = false;
-            isSwitching = true;
-            current_proc = 12;
-            return;
+        wifi_connect_cont++;
+        if (wifi_connect_cont > 20){
+          ssh_wifi_ssid = ""; 
+          ssh_wifi_password = "";
+          wifi_connect_cont = 0;
+          rstOverride = false;
+          isSwitching = true;
+          current_proc = 12;
+          DISP.print("\n Connection Timeout.");
+          Serial.println("\n Connection Timeout.");
+          delay(1000);
+          return;
         }
     }
+    ssh_wifi_ssid = ""; 
+    ssh_wifi_password = "";  
     DISP.print("\n Connected!");
     Serial.println("\nWiFi Connected");
 
@@ -140,56 +137,101 @@ void ssh_setup() {
     // Connect and authenticate with SSH server
     my_ssh_session = ssh_new();
     if (my_ssh_session == NULL) {
+        ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12; 
         DISP.print("SSH Session creation failed.");
         Serial.println("SSH Session creation failed.");
+        delay(1000);            
         return;
     }
     ssh_options_set(my_ssh_session, SSH_OPTIONS_HOST, ssh_host.c_str());
     ssh_options_set(my_ssh_session, SSH_OPTIONS_USER, ssh_user.c_str());
 
     if (ssh_connect(my_ssh_session) != SSH_OK) {
+        ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12;
+        ssh_free(my_ssh_session);  
         DISP.print("SSH Connect error.");
         Serial.println("SSH Connect error.");
-        ssh_free(my_ssh_session);
+        delay(1000);
         return;
     }
 
     if (ssh_userauth_password(my_ssh_session, NULL, ssh_password.c_str()) != SSH_AUTH_SUCCESS) {
-        DISP.print("SSH Authentication error.");
-        Serial.println("SSH Authentication error.");
+        ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12;
         ssh_disconnect(my_ssh_session);
         ssh_free(my_ssh_session);
+        DISP.print("SSH Authentication error.");
+        Serial.println("SSH Authentication error.");
+        delay(1000);
         return;
     }
 
     channel = ssh_channel_new(my_ssh_session);
     if (channel == NULL || ssh_channel_open_session(channel) != SSH_OK) {
-        DISP.print("SSH Channel open error.");
-        Serial.println("SSH Channel open error.");
+        ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12;
         ssh_disconnect(my_ssh_session);
         ssh_free(my_ssh_session);
+        DISP.print("SSH Channel open error.");
+        Serial.println("SSH Channel open error.");
+        delay(1000);
         return;
     }
 
     if (ssh_channel_request_pty(channel) != SSH_OK) {
-        DISP.print("SSH PTY request error.");
-        Serial.println("SSH PTY request error.");
+      ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12;
         ssh_channel_close(channel);
         ssh_channel_free(channel);
         ssh_disconnect(my_ssh_session);
         ssh_free(my_ssh_session);
+        DISP.print("SSH PTY request error.");
+        Serial.println("SSH PTY request error.");
+        delay(1000);
         return;
     }
 
     if (ssh_channel_request_shell(channel) != SSH_OK) {
-        DISP.print("SSH Shell request error.");
-        Serial.println("SSH Shell request error.");
+        ssh_host = ""; 
+        ssh_user = "";
+        ssh_password = "";
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12;
         ssh_channel_close(channel);
         ssh_channel_free(channel);
         ssh_disconnect(my_ssh_session);
         ssh_free(my_ssh_session);
+        DISP.print("SSH Shell request error.");
+        Serial.println("SSH Shell request error.");
+        delay(1000);
         return;
     }
+    ssh_host = ""; 
+    ssh_user = "";
+    ssh_password = "";
     DISP.print("SSH setup completed.");    
     Serial.println("SSH setup completed.");
 }
@@ -214,6 +256,7 @@ void ssh_loop() {
                     // Normal character handling
                     commandBuffer += i;
                     DISP.print(i);
+                    Serial.print(i);
                     cursorY = DISP.getCursorY();
                 }
             }
@@ -235,13 +278,6 @@ void ssh_loop() {
                 commandBuffer = "> "; // Reset command buffer
                 DISP.print('\n'); // Move to the next line on display
                 cursorY = DISP.getCursorY(); // Update cursor position
-            }
-            if (M5Cardputer.BtnA.isPressed()){
-                delay(200);
-                rstOverride = false;
-                isSwitching = true;
-                current_proc = 12;
-                return;
             }
         }
     }
@@ -283,11 +319,15 @@ void ssh_loop() {
 
     // Handle channel closure and other conditions
     if (nbytes < 0 || ssh_channel_is_closed(channel)) {
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 12; 
         ssh_channel_close(channel);
         ssh_channel_free(channel);
         ssh_disconnect(my_ssh_session);
         ssh_free(my_ssh_session);
         DISP.println("\nSSH session closed.");
+        delay(1000);
         return; // Exit the loop upon session closure
     }
 }

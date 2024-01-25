@@ -67,8 +67,6 @@
   #define TXT_STK_SEL "Sel : M5 Button"
   #define TXT_STK_HOME "Home: Power Button"
   #define TXT_VBAT "Voltage: " // needs to have exactly 9 characters
-  
-
 #endif
 
 #if defined(LANGUAGE_PT_BR)
