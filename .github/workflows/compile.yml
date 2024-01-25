@@ -153,8 +153,8 @@ jobs:
       - name: Upload ${{ matrix.board.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
+          name: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}
           path: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}.bin
-          name: M5Nemo-${{ matrix.board.name }}
           if-no-files-found: error
 
   create_release:
