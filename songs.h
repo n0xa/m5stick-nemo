@@ -68,7 +68,7 @@ void setupSongs() {
 #if defined(STICK_C_PLUS)
     SPEAKER.tone(4000);
     delay(noteDuration * 0.9);
-    delay(noteDuration)
+    delay(noteDuration);
     SPEAKER.mute();
 #elif defined(CARDPUTER)
     // we only play the note for 90% of the duration, leaving 10% as a pause
