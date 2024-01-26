@@ -2,19 +2,30 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
-#define STICK_C_PLUS2
-//#define STICK_C
-//#define CARDPUTER
+// #define STICK_C_PLUS
+// #define STICK_C_PLUS2
+// #define STICK_C
+// #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.4.0";
+// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
+// #define LANGUAGE_EN_US
+// #define LANGUAGE_PT_BR
+
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
-// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
-#define LANGUAGE_EN_US
-//#define LANGUAGE_PT_BR
+#ifndef NEMO_VERSION
+  #define NEMO_VERSION "dev"
+#endif
+
+#if !defined(CARDPUTER) && !defined(STICK_C_PLUS2) && !defined(STICK_C_PLUS) && !defined(STICK_C)
+  #define CARDPUTER
+#endif
+
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR)
+  #define LANGUAGE_EN_US
+#endif
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -1356,7 +1367,7 @@ void credits_setup(){
   DISP.setCursor(0, 10);
   DISP.print(" M5-NEMO\n");
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("  %s\n",buildver);
+  DISP.printf("  %s\n",NEMO_VERSION);
   DISP.println(" For M5Stack");
   DISP.printf(" %s\n\n", platformName);
   DISP.println("Contributors:");
@@ -1689,7 +1700,7 @@ void bootScreen(){
   DISP.println("M5-NEMO");
   DISP.setCursor(10, 30);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("%s-%s\n",buildver,platformName);
+  DISP.printf("%s-%s\n",NEMO_VERSION,platformName);
 #if defined(CARDPUTER)
   DISP.println(TXT_INST_NXT);
   DISP.println(TXT_INST_PRV);
