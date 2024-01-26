@@ -145,7 +145,7 @@ jobs:
       - name: Upload ${{ matrix.board.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
-          name: M5Nemo-${{ matrix.board.name }}-${{ matrix.locale }}
+          name: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}
           path: M5Nemo-*.bin
           if-no-files-found: error
 
@@ -155,6 +155,18 @@ jobs:
     needs: [compile_sketch]
 
     steps:
+    - id: nemo_version
+      run: |
+        set -x
+
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          version=${{ github.ref }}
+        else
+          version="${GITHUB_SHA::7}"
+        fi
+
+        echo "version=${version}" > $GITHUB_OUTPUT
+
     - uses: actions/download-artifact@v4
       with:
         merge-multiple: true
@@ -171,8 +183,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ env.NEMO_VERSION }}
-        tag_name: ${{ env.NEMO_VERSION }}
+        name: NEMO Release ${{ steps.nemo_version.outputs.version }}
+        tag_name: ${{ steps.nemo_version.outputs.version }}
         files: |
           M5Nemo-*.bin
 
