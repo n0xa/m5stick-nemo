@@ -19,6 +19,9 @@ on:
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
+env:
+  MY_VERSION: ${{ contains(github.ref, 'refs/tags/') && github.ref_name || github.sha }}
+
 jobs:
   compile_sketch:
     name: Build ${{ matrix.board.name }} (${{ matrix.locale }})
@@ -116,6 +119,12 @@ jobs:
       - name: Create ${{ matrix.board.name }} Firmware Binary
         run: |
           set -x
+          
+          if [[ "${locale}" == "en-us" ]]; then
+            output_file="M5Nemo-${{ matrix.board.name }}-${version}.bin"
+          else
+            output_file="M5Nemo-${{ matrix.board.name }}-${version}.${locale}.bin"
+          fi
 
           # If we are building a tag, use that as the version, otherwise use the short SHA
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
@@ -127,7 +136,7 @@ jobs:
           fqbn=${{ matrix.board.fqbn }}
           directory="${fqbn//:/.}"
 
-          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}-${version}.${{ matrix.locale }}.bin  \
+          esptool.py --chip esp32s3 merge_bin --output ${output_file}  \
             ${{ matrix.board.partitions.bootloader_addr }} build/${directory}/m5stick-nemo.ino.bootloader.bin \
             0x8000 build/${directory}/m5stick-nemo.ino.partitions.bin \
             0x10000 build/${directory}/m5stick-nemo.ino.bin
@@ -137,6 +146,7 @@ jobs:
         continue-on-error: true
         run: |
           set -x
+          echo ${MY_VERSION}
           pwd
           ls -all
           tree
@@ -146,7 +156,7 @@ jobs:
       - name: Upload ${{ matrix.board.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
-          name: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}
+          name: M5Nemo-${{ matrix.board.name }} - ${{ matrix.locale }}
           path: M5Nemo-*.bin
           if-no-files-found: error
 
