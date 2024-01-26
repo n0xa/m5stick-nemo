@@ -98,9 +98,9 @@ jobs:
         run: |
           set -x
 
+          version="${NEMO_VERSION::7}"
           locale=${{ matrix.locale }}
           language=$(echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]')
-          version="${NEMO_VERSION::7}"
           
           extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language}"
 
@@ -115,11 +115,12 @@ jobs:
           set -x
           
           version="${NEMO_VERSION::7}"
+          locale=${{ matrix.locale }}
           
           if [[ "${locale}" == "en-us" ]]; then
-            output_file="M5Nemo-${{ matrix.board.name }}-${version}.bin"
+            output_file="M5Nemo-${version}-${{ matrix.board.name }}.bin"
           else
-            output_file="M5Nemo-${{ matrix.board.name }}-${version}.${locale}.bin"
+            output_file="M5Nemo-${version}-${{ matrix.board.name }}.${locale}.bin"
           fi
 
           fqbn=${{ matrix.board.fqbn }}
@@ -144,7 +145,7 @@ jobs:
       - name: Upload ${{ matrix.board.name }} Firmware Binary
         uses: actions/upload-artifact@v4
         with:
-          name: M5Nemo-${{ matrix.board.name }} - ${{ matrix.locale }}
+          name: M5Nemo-${{ matrix.board.name }}-${{ matrix.locale }}
           path: M5Nemo-*.bin
           if-no-files-found: error
 
@@ -170,8 +171,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}
+        name: NEMO Release ${{ env.NEMO_VERSION }}
+        tag_name: ${{ env.NEMO_VERSION }}
         files: |
           M5Nemo-*.bin
 
