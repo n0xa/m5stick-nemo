@@ -147,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}
-          path: M5Nemo-${{ matrix.board.name }}.*.bin
+          path: M5Nemo-*.bin
           if-no-files-found: error
 
   create_release:
@@ -164,7 +164,6 @@ jobs:
       if: always()
       run: |
         set -x
-        echo ${{ github.ref_name }}
         pwd
         ls -all
         tree
@@ -174,7 +173,7 @@ jobs:
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
         name: NEMO Release ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}-${{ github.run_id }}
+        tag_name: ${{ github.ref_name }}
         files: |
           M5Nemo-*.bin
 
