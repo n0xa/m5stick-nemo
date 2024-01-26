@@ -27,14 +27,14 @@ jobs:
     name: Build ${{ matrix.board.name }} (${{ matrix.locale }})
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      # max-parallel: 4
       fail-fast: false
       matrix:
         locale:
           - en-us
           - pt-br
         board:
-          - { 
+          - {
               name: "M5Cardputer",
               fqbn: "m5stack:esp32:m5stack_cardputer",
               extra_flags: "-DCARDPUTER",
@@ -160,7 +160,7 @@ jobs:
         set -x
 
         if [[ "${{ github.ref_type }}" == "tag" ]]; then
-          version=${{ github.ref }}
+          version=${{ github.ref_name }}
         else
           version="${GITHUB_SHA::7}"
         fi
