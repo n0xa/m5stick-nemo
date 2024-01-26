@@ -20,7 +20,7 @@ on:
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
 env:
-  MY_VERSION: ${{ contains(github.ref, 'refs/tags/') && github.ref_name || github.sha }}
+  NEMO_VERSION: ${{ contains(github.ref, 'refs/tags/') && github.ref_name || github.sha }}
 
 jobs:
   compile_sketch:
@@ -98,15 +98,9 @@ jobs:
         run: |
           set -x
 
-          # If we are building a tag, use that as the version, otherwise use the short SHA
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            version=${{ github.ref_name }}
-          else
-            version="${GITHUB_SHA::7}"
-          fi
-
           locale=${{ matrix.locale }}
           language=$(echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]')
+          version="${NEMO_VERSION::7}"
           
           extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language}"
 
@@ -120,17 +114,12 @@ jobs:
         run: |
           set -x
           
+          version="${NEMO_VERSION::7}"
+          
           if [[ "${locale}" == "en-us" ]]; then
             output_file="M5Nemo-${{ matrix.board.name }}-${version}.bin"
           else
             output_file="M5Nemo-${{ matrix.board.name }}-${version}.${locale}.bin"
-          fi
-
-          # If we are building a tag, use that as the version, otherwise use the short SHA
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            version=${{ github.ref_name }}
-          else
-            version="${GITHUB_SHA::7}"
           fi
 
           fqbn=${{ matrix.board.fqbn }}
@@ -146,7 +135,6 @@ jobs:
         continue-on-error: true
         run: |
           set -x
-          echo ${MY_VERSION}
           pwd
           ls -all
           tree
