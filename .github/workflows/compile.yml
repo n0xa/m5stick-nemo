@@ -19,13 +19,6 @@ on:
         default: 'M5Cardputer'
         options: ['M5Cardputer', 'M5StickCPlus2', 'M5StickCPlus', 'M5StickC']
 
-env:
-  locale: "en-us,pt-br"
-  NEMO_VERSION: ${{ github.sha }}
-  MY1_ENV_VAR: ${{ github.ref }}
-  MY2_ENV_VAR: ${{ github.ref_name }}
-  # MY2_ENV_VAR: ${{ format('{0}', contains(github.ref, 'refs/tags/') && github.ref || "NEMO_VERSION") }}
-
 jobs:
   compile_sketch:
     name: Build ${{ matrix.board.name }} (${{ matrix.locale }})
@@ -37,7 +30,6 @@ jobs:
         locale:
           - en-us
           - pt-br
-        # locale: ${{ fromJson(format('[{0}]', env.locale)) }}
         board:
           - { 
               name: "M5Cardputer",
@@ -83,12 +75,6 @@ jobs:
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1
 
-      - run: |
-          set -x
-
-          echo "MY1_ENV_VAR: ${MY1_ENV_VAR}"
-          echo "MY2_ENV_VAR: ${MY2_ENV_VAR}"
-
       - name: Install platform
         run: |
           set -x
@@ -111,7 +97,7 @@ jobs:
 
           # If we are building a tag, use that as the version, otherwise use the short SHA
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            version=${{ github.ref }}
+            version=${{ github.ref_name }}
           else
             version="${GITHUB_SHA::7}"
           fi
@@ -131,10 +117,17 @@ jobs:
         run: |
           set -x
 
+          # If we are building a tag, use that as the version, otherwise use the short SHA
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            version=${{ github.ref_name }}
+          else
+            version="${GITHUB_SHA::7}"
+          fi
+
           fqbn=${{ matrix.board.fqbn }}
           directory="${fqbn//:/.}"
 
-          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}.bin  \
+          esptool.py --chip esp32s3 merge_bin --output M5Nemo-${{ matrix.board.name }}-${version}.${{ matrix.locale }}.bin  \
             ${{ matrix.board.partitions.bootloader_addr }} build/${directory}/m5stick-nemo.ino.bootloader.bin \
             0x8000 build/${directory}/m5stick-nemo.ino.partitions.bin \
             0x10000 build/${directory}/m5stick-nemo.ino.bin
@@ -159,29 +152,13 @@ jobs:
 
   create_release:
     runs-on: ubuntu-latest
-    environment: release
+    environment: github_release
     needs: [compile_sketch]
 
     steps:
     - uses: actions/download-artifact@v4
       with:
-        # name: M5Nemo-M5Cardputer
         merge-multiple: true
-    
-    # - uses: actions/download-artifact@v4
-    #   with:
-    #     name: M5Nemo-M5StickCPlus2
-    #     merge-multiple: true
-    
-    # - uses: actions/download-artifact@v4
-    #   with:
-    #     name: M5Nemo-M5StickCPlus
-    #     merge-multiple: true
-    
-    # - uses: actions/download-artifact@v4
-    #   with:
-    #     name: M5Nemo-M5StickC
-    #     merge-multiple: true
 
     - name: List all files
       if: always()
@@ -196,7 +173,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       with:
-        name: NEMO Release ${{ github.ref_name }}-${{ github.sha }}
+        name: NEMO Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}-${{ github.run_id }}
         files: |
           M5Nemo-*.bin
