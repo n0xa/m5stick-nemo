@@ -57,6 +57,7 @@ void setSSID(String ssid){
   return;
 }
 
+#ifdef CARDPUTER
 void confirmOrTypeSSID(){
   DISP.fillScreen(BLACK);
   DISP.setSwapBytes(true);
@@ -101,6 +102,7 @@ void confirmOrTypeSSID(){
     setSSID(currentSSID);
   }
 }
+#endif
 
 void setupWiFi() {
   Serial.println("Initializing WiFi");

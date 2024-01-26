@@ -3,12 +3,12 @@
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 //#define STICK_C_PLUS
-//#define STICK_C_PLUS2
+#define STICK_C_PLUS2
 //#define STICK_C
-#define CARDPUTER
+//#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.5";
+String buildver="2.4.0";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -141,6 +141,7 @@ String buildver="2.3.5";
 // ROTATION   - Allow screen to be rotated
 // DISP       - Set to the API's Display class
 // SDCARD     - Device has an SD Card Reader attached
+// SONG       - Play melody or beep on startup
 // SPEAKER    - Aliased to the prefix used for making noise
 
 /// SWITCHER ///
@@ -165,6 +166,20 @@ String buildver="2.3.5";
 // 17 - Bluetooth Maelstrom
 // 18 - QR Codes
 // 19 - NEMO Portal
+
+const String contributors[] PROGMEM = {
+  "@bicurico",
+  "@chr0m1ng",
+  "@doflamingozk",
+  "@gustavocelani",
+  "@imxnoobx",
+  "@marivaaldo",
+  "@mmatuda",
+  "@n0xa",
+  "@niximkk",
+  "@unagironin",
+  "@vladimirpetrov"
+};
 
 int advtime = 0; 
 int cursor = 0;
@@ -382,7 +397,7 @@ void screenBrightness(int bright){
     M5.Axp.ScreenBreath(bright);
   #endif
   #if defined(BACKLIGHT)
-    analogWrite(BACKLIGHT, 155 + (bright));
+    analogWrite(BACKLIGHT, 205 + (bright/2));
   #endif
 }
 
@@ -1335,30 +1350,37 @@ void aj_adv(){
 /// CREDITS ///
 void credits_setup(){
   DISP.fillScreen(WHITE);
-  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 40, 100, 5);
+  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 22, 100, 5);
   DISP.setTextColor(BLACK, WHITE);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(0, 25);
+  DISP.setCursor(0, 10);
   DISP.print(" M5-NEMO\n");
   DISP.setTextSize(SMALL_TEXT);
   DISP.printf("  %s\n",buildver);
   DISP.println(" For M5Stack");
-#if defined(STICK_C_PLUS)
-  DISP.println("  StickC-Plus");
-#endif
-#if defined(STICK_C)
-  DISP.println("  StickC");
-#endif
-#if defined(CARDPUTER)
-  DISP.println("  Cardputer");
-#endif
-  DISP.println("By Noah Axon");
+  DISP.printf(" %s\n\n", platformName);
+  DISP.println("Contributors:");
   DISP.setCursor(155, 5);
   DISP.println("GitHub");
-  DISP.setCursor(155, 25);
+  DISP.setCursor(155, 17);
   DISP.println("Source:");
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(250);
+  cursor = 0;
+  advtime = 0;
+}
+
+void credits_loop(){
+  if(millis() > advtime){
+    DISP.setTextColor(BLACK, WHITE);  
+    DISP.setCursor(0, 115);
+    DISP.println("                   ");
+    DISP.setCursor(0, 115);
+    DISP.println(contributors[cursor]);
+    cursor++;  
+    cursor = cursor % (sizeof(contributors)/sizeof(contributors[0]));
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
+    advtime=millis() + 2000;
+  }
 }
 
 /// WiFiSPAM ///
@@ -1654,7 +1676,9 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  #ifdef SONG
   setupSongs();
+  #endif
   #ifndef STICK_C
   BITMAP;
   delay(3000);
@@ -1966,10 +1990,7 @@ void loop() {
       aj_adv();
       break;
     case 10:
-      // easter egg?
-      #ifndef STICK_C
-      if(check_select_press()){BITMAP;}
-      #endif
+      credits_loop();
       break;
     case 11:
       wifispam_loop();
