@@ -8,7 +8,7 @@
 //#define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.4";
+String buildver="2.3.5";
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
@@ -41,6 +41,8 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -53,10 +55,12 @@ String buildver="2.3.4";
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
   //#define ACTIVE_LOW_IR
+  #define M5LED
   #define ROTATION
   #define USE_EEPROM
   //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
   //#define SDCARD   //Requires a custom-built adapter
+  #define PWRMGMT
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -69,6 +73,8 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON HIGH
+  #define M5LED_OFF LOW
 #endif
 
 #if defined(STICK_C)
@@ -93,6 +99,8 @@ String buildver="2.3.4";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 #if defined(CARDPUTER)
@@ -123,9 +131,10 @@ String buildver="2.3.4";
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
-// M5LED      - An LED exposed as M5_LED
+// M5LED      - An LED exposed as IRLED
 // RTC        - Real-time clock exposed as M5.Rtc 
 // AXP        - AXP192 Power Management exposed as M5.Axp
+// PWRMGMT    - StickC+2 Power Management exposed as M5.Power
 // KB         - Keyboard exposed as M5Cardputer.Keyboard
 // HID        - HID exposed as USBHIDKeyboard
 // USE_EEPROM - Store settings in EEPROM
@@ -467,7 +476,7 @@ void dmenu_loop() {
 /// SETTINGS MENU ///
 MENU smenu[] = {
   { TXT_BACK, 1},
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
   { TXT_BATT_INFO, 6},
 #endif
 #if defined(CARDPUTER)
@@ -573,9 +582,48 @@ int rotation = 1;
   }
 #endif //ROTATION
 
-#if defined(AXP)
-  /// BATTERY INFO ///
-  int oldbattery=0;
+/// BATTERY INFO ///
+
+#if defined(PWRMGMT)
+  int old_battery = 0;
+
+  void battery_drawmenu(int battery) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 8, 1);
+    DISP.print(TXT_BATT);
+    DISP.print(battery);
+    DISP.println("%");
+    DISP.println(TXT_EXIT);
+  }
+
+  int get_battery_voltage() {
+    return M5.Power.getBatteryLevel();
+  }
+
+  void battery_setup() {
+    int battery = get_battery_voltage();
+    battery_drawmenu(battery);
+    delay(500); // Prevent switching after menu loads up
+  }
+
+  void battery_loop() {
+    delay(300);
+    int battery = get_battery_voltage();
+
+    if (battery != old_battery){
+      battery_drawmenu(battery);
+    }
+    if (check_select_press()) {
+      isSwitching = true;
+      current_proc = 1;
+    }
+    old_battery = battery;
+  }
+#endif
+
+#ifdef AXP
+  int old_battery=0;
   void battery_drawmenu(int battery, int b, int c) {
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
@@ -590,6 +638,7 @@ int rotation = 1;
     DISP.println("");
     DISP.println(TXT_EXIT);
   }
+
   void battery_setup() {
     rstOverride = false;
     float c = M5.Axp.GetVapsData() * 1.4 / 1000;
@@ -604,15 +653,15 @@ int rotation = 1;
     float c = M5.Axp.GetVapsData() * 1.4 / 1000;
     float b = M5.Axp.GetVbatData() * 1.1 / 1000;
     int battery = ((b - 3.0) / 1.2) * 100;
-    if (battery != oldbattery){
+    if (battery != old_battery){
       battery_drawmenu(battery, b, c);
     }
     if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
-     current_proc = 1;
+      current_proc = 1;
     }
-    oldbattery = battery;
+    old_battery = battery;
   }
 #endif // AXP
 
@@ -1260,9 +1309,9 @@ void aj_adv(){
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
 #if defined(M5LED)
-    digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+    digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+     digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -1369,9 +1418,9 @@ void wifispam_loop() {
   int i = 0;
   int len = 0;
 #if defined(M5LED)
-  digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+  digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
   delay(1);
-  digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+  digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
@@ -1754,8 +1803,8 @@ void setup() {
   
   // Pin setup
 #if defined(M5LED)
-  pinMode(M5_LED, OUTPUT);
-  digitalWrite(M5_LED, HIGH); //LEDOFF
+  pinMode(IRLED, OUTPUT);
+  digitalWrite(IRLED, M5LED_OFF); //LEDOFF
 #endif
 #if !defined(KB)
   pinMode(M5_BUTTON_HOME, INPUT);
@@ -1818,7 +1867,7 @@ void loop() {
       case 5:
         tvbgone_setup();
         break;
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
       case 6:
         battery_setup();
         break;
@@ -1895,7 +1944,7 @@ void loop() {
     case 5:
       tvbgone_loop();
       break;
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
     case 6:
       battery_loop();
       break;
