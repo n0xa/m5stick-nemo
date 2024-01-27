@@ -79,8 +79,8 @@
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
-  //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
-  #define BACKLIGHT 27 // best I can tell from the schematics?
+  #define BACKLIGHT 27
+  #define MINBRIGHT 190
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -132,6 +132,7 @@
   #define DISP M5Cardputer.Display
   #define IRLED 44
   #define BACKLIGHT 38
+  #define MINBRIGHT 165
   #define SPEAKER M5Cardputer.Speaker
   #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
@@ -154,6 +155,8 @@
 // SDCARD     - Device has an SD Card Reader attached
 // SONG       - Play melody or beep on startup
 // SPEAKER    - Aliased to the prefix used for making noise
+// BACKLIGHT  - Alias to the pin used for the backlight on some models
+// MINBRIGHT  - The lowest number (0-255) for the backlight to show through
 
 /// SWITCHER ///
 // Proc codes
@@ -405,11 +408,13 @@ int screen_dim_time = 30;
 int screen_dim_current = 0;
 
 void screenBrightness(int bright){
+  Serial.printf("Brightness: %d\n", bright);
   #if defined(AXP)
     M5.Axp.ScreenBreath(bright);
   #endif
   #if defined(BACKLIGHT)
-    analogWrite(BACKLIGHT, 205 + (bright/2));
+    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
+    analogWrite(BACKLIGHT, bl);
   #endif
 }
 
@@ -429,7 +434,7 @@ void screen_dim_proc() {
   if(screen_dim_time > 0){
     if (screen_dim_dimmed == false) {
       if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
-        screenBrightness(10);
+        screenBrightness(0);
         screen_dim_dimmed = true;
       }
     }
@@ -1804,9 +1809,11 @@ void setup() {
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
-  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
 #else
   M5.begin();
+#endif
+#if defined(BACKLIGHT)
+  pinMode(BACKLIGHT, OUTPUT); // Backlight analogWrite range ~150 - 255
 #endif
   if(check_next_press()){
     clearSettings();
