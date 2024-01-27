@@ -141,6 +141,7 @@ Contributions are welcome.
 * Pliease look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
 * When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.
 * Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
+* Feel free to add your github to the contributors array as part of your pull request.
 
 Things I'd like help on:
 * Improved localization/translations of the menu, not just NEMO Portal HTML.
