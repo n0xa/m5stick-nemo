@@ -36,7 +36,7 @@
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ACTIVE_LOW_IR
@@ -65,8 +65,8 @@
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  //#define ACTIVE_LOW_IR
-  #define M5LED
+  #define ACTIVE_LOW_IR
+  #define M5LED 19
   #define ROTATION
   #define USE_EEPROM
   //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
@@ -97,7 +97,7 @@
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ROTATION
@@ -143,7 +143,8 @@
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
-// M5LED      - An LED exposed as IRLED
+// M5LED      - A visible LED (Red) exposed on this pin number
+// IRLED      - An IR LED exposed on this pin number
 // RTC        - Real-time clock exposed as M5.Rtc 
 // AXP        - AXP192 Power Management exposed as M5.Axp
 // PWRMGMT    - StickC+2 Power Management exposed as M5.Power
@@ -753,7 +754,7 @@ void tvbgone_setup() {
   DISP.setTextSize(SMALL_TEXT);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
-  digitalWrite(IRLED, HIGH);
+  digitalWrite(IRLED, M5LED_OFF);
 
   delay_ten_us(5000);
   if(region == NA) {
@@ -866,10 +867,7 @@ void sendAllCodes() {
       rawData[(k * 2) + 1] = ontime * 10;
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    #if defined(ACTIVE_LOW_IR)
-      // Set Active Low IRLED high to turn it off after each burst.
-      digitalWrite(IRLED, HIGH);
-    #endif
+    digitalWrite(IRLED, M5LED_OFF);
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
@@ -1341,9 +1339,9 @@ void aj_adv(){
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
 #if defined(M5LED)
-    digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
+    digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
+    digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -1457,9 +1455,9 @@ void wifispam_loop() {
   int i = 0;
   int len = 0;
 #if defined(M5LED)
-  digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
+  digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
   delay(1);
-  digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
+  digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
@@ -1846,6 +1844,10 @@ void setup() {
   
   // Pin setup
 #if defined(M5LED)
+  pinMode(M5LED, OUTPUT);
+  digitalWrite(M5LED, M5LED_OFF); //LEDOFF
+#endif
+#if defined(IRLED)
   pinMode(IRLED, OUTPUT);
   digitalWrite(IRLED, M5LED_OFF); //LEDOFF
 #endif
