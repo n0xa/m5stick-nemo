@@ -236,11 +236,13 @@ bool isSwitching = true;
 #include "sd.h"
 #include "portal.h"
 #include "NEMOMatrix.h"
-#include "songs.h"
 #include "localization.h"
+#include "songs.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
-
+#if defined(CARDPUTER)
+  #include "SSHClient.h"
+#endif
 struct MENU {
   char name[19];
   int command;
@@ -702,48 +704,76 @@ int rotation = 1;
 
 #if defined(CARDPUTER)
   /// BATTERY INFO ///
-  int oldbattery=0;
-  void battery_drawmenu(int battery) {
+  unsigned long lastBatteryTime = 0;
+  unsigned long batteryInterval = 1000;  
+  void battery_drawmenu(int battery, float vbat_) {
     DISP.setTextSize(SMALL_TEXT);
-    DISP.fillScreen(BGCOLOR);
+    DISP.fillRect(100, 5, 140, 9, BGCOLOR); // prevents display flickering
     DISP.setCursor(0, 8, 1);
     DISP.print(TXT_BATT);
     DISP.print(battery);
     DISP.println("%");
+    DISP.print(TXT_VBAT);
+    DISP.print(vbat_, 2);
+    DISP.println("V");
     DISP.println(TXT_EXIT);
   }
-
-  void battery_setup() { // 
+  void battery_setup() { 
     rstOverride = false;
+    DISP.fillScreen(BGCOLOR);
     pinMode(VBAT_PIN, INPUT);
-    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738); // 
     int bat_ = analogRead(VBAT_PIN);
-    Serial.println("Battery level:");
-    Serial.println(battery);
-    battery_drawmenu(battery);
+    int battery = (((bat_ - 1712) * 100) / 823); 
+    if (battery > 100) {
+      battery = 100;
+    }
+    if (battery < 0) {
+        battery = 0;
+      }
+    float vbat_ = (((float)bat_ / 4095) * 3.3) * 2;
+    battery_drawmenu(battery, vbat_);
+    Serial.print("Battery level: ");
+    Serial.print(battery);
+    Serial.println("%");
+    Serial.print("Battery Voltage: ");
+    Serial.print(vbat_, 2);
+    Serial.println("V");
     delay(500); // Prevent switching after menu loads up
+    lastBatteryTime = millis() + batteryInterval + 1; // makes battery_loop show battery at first run
     /*
       Used minimum 3,0V and maximum 4,2V for battery. So it may show wrong values. Needs testing.
       It only shows decent values when disconnected from charger, due to HW limitations.
-      Equation: Bat% = ((Vadc - 1842) / (2580 - 1842)) * 100. Where: 4,2V = 2580, 3,0V = 1842.
+      Ideal equation: Bat% = ((Vadc - 1842) / (2580 - 1842)) * 100. Where: 4,2V = 2580, 3,0V = 1842.
+      Adjusted mine to: 2535 maximum / 1712 minimum / delta = 823
     */
   }
 
   void battery_loop() {
-    delay(300);
-    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
-    if (battery != oldbattery){
-      Serial.println("Battery level:");
-      Serial.println(battery);
-      Serial.printf("Raw: %d\n", analogRead(VBAT_PIN));
-      battery_drawmenu(battery);
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastBatteryTime >= batteryInterval) { // 1s delay for displaying things, maintaining buttons available
+      lastBatteryTime = currentMillis;
+      int bat_ = analogRead(VBAT_PIN);
+      int battery = (((bat_ - 1712) * 100) / 823);
+      if (battery > 100) {
+        battery = 100;
+      }
+      if (battery < 0) {
+        battery = 0;
+      }
+      float vbat_ = (((float)bat_ / 4095) * 3.3) * 2;
+      Serial.print("Battery level: ");
+      Serial.print(battery);
+      Serial.println("%");
+      Serial.print("Battery Voltage: ");
+      Serial.print(vbat_, 2);
+      Serial.println("V");
+      battery_drawmenu(battery, vbat_);
     }
     if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
-     current_proc = 1;
+      current_proc = 1;
     }
-    oldbattery = battery;
   }
 #endif // Cardputer
 
@@ -1546,6 +1576,9 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
+#if defined(CARDPUTER)
+  { "SSH Client", 6},
+#endif  
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1589,6 +1622,11 @@ void wsmenu_loop() {
       case 5:
         current_proc = 1;
         break;
+#if defined(CARDPUTER)
+      case 6:
+        current_proc = 20;
+        break;
+#endif  
     }
   }
 }
@@ -1663,9 +1701,9 @@ void wscan_result_loop(){
       break ;
     }
     
-    DISP.setTextSize(SMALL_TEXT);
+    DISP.setTextSize(MEDIUM_TEXT);
     if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(TINY_TEXT);
+      DISP.setTextSize(SMALL_TEXT);
     }       
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
@@ -1983,6 +2021,11 @@ void loop() {
       case 19:
         portal_setup();
         break;
+#if defined(CARDPUTER)
+      case 20:
+        ssh_setup();
+        break;
+#endif
     }
   }
 
@@ -2060,5 +2103,10 @@ void loop() {
     case 19:
       portal_loop();
       break;
+#if defined(CARDPUTER)
+    case 20:
+      ssh_loop();
+      break;
+#endif
   }
 }

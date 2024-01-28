@@ -19,7 +19,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * WiFi SSID Scanner - Display 2.4 GHz SSIDs nearby, get information about them, and even clone the SSIDs in NEMO Portal
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
 * EEPROM-backed Settings for rotation, brightness, automatic dimming and NEMO Portal SSID
-* Battery level and credits in settings menu
+* Battery level and credits in settings menu (now also on M5Cardputer)
 
 ## User Interface
 There are three main controls:
