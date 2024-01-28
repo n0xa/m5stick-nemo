@@ -36,7 +36,7 @@
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ACTIVE_LOW_IR
@@ -65,11 +65,11 @@
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  //#define ACTIVE_LOW_IR
-  #define M5LED
+  #define ACTIVE_LOW_IR
+  #define M5LED 19
   #define ROTATION
   #define USE_EEPROM
-  //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
+  #define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
   //#define SDCARD   //Requires a custom-built adapter
   #define PWRMGMT
   // -=-=- ALIASES -=-=-
@@ -79,8 +79,8 @@
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
-  //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
-  #define BACKLIGHT 27 // best I can tell from the schematics?
+  #define BACKLIGHT 27
+  #define MINBRIGHT 190
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -97,7 +97,7 @@
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ROTATION
@@ -132,6 +132,7 @@
   #define DISP M5Cardputer.Display
   #define IRLED 44
   #define BACKLIGHT 38
+  #define MINBRIGHT 165
   #define SPEAKER M5Cardputer.Speaker
   #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
@@ -139,10 +140,13 @@
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
   #define VBAT_PIN 10
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
-// M5LED      - An LED exposed as IRLED
+// M5LED      - A visible LED (Red) exposed on this pin number
+// IRLED      - An IR LED exposed on this pin number
 // RTC        - Real-time clock exposed as M5.Rtc 
 // AXP        - AXP192 Power Management exposed as M5.Axp
 // PWRMGMT    - StickC+2 Power Management exposed as M5.Power
@@ -154,6 +158,8 @@
 // SDCARD     - Device has an SD Card Reader attached
 // SONG       - Play melody or beep on startup
 // SPEAKER    - Aliased to the prefix used for making noise
+// BACKLIGHT  - Alias to the pin used for the backlight on some models
+// MINBRIGHT  - The lowest number (0-255) for the backlight to show through
 
 /// SWITCHER ///
 // Proc codes
@@ -405,11 +411,13 @@ int screen_dim_time = 30;
 int screen_dim_current = 0;
 
 void screenBrightness(int bright){
+  Serial.printf("Brightness: %d\n", bright);
   #if defined(AXP)
     M5.Axp.ScreenBreath(bright);
   #endif
   #if defined(BACKLIGHT)
-    analogWrite(BACKLIGHT, 205 + (bright/2));
+    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
+    analogWrite(BACKLIGHT, bl);
   #endif
 }
 
@@ -429,7 +437,7 @@ void screen_dim_proc() {
   if(screen_dim_time > 0){
     if (screen_dim_dimmed == false) {
       if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
-        screenBrightness(10);
+        screenBrightness(0);
         screen_dim_dimmed = true;
       }
     }
@@ -748,7 +756,7 @@ void tvbgone_setup() {
   DISP.setTextSize(SMALL_TEXT);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
-  digitalWrite(IRLED, HIGH);
+  digitalWrite(IRLED, M5LED_OFF);
 
   delay_ten_us(5000);
   if(region == NA) {
@@ -861,10 +869,7 @@ void sendAllCodes() {
       rawData[(k * 2) + 1] = ontime * 10;
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    #if defined(ACTIVE_LOW_IR)
-      // Set Active Low IRLED high to turn it off after each burst.
-      digitalWrite(IRLED, HIGH);
-    #endif
+    digitalWrite(IRLED, M5LED_OFF);
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
@@ -910,9 +915,14 @@ void sendAllCodes() {
   }
 
   void clock_loop() {
-    M5.Rtc.GetBm8563Time();
     DISP.setCursor(40, 40, 2);
-    DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    #if defined(STICK_C_PLUS2)
+      auto dt = StickCP2.Rtc.getDateTime();
+      DISP.printf("%02d:%02d:%02d\n", dt.time.hours, dt.time.minutes, dt.time.seconds);
+    #else
+      M5.Rtc.GetBm8563Time();
+      DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    #endif
     delay(250);
   }
 
@@ -926,8 +936,13 @@ void sendAllCodes() {
   }
 
   void timeset_loop() {
+  #if defined(STICK_C_PLUS2)
+    auto dt = StickCP2.Rtc.getDateTime();
+    cursor = dt.time.hours;
+  #else
     M5.Rtc.GetBm8563Time();
     cursor = M5.Rtc.Hour;
+  #endif
     number_drawmenu(24);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
@@ -942,7 +957,11 @@ void sendAllCodes() {
     DISP.setCursor(0, 5, 1);
     DISP.println(TXT_SET_MIN);
     delay(2000);
-    cursor = M5.Rtc.Minute;
+    #if defined(STICK_C_PLUS2)
+      cursor = dt.time.minutes;
+    #else
+      cursor = M5.Rtc.Minute;
+    #endif
     number_drawmenu(60);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
@@ -955,11 +974,15 @@ void sendAllCodes() {
     int minute = cursor;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    RTC_TimeTypeDef TimeStruct;
-    TimeStruct.Hours   = hour;
-    TimeStruct.Minutes = minute;
-    TimeStruct.Seconds = 0;
-    M5.Rtc.SetTime(&TimeStruct);
+    #if defined(STICK_C_PLUS2)
+       StickCP2.Rtc.setDateTime( { { dt.date.year, dt.date.month, dt.date.date }, { hour, minute, 0 } } );
+    #else
+      RTC_TimeTypeDef TimeStruct;
+      TimeStruct.Hours   = hour;
+      TimeStruct.Minutes = minute;
+      TimeStruct.Seconds = 0;
+      M5.Rtc.SetTime(&TimeStruct);
+    #endif
     DISP.printf("Setting Time:\n%02d:%02d:00",hour,minute);
     delay(2000);
     rstOverride = false;
@@ -1336,9 +1359,9 @@ void aj_adv(){
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
 #if defined(M5LED)
-    digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
+    digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
+    digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -1452,9 +1475,9 @@ void wifispam_loop() {
   int i = 0;
   int len = 0;
 #if defined(M5LED)
-  digitalWrite(IRLED, M5LED_ON); //LED ON on Stick C Plus
+  digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
   delay(1);
-  digitalWrite(IRLED, M5LED_OFF); //LED OFF on Stick C Plus
+  digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
@@ -1804,9 +1827,11 @@ void setup() {
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
-  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
 #else
   M5.begin();
+#endif
+#if defined(BACKLIGHT)
+  pinMode(BACKLIGHT, OUTPUT); // Backlight analogWrite range ~150 - 255
 #endif
   if(check_next_press()){
     clearSettings();
@@ -1839,6 +1864,10 @@ void setup() {
   
   // Pin setup
 #if defined(M5LED)
+  pinMode(M5LED, OUTPUT);
+  digitalWrite(M5LED, M5LED_OFF); //LEDOFF
+#endif
+#if defined(IRLED)
   pinMode(IRLED, OUTPUT);
   digitalWrite(IRLED, M5LED_OFF); //LEDOFF
 #endif
