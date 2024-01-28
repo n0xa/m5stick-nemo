@@ -140,6 +140,8 @@
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
   #define VBAT_PIN 10
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
