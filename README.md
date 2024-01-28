@@ -83,12 +83,50 @@ If you want to customize NEMO or contribute to the project, you should be famili
   * If for some reason the screen jumps from very dim at level 0 to almost fully bright at level 1 and further brightness levels don't affect anything, set the pct_brightness variable to false.
 * Compile and upload the project
 
+## Building from Source (with Arduino CLI)
+
+- Install Arduino CLI
+- Add M5Stack Index to Arduino Core
+- Add M5Stack Libraries
+
+```bash
+
+# Install m5stack boards
+arduino-cli core install m5stack:esp32  --additional-urls https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json --log-level warn --verbose
+
+# Install required library
+arduino-cli lib install M5Cardputer --log-level warn --verbose
+arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
+
+# Compile sketch
+arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property build.partitions=huge_app --build-property upload.maximum_size=3145728 ./m5stick-nemo.ino
+
+```
+
+- This will create multiple binaries based on partition sketch, you can merge a single binary using `esptool``
+- Install esptool - `pip install -U esptool`
+
+```bash
+
+esptool.py --chip esp32s3 merge_bin --output final.bin 0x0000 m5stick-nemo.ino.bootloader.bin 0x8000 m5stick-nemo.ino.partitions.bin 0x10000 m5stick-nemo.ino.bin
+```
+
+- You can now flash the merged binary firmware using `esptool`
+
+```bash
+
+esptool.exe write_flash -z 0 final.bin
+```
+
+
 ## Troubleshooting
 * Several features output debugging information to the serial monitor. Use the Serial Monitor feature in Arduino IDE or M5Burner to gather this information. It may have useful hints. When filing a bug report, it often helps to include serial monitor output.
 * Reset the EEPROM. On models with EEPROM settings support, use "Clear Settings" from the settings menu, or hold the "Next" button (Side key on StickC models, Tab or Down Arrow on Cardputer) while powering on. 
 * TV-B-Gone's IR LED can be observed through a smart phone camera, emitting a pale purple beam of light. If it seems to be on constantly, or if it never flashes at all during TV-B-Gone operations, something is wrong. Report a bug. There's a known issue with TVBG not working after using Bluetooth spam or random wifi spam.
 * Try viewing wifi lists from several different devices if you suspect wifi spam isn't working. Sometimes, Linux network manager can see networks that smart phones cannot. Please include the results of this testing if reporting wifi spam problems.
 * Apple has patched a lot of Bluetooth stuff since summer 2023. If testing AppleJuice, try some of the AppleTV device types, as they tend to be more reliable due to apple not filtering out weaker bluetooth signals for that platform.
+
+
 ## Reporting Bugs
 Please report bugs via GitHub Issues. These are easier to track than comments on social media posts, M5Burner entries, etc. If something isn't working, please include:
 * Firmware version
@@ -103,6 +141,7 @@ Contributions are welcome.
 * Pliease look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
 * When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.
 * Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
+* Feel free to add your github to the contributors array as part of your pull request.
 
 Things I'd like help on:
 * Improved localization/translations of the menu, not just NEMO Portal HTML.
