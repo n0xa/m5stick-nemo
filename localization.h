@@ -66,7 +66,13 @@
   #define TXT_STK_NXT "Next: Side Button"
   #define TXT_STK_SEL "Sel : M5 Button"
   #define TXT_STK_HOME "Home: Power Button"
-
+  #define TXT_SDCARD "Mount/Unmount SD"
+  #define TXT_DEAUTH_START "Select>Start DEAUTH\n"
+  #define TXT_DEAUTH_STOP "Select>Stop DEAUTH \n"
+  #define TXT_HOLD_ATTACK "Hold Select: Attack\n"
+  #define TXT_WFA_PORTAL "Clone Portal"
+  #define TXT_WFA_DEAUTH "Deauth attack"
+  #define TXT_WFA_COMBINED "Deauth+Clone"
 #endif
 
 #if defined(LANGUAGE_PT_BR)
@@ -137,4 +143,11 @@
   #define TXT_STK_NXT "Prox: Botao do Lado"
   #define TXT_STK_SEL "Sel : Botao M5"
   #define TXT_STK_HOME "Home: Botao Power"
+  #define TXT_SDCARD "Monta/Desmonta SD"
+  #define TXT_DEAUTH_START "Sel: Iniciar DEAUTH\n"
+  #define TXT_DEAUTH_STOP "Sel: Parar DEAUTH  \n"
+  #define TXT_HOLD_ATTACK "Segurar Ok: Atacar\n"
+  #define TXT_WFA_PORTAL "Clonar Portal"
+  #define TXT_WFA_DEAUTH "Ataque Deauth"
+  #define TXT_WFA_COMBINED "Deauth+Clone"
 #endif
