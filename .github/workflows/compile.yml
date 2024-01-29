@@ -118,14 +118,6 @@ jobs:
                               --build-property build.partitions=huge_app \
                               --build-property upload.maximum_size=3145728 \
                               --build-property compiler.cpp.extra_flags="${extra_flags}" \
-                              --build-property build.extra_flags.esp32=-w \
-                              --build-property build.extra_flags.esp32s2=-w \
-                              --build-property build.extra_flags.esp32s3=-w \
-                              --build-property build.extra_flags.esp32c3=-w \
-                              --build-property compiler.c.elf.libs.esp32=-zmuldefs  \
-                              --build-property compiler.c.elf.libs.esp32s2=-zmuldefs \
-                              --build-property compiler.c.elf.libs.esp32s3=-zmuldefs \
-                              --build-property compiler.c.elf.libs.esp32c3=-zmuldefs \
                               ./m5stick-nemo.ino
       
       - name: Create ${{ matrix.board.name }} Firmware Binary
@@ -207,5 +199,4 @@ jobs:
         generate_release_notes: true
         files: |
           M5Nemo-*.bin
-
 
