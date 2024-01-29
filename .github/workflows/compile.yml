@@ -106,7 +106,7 @@ jobs:
 
       - name: Setup platform.txt
         run: |
-          baseFolder="$HOME/runner/.arduino15/packages/m5stack/hardware/esp32"
+          baseFolder="$HOME/.arduino15/packages/m5stack/hardware/esp32"
           
           # Find the latest version of the folder
           latestVersion=$(find "$baseFolder" -maxdepth 1 -type d -exec basename {} \; | sort -V | head -n 1)
