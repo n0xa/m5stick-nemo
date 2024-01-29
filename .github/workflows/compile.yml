@@ -6,7 +6,7 @@ on:
     branches:
       - main
     tags:
-      - "v*"
+      - "*"
   pull_request:
     branches:
       - main
@@ -196,6 +196,7 @@ jobs:
       with:
         name: NEMO Release ${{ steps.nemo_version.outputs.version }}
         tag_name: ${{ steps.nemo_version.outputs.version }}
+        generate_release_notes: true
         files: |
           M5Nemo-*.bin
 
