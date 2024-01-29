@@ -34,7 +34,7 @@ jobs:
           - {
               name: "M5Cardputer",
               fqbn: "m5stack:esp32:m5stack_cardputer",
-              extra_flags: "-DCARDPUTER",
+              extra_flags: "-DCARDPUTER -w",
               libraries: "M5Cardputer IRRemoteESP8266",
               partitions: {
                 bootloader_addr: "0x0000",
@@ -43,7 +43,7 @@ jobs:
           - {
               name: "M5StickCPlus2",
               fqbn: "m5stack:esp32:m5stack_stickc_plus2",
-              extra_flags: "-DSTICK_C_PLUS2",
+              extra_flags: "-DSTICK_C_PLUS2 -w",
               libraries: "M5StickCPlus2 IRRemoteESP8266",
               partitions: {
                 bootloader_addr: "0x1000",
@@ -52,7 +52,7 @@ jobs:
           - {
               name: "M5StickCPlus",
               fqbn: "m5stack:esp32:m5stack_stickc_plus",
-              extra_flags: "-DSTICK_C_PLUS",
+              extra_flags: "-DSTICK_C_PLUS -w",
               libraries: "M5StickCPlus IRRemoteESP8266",
               partitions: {
                 bootloader_addr: "0x1000",
@@ -61,7 +61,7 @@ jobs:
           - {
               name: "M5StickC",
               fqbn: "m5stack:esp32:m5stack_stickc",
-              extra_flags: "-DSTICK_C",
+              extra_flags: "-DSTICK_C -w",
               # TODO: M5StickC's latest version has some dependency issues with M5Hat-JoyC library
               libraries: "M5StickC@0.2.8 IRRemoteESP8266",
               partitions: {
@@ -112,7 +112,7 @@ jobs:
           locale=${{ matrix.locale }}
           language=$(echo "LANGUAGE_${locale//-/_}" | tr '[:lower:]' '[:upper:]')
           
-          extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language}"
+          extra_flags="${{ matrix.board.extra_flags }} -DNEMO_VERSION=\"${version}\" -D${language} -zmuldefs"
 
           arduino-cli compile --fqbn ${{ matrix.board.fqbn }} -e \
                               --build-property build.partitions=huge_app \
