@@ -4,7 +4,7 @@
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 // #define STICK_C_PLUS
-#define STICK_C_PLUS2
+// #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
@@ -17,7 +17,7 @@
 #define FGCOLOR GREEN
 
 #ifndef NEMO_VERSION
-  #define NEMO_VERSION "2.4.1b"
+  #define NEMO_VERSION "dev"
 #endif
 
 #if !defined(CARDPUTER) && !defined(STICK_C_PLUS2) && !defined(STICK_C_PLUS) && !defined(STICK_C)
@@ -48,7 +48,7 @@
   #define ROTATION
   #define USE_EEPROM
   #define SDCARD   //Requires a custom-built adapter
-  #define SONG
+  // #define SONG
 
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
