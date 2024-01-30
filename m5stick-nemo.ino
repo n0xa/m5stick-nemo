@@ -47,8 +47,7 @@
   #define DISP M5.Lcd
   #define IRLED 9
   #define SPEAKER M5.Beep
-//  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix) // This doesn't work, generates static.
-  #define BITMAP Serial.println("unsupported")
+  #define BITMAP M5.Lcd.drawBitmap(0, 0, M5.Lcd.width(), M5.Lcd.height(), NEMOMatrix)
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
@@ -1780,7 +1779,7 @@ void qrmenu_loop() {
     }else if ( activeQR == false ) {
       activeQR = true;
       DISP.fillScreen(WHITE);
-      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 5);
+      DISP.qrcode(qrcodes[cursor].url, (DISP.width() - DISP.height()) / 2, 0, DISP.height(), 6);
       delay(500);
     } else {
       isSwitching = true;
