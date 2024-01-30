@@ -18,7 +18,7 @@
 #define LOGIN_MESSAGE "Please log in to browse securely."
 #define LOGIN_BUTTON "Next"
 #define LOGIN_AFTER_MESSAGE "Please wait a few minutes. Soon you will be able to access the internet."
-#define TYPE_SSID_TEXT "Lenght between 2 and 32\nInvalid: ?,$,\",[,\\,],+\n\nType the SSID\nPress Enter to Confirm\n\n"
+#define TYPE_SSID_TEXT "SSID length should be between 2 and 32\nInvalid: ?,$,\",[,\\,],+\n\nType the SSID\nPress Enter to Confirm\n\n"
 #elif defined(LANGUAGE_PT_BR)
 #define LOGIN_TITLE "Fazer login"
 #define LOGIN_SUBTITLE "Use sua Conta do Google"
