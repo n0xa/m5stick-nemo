@@ -1,6 +1,5 @@
 // Nemo Firmware for the M5 Stack Stick C Plus
 // github.com/n0xa | IG: @4x0nn
-// github.com/bmorcelli | Discord: Pirata#5263 bmorcelli
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 // #define STICK_C_PLUS
@@ -59,7 +58,7 @@
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
-  #define SD_CS_PIN 14 //can be 14, to avoid serial messages
+  #define SD_CS_PIN -1 //can be 14, to avoid serial messages
   #define M5LED_ON LOW
   #define M5LED_OFF HIGH
 #endif
@@ -74,10 +73,10 @@
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
   #define ACTIVE_LOW_IR
-  #define M5LED   19
+  #define M5LED 19
   #define ROTATION
   #define USE_EEPROM
-  // #define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
+  #define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
   #define SDCARD   //Requires a custom-built adapter
   #define PWRMGMT
   #define SPEAKER M5.Speaker
@@ -108,7 +107,7 @@
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED   10
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ROTATION
@@ -467,7 +466,7 @@ void screen_dim_proc() {
   if(screen_dim_time > 0){
     if (screen_dim_dimmed == false) {
       if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
-        screenBrightness(10);
+        screenBrightness(0);
         screen_dim_dimmed = true;
       }
     }
@@ -907,7 +906,6 @@ void sendAllCodes() {
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
     digitalWrite(IRLED, M5LED_OFF);
-
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
@@ -1399,7 +1397,7 @@ void aj_adv(){
 #if defined(M5LED)
     digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
+    digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -2026,7 +2024,6 @@ void setup() {
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
-  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
 #else
   M5.begin();
 #endif

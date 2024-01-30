@@ -1,3 +1,4 @@
+
 bool sdcardMounted = false;
 #if defined(SDCARD)
   #include <FS.h>
@@ -10,6 +11,7 @@ bool sdcardMounted = false;
     SPIClass sdcardSPI;
   #endif
   SemaphoreHandle_t sdcardSemaphore;
+
   void appendToFile(fs::FS& fs, const char* path, const char* text) {
     if (xSemaphoreTake(sdcardSemaphore, portMAX_DELAY) == pdTRUE) {
       File file = fs.open(path, FILE_APPEND);
@@ -41,6 +43,7 @@ bool setupSdCard() {
   #endif
 
   delay(10);
+  
   #if defined (CARDPUTER)
     if (!SD.begin(SD_CS_PIN, *sdcardSPI)) {
       sdcardSPI->end();

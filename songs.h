@@ -71,6 +71,7 @@ void setupSongs() {
     SPEAKER.tone(0, noteDuration*0.1);
     // Wait for the specief duration before playing the next note.
     delay(noteDuration);
+    SPEAKER.mute();
 #elif defined(CARDPUTER)
     // we only play the note for 90% of the duration, leaving 10% as a pause
     SPEAKER.tone(melody[thisNote], noteDuration * 0.9);
