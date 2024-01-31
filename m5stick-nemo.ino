@@ -702,8 +702,8 @@ int rotation = 1;
 
 #if defined(CARDPUTER)
   /// BATTERY INFO ///
-  int oldbattery=0;
-  void battery_drawmenu(int battery) {
+  uint8_t oldBattery = 0;
+  void battery_drawmenu(uint8_t battery) {
     // Battery bar color definition
     uint16_t batteryBarColor = BLUE;
     if(battery < 20) {
@@ -746,7 +746,7 @@ int rotation = 1;
   void battery_loop() {
     // Read 30 battery values to calculate the average (avoiding unprecise and close values)
     uint16_t batteryValues = 0;
-    for(int i = 0; i < 30; i++) { // 30 iterations X 100ms = 3 seconds for each refresh
+    for(uint8_t i = 0; i < 30; i++) { // 30 iterations X 100ms = 3 seconds for each refresh
       delay(100);
       batteryValues += ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
       M5Cardputer.update();
@@ -761,8 +761,8 @@ int rotation = 1;
     if(!isSwitching) { // If is not switching, calculate battery average
       uint8_t battery = batteryValues / 30; // Iteration times
       Serial.printf("Battery Level: %d\n", battery);
-      if(battery != oldbattery) { // Only draw a new screen if value is different
-        oldbattery = battery;
+      if(battery != oldBattery) { // Only draw a new screen if value is different
+        oldBattery = battery;
         battery_drawmenu(battery);
       }
     }
