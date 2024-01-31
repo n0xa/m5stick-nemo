@@ -83,6 +83,7 @@ void setupSongs() {
     SPEAKER.tone(0, noteDuration*0.1);
     // Wait for the specief duration before playing the next note.
     delay(noteDuration);
+    SPEAKER.stop();
 #endif
     
   }
