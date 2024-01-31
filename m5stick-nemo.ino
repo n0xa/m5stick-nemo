@@ -2,19 +2,30 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-//#define STICK_C_PLUS
-//#define STICK_C_PLUS2
-//#define STICK_C
-#define CARDPUTER
+// #define STICK_C_PLUS
+// #define STICK_C_PLUS2
+// #define STICK_C
+// #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
-String buildver="2.3.5";
+// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
+// #define LANGUAGE_EN_US
+// #define LANGUAGE_PT_BR
+
 #define BGCOLOR BLACK
 #define FGCOLOR GREEN
 
-// -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
-#define LANGUAGE_EN_US
-//#define LANGUAGE_PT_BR
+#ifndef NEMO_VERSION
+  #define NEMO_VERSION "dev"
+#endif
+
+#if !defined(CARDPUTER) && !defined(STICK_C_PLUS2) && !defined(STICK_C_PLUS) && !defined(STICK_C)
+  #define CARDPUTER
+#endif
+
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR)
+  #define LANGUAGE_EN_US
+#endif
 
 #if defined(STICK_C_PLUS)
   #include <M5StickCPlus.h>
@@ -25,7 +36,7 @@ String buildver="2.3.5";
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ACTIVE_LOW_IR
@@ -41,6 +52,8 @@ String buildver="2.3.5";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 #if defined(STICK_C_PLUS2)
@@ -52,11 +65,13 @@ String buildver="2.3.5";
   #define SMALL_TEXT 2
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  //#define ACTIVE_LOW_IR
+  #define ACTIVE_LOW_IR
+  #define M5LED 19
   #define ROTATION
   #define USE_EEPROM
-  //#define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
+  #define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
   //#define SDCARD   //Requires a custom-built adapter
+  #define PWRMGMT
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -64,11 +79,13 @@ String buildver="2.3.5";
   #define M5_BUTTON_MENU 35
   #define M5_BUTTON_HOME 37
   #define M5_BUTTON_RST 39
-  //TODO: Figure out screen brightness on PLUS2 (if possible at all?) without AXP.
-  #define BACKLIGHT 27 // best I can tell from the schematics?
+  #define BACKLIGHT 27
+  #define MINBRIGHT 190
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON HIGH
+  #define M5LED_OFF LOW
 #endif
 
 #if defined(STICK_C)
@@ -80,7 +97,7 @@ String buildver="2.3.5";
   #define SMALL_TEXT 1
   #define TINY_TEXT 1
   // -=-=- FEATURES -=-=-
-  #define M5LED
+  #define M5LED 10
   #define RTC
   #define AXP
   #define ROTATION
@@ -93,6 +110,8 @@ String buildver="2.3.5";
   #define SD_CLK_PIN 0
   #define SD_MISO_PIN 36
   #define SD_MOSI_PIN 26
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 #if defined(CARDPUTER)
@@ -113,6 +132,7 @@ String buildver="2.3.5";
   #define DISP M5Cardputer.Display
   #define IRLED 44
   #define BACKLIGHT 38
+  #define MINBRIGHT 165
   #define SPEAKER M5Cardputer.Speaker
   #define BITMAP M5Cardputer.Display.drawBmp(NEMOMatrix, 97338)
   #define SD_CLK_PIN 40
@@ -120,19 +140,26 @@ String buildver="2.3.5";
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
   #define VBAT_PIN 10
+  #define M5LED_ON LOW
+  #define M5LED_OFF HIGH
 #endif
 
 // -=-=-=-=-=- LIST OF CURRENTLY DEFINED FEATURES -=-=-=-=-=-
-// M5LED      - An LED exposed as M5_LED
+// M5LED      - A visible LED (Red) exposed on this pin number
+// IRLED      - An IR LED exposed on this pin number
 // RTC        - Real-time clock exposed as M5.Rtc 
 // AXP        - AXP192 Power Management exposed as M5.Axp
+// PWRMGMT    - StickC+2 Power Management exposed as M5.Power
 // KB         - Keyboard exposed as M5Cardputer.Keyboard
 // HID        - HID exposed as USBHIDKeyboard
 // USE_EEPROM - Store settings in EEPROM
 // ROTATION   - Allow screen to be rotated
 // DISP       - Set to the API's Display class
 // SDCARD     - Device has an SD Card Reader attached
+// SONG       - Play melody or beep on startup
 // SPEAKER    - Aliased to the prefix used for making noise
+// BACKLIGHT  - Alias to the pin used for the backlight on some models
+// MINBRIGHT  - The lowest number (0-255) for the backlight to show through
 
 /// SWITCHER ///
 // Proc codes
@@ -156,6 +183,21 @@ String buildver="2.3.5";
 // 17 - Bluetooth Maelstrom
 // 18 - QR Codes
 // 19 - NEMO Portal
+
+const String contributors[] PROGMEM = {
+  "@bicurico",
+  "@chr0m1ng",
+  "@doflamingozk",
+  "@gustavocelani",
+  "@imxnoobx",
+  "@marivaaldo",
+  "@mmatuda",
+  "@n0xa",
+  "@niximkk",
+  "@unagironin",
+  "@vladimirpetrov",
+  "@vs4vijay"
+};
 
 int advtime = 0; 
 int cursor = 0;
@@ -369,11 +411,13 @@ int screen_dim_time = 30;
 int screen_dim_current = 0;
 
 void screenBrightness(int bright){
+  Serial.printf("Brightness: %d\n", bright);
   #if defined(AXP)
     M5.Axp.ScreenBreath(bright);
   #endif
   #if defined(BACKLIGHT)
-    analogWrite(BACKLIGHT, 155 + (bright));
+    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
+    analogWrite(BACKLIGHT, bl);
   #endif
 }
 
@@ -393,7 +437,7 @@ void screen_dim_proc() {
   if(screen_dim_time > 0){
     if (screen_dim_dimmed == false) {
       if (uptime() == screen_dim_current || (uptime() + 1) == screen_dim_current || (uptime() + 2) == screen_dim_current) {
-        screenBrightness(10);
+        screenBrightness(0);
         screen_dim_dimmed = true;
       }
     }
@@ -467,7 +511,7 @@ void dmenu_loop() {
 /// SETTINGS MENU ///
 MENU smenu[] = {
   { TXT_BACK, 1},
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
   { TXT_BATT_INFO, 6},
 #endif
 #if defined(CARDPUTER)
@@ -573,9 +617,48 @@ int rotation = 1;
   }
 #endif //ROTATION
 
-#if defined(AXP)
-  /// BATTERY INFO ///
-  int oldbattery=0;
+/// BATTERY INFO ///
+
+#if defined(PWRMGMT)
+  int old_battery = 0;
+
+  void battery_drawmenu(int battery) {
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 8, 1);
+    DISP.print(TXT_BATT);
+    DISP.print(battery);
+    DISP.println("%");
+    DISP.println(TXT_EXIT);
+  }
+
+  int get_battery_voltage() {
+    return M5.Power.getBatteryLevel();
+  }
+
+  void battery_setup() {
+    int battery = get_battery_voltage();
+    battery_drawmenu(battery);
+    delay(500); // Prevent switching after menu loads up
+  }
+
+  void battery_loop() {
+    delay(300);
+    int battery = get_battery_voltage();
+
+    if (battery != old_battery){
+      battery_drawmenu(battery);
+    }
+    if (check_select_press()) {
+      isSwitching = true;
+      current_proc = 1;
+    }
+    old_battery = battery;
+  }
+#endif
+
+#ifdef AXP
+  int old_battery=0;
   void battery_drawmenu(int battery, int b, int c) {
     DISP.setTextSize(SMALL_TEXT);
     DISP.fillScreen(BGCOLOR);
@@ -590,6 +673,7 @@ int rotation = 1;
     DISP.println("");
     DISP.println(TXT_EXIT);
   }
+
   void battery_setup() {
     rstOverride = false;
     float c = M5.Axp.GetVapsData() * 1.4 / 1000;
@@ -604,15 +688,15 @@ int rotation = 1;
     float c = M5.Axp.GetVapsData() * 1.4 / 1000;
     float b = M5.Axp.GetVbatData() * 1.1 / 1000;
     int battery = ((b - 3.0) / 1.2) * 100;
-    if (battery != oldbattery){
+    if (battery != old_battery){
       battery_drawmenu(battery, b, c);
     }
     if (check_select_press()) {
       rstOverride = false;
       isSwitching = true;
-     current_proc = 1;
+      current_proc = 1;
     }
-    oldbattery = battery;
+    old_battery = battery;
   }
 #endif // AXP
 
@@ -694,7 +778,7 @@ void tvbgone_setup() {
   DISP.setTextSize(SMALL_TEXT);
   irsend.begin();
   // Hack: Set IRLED high to turn it off after setup. Otherwise it stays on (active low)
-  digitalWrite(IRLED, HIGH);
+  digitalWrite(IRLED, M5LED_OFF);
 
   delay_ten_us(5000);
   if(region == NA) {
@@ -807,10 +891,7 @@ void sendAllCodes() {
       rawData[(k * 2) + 1] = ontime * 10;
     }
     irsend.sendRaw(rawData, (numpairs * 2) , freq);
-    #if defined(ACTIVE_LOW_IR)
-      // Set Active Low IRLED high to turn it off after each burst.
-      digitalWrite(IRLED, HIGH);
-    #endif
+    digitalWrite(IRLED, M5LED_OFF);
     bitsleft_r = 0;
     delay_ten_us(20500);
     #if defined(AXP)
@@ -856,9 +937,14 @@ void sendAllCodes() {
   }
 
   void clock_loop() {
-    M5.Rtc.GetBm8563Time();
     DISP.setCursor(40, 40, 2);
-    DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    #if defined(STICK_C_PLUS2)
+      auto dt = StickCP2.Rtc.getDateTime();
+      DISP.printf("%02d:%02d:%02d\n", dt.time.hours, dt.time.minutes, dt.time.seconds);
+    #else
+      M5.Rtc.GetBm8563Time();
+      DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
+    #endif
     delay(250);
   }
 
@@ -872,8 +958,13 @@ void sendAllCodes() {
   }
 
   void timeset_loop() {
+  #if defined(STICK_C_PLUS2)
+    auto dt = StickCP2.Rtc.getDateTime();
+    cursor = dt.time.hours;
+  #else
     M5.Rtc.GetBm8563Time();
     cursor = M5.Rtc.Hour;
+  #endif
     number_drawmenu(24);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
@@ -888,7 +979,11 @@ void sendAllCodes() {
     DISP.setCursor(0, 5, 1);
     DISP.println(TXT_SET_MIN);
     delay(2000);
-    cursor = M5.Rtc.Minute;
+    #if defined(STICK_C_PLUS2)
+      cursor = dt.time.minutes;
+    #else
+      cursor = M5.Rtc.Minute;
+    #endif
     number_drawmenu(60);
     while(digitalRead(M5_BUTTON_HOME) == HIGH) {
       if (check_next_press()) {
@@ -901,11 +996,15 @@ void sendAllCodes() {
     int minute = cursor;
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 5, 1);
-    RTC_TimeTypeDef TimeStruct;
-    TimeStruct.Hours   = hour;
-    TimeStruct.Minutes = minute;
-    TimeStruct.Seconds = 0;
-    M5.Rtc.SetTime(&TimeStruct);
+    #if defined(STICK_C_PLUS2)
+       StickCP2.Rtc.setDateTime( { { dt.date.year, dt.date.month, dt.date.date }, { hour, minute, 0 } } );
+    #else
+      RTC_TimeTypeDef TimeStruct;
+      TimeStruct.Hours   = hour;
+      TimeStruct.Minutes = minute;
+      TimeStruct.Seconds = 0;
+      M5.Rtc.SetTime(&TimeStruct);
+    #endif
     DISP.printf("Setting Time:\n%02d:%02d:00",hour,minute);
     delay(2000);
     rstOverride = false;
@@ -1282,9 +1381,9 @@ void aj_adv(){
     pAdvertising->setAdvertisementData(oAdvertisementData);
     pAdvertising->start();
 #if defined(M5LED)
-    digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+    digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
     delay(10);
-     digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+    digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   }
   if (check_next_press()) {
@@ -1308,30 +1407,37 @@ void aj_adv(){
 /// CREDITS ///
 void credits_setup(){
   DISP.fillScreen(WHITE);
-  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 40, 100, 5);
+  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 22, 100, 5);
   DISP.setTextColor(BLACK, WHITE);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(0, 25);
+  DISP.setCursor(0, 10);
   DISP.print(" M5-NEMO\n");
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("  %s\n",buildver);
+  DISP.printf("  %s\n",NEMO_VERSION);
   DISP.println(" For M5Stack");
-#if defined(STICK_C_PLUS)
-  DISP.println("  StickC-Plus");
-#endif
-#if defined(STICK_C)
-  DISP.println("  StickC");
-#endif
-#if defined(CARDPUTER)
-  DISP.println("  Cardputer");
-#endif
-  DISP.println("By Noah Axon");
+  DISP.printf(" %s\n\n", platformName);
+  DISP.println("Contributors:");
   DISP.setCursor(155, 5);
   DISP.println("GitHub");
-  DISP.setCursor(155, 25);
+  DISP.setCursor(155, 17);
   DISP.println("Source:");
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(250);
+  cursor = 0;
+  advtime = 0;
+}
+
+void credits_loop(){
+  if(millis() > advtime){
+    DISP.setTextColor(BLACK, WHITE);  
+    DISP.setCursor(0, 115);
+    DISP.println("                   ");
+    DISP.setCursor(0, 115);
+    DISP.println(contributors[cursor]);
+    cursor++;  
+    cursor = cursor % (sizeof(contributors)/sizeof(contributors[0]));
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
+    advtime=millis() + 2000;
+  }
 }
 
 /// WiFiSPAM ///
@@ -1391,9 +1497,9 @@ void wifispam_loop() {
   int i = 0;
   int len = 0;
 #if defined(M5LED)
-  digitalWrite(M5_LED, LOW); //LED ON on Stick C Plus
+  digitalWrite(M5LED, M5LED_ON); //LED ON on Stick C Plus
   delay(1);
-  digitalWrite(M5_LED, HIGH); //LED OFF on Stick C Plus
+  digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
   currentTime = millis();
   if (currentTime - attackTime > 100) {
@@ -1586,7 +1692,7 @@ void wscan_result_loop(){
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(5, 1);
     DISP.println(WiFi.SSID(cursor));
-    DISP.setTextSize(TINY_TEXT);
+    DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
@@ -1627,7 +1733,9 @@ void wscan_loop(){
 
 void bootScreen(){
   // Boot Screen
+  #ifdef SONG
   setupSongs();
+  #endif
   #ifndef STICK_C
   BITMAP;
   delay(3000);
@@ -1638,7 +1746,7 @@ void bootScreen(){
   DISP.println("M5-NEMO");
   DISP.setCursor(10, 30);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("%s-%s\n",buildver,platformName);
+  DISP.printf("%s-%s\n",NEMO_VERSION,platformName);
 #if defined(CARDPUTER)
   DISP.println(TXT_INST_NXT);
   DISP.println(TXT_INST_PRV);
@@ -1741,9 +1849,11 @@ void setup() {
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
-  pinMode(38, OUTPUT); // Backlight analogWrite range ~150 - 255
 #else
   M5.begin();
+#endif
+#if defined(BACKLIGHT)
+  pinMode(BACKLIGHT, OUTPUT); // Backlight analogWrite range ~150 - 255
 #endif
   if(check_next_press()){
     clearSettings();
@@ -1776,8 +1886,12 @@ void setup() {
   
   // Pin setup
 #if defined(M5LED)
-  pinMode(M5_LED, OUTPUT);
-  digitalWrite(M5_LED, HIGH); //LEDOFF
+  pinMode(M5LED, OUTPUT);
+  digitalWrite(M5LED, M5LED_OFF); //LEDOFF
+#endif
+#if defined(IRLED)
+  pinMode(IRLED, OUTPUT);
+  digitalWrite(IRLED, M5LED_OFF); //LEDOFF
 #endif
 #if !defined(KB)
   pinMode(M5_BUTTON_HOME, INPUT);
@@ -1840,7 +1954,7 @@ void loop() {
       case 5:
         tvbgone_setup();
         break;
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
       case 6:
         battery_setup();
         break;
@@ -1917,7 +2031,7 @@ void loop() {
     case 5:
       tvbgone_loop();
       break;
-#if defined(AXP)
+#if defined(AXP) || defined(PWRMGMT)
     case 6:
       battery_loop();
       break;
@@ -1939,10 +2053,7 @@ void loop() {
       aj_adv();
       break;
     case 10:
-      // easter egg?
-      #ifndef STICK_C
-      if(check_select_press()){BITMAP;}
-      #endif
+      credits_loop();
       break;
     case 11:
       wifispam_loop();

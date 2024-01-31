@@ -57,6 +57,7 @@ void setSSID(String ssid){
   return;
 }
 
+#ifdef CARDPUTER
 void confirmOrTypeSSID(){
   DISP.fillScreen(BLACK);
   DISP.setSwapBytes(true);
@@ -101,6 +102,7 @@ void confirmOrTypeSSID(){
     setSSID(currentSSID);
   }
 }
+#endif
 
 void setupWiFi() {
   Serial.println("Initializing WiFi");
@@ -243,9 +245,9 @@ String clear_GET() {
 void blinkLed() {
   int count = 0;
   while (count < 5) {
-    digitalWrite(M5_LED, LOW);
+    digitalWrite(IRLED, M5LED_ON);
     delay(500);
-    digitalWrite(M5_LED, HIGH);
+    digitalWrite(IRLED, M5LED_OFF);
     delay(500);
     count = count + 1;
   }
