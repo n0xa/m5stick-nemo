@@ -1081,7 +1081,7 @@ void btmenu_loop() {
 }
 
 MENU ajmenu[] = {
-  { TXT_BACK, 29},
+  { TXT_BACK, 30},
   { "AirPods", 1},
   { TXT_AJ_TRANSF_NM, 27},
   { "AirPods Pro", 2},
