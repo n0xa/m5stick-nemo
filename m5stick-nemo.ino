@@ -1740,20 +1740,35 @@ void bootScreen(){
   BITMAP;
   delay(3000);
   #endif
+  // Background
   DISP.fillScreen(BGCOLOR);
+  DISP.fillRect(0,  0, 240, 50, GREEN); // Title Rect
+  DISP.drawRect(0,  0, 240, 50, WHITE); // Title Border
+  // Title
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(40, 0);
+  DISP.setTextColor(BLACK);
+  DISP.setCursor(40, 1);
   DISP.println("M5-NEMO");
-  DISP.setCursor(10, 30);
+  // Version
+  DISP.setCursor(0, 32);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("%s-%s\n",NEMO_VERSION,platformName);
+  DISP.setTextColor(BLACK);
+  DISP.printf("%s-%s\n", NEMO_VERSION, platformName);
 #if defined(CARDPUTER)
+  // Instructions
+  DISP.setCursor(0, 56);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(GREEN);
   DISP.println(TXT_INST_NXT);
   DISP.println(TXT_INST_PRV);
   DISP.println(TXT_INST_SEL);
   DISP.println(TXT_INST_HOME);
-  delay(1500);
+  // Press any key to continue
+  DISP.setTextSize(TINY_TEXT);
+  DISP.setTextColor(WHITE);
+  DISP.setCursor(0, 124);
   DISP.println(TXT_INST_PRSS_KEY);
+  DISP.setTextColor(FGCOLOR);
   while(true){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
