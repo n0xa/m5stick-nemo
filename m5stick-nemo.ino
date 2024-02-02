@@ -702,24 +702,38 @@ int rotation = 1;
 
 #if defined(CARDPUTER)
   /// BATTERY INFO ///
-  int oldbattery=0;
-  void battery_drawmenu(int battery) {
-    DISP.setTextSize(SMALL_TEXT);
+  uint8_t oldBattery = 0;
+  void battery_drawmenu(uint8_t battery) {
+    // Battery bar color definition
+    uint16_t batteryBarColor = BLUE;
+    if(battery < 20) {
+      batteryBarColor = RED;
+    } else if(battery < 60) {
+      batteryBarColor = ORANGE;
+    } else {
+      batteryBarColor = GREEN;
+    }
+    // Battery bar
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 8, 1);
-    DISP.print(TXT_BATT);
+    DISP.drawRect(10, 10, 220, 100, batteryBarColor);
+    DISP.fillRect(10, 10, (220 * battery / 100), 100, batteryBarColor);
+    // Battery percentage
+    DISP.setTextColor(WHITE);
+    DISP.setTextSize(BIG_TEXT);
+    DISP.setCursor(80, 45, 1);
     DISP.print(battery);
     DISP.println("%");
+    // Exit text
+    DISP.setCursor(10, 120, 1);
+    DISP.setTextSize(TINY_TEXT);
     DISP.println(TXT_EXIT);
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
   }
 
-  void battery_setup() { // 
+  void battery_setup() {
     rstOverride = false;
     pinMode(VBAT_PIN, INPUT);
-    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738); // 
-    int bat_ = analogRead(VBAT_PIN);
-    Serial.println("Battery level:");
-    Serial.println(battery);
+    uint8_t battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
     battery_drawmenu(battery);
     delay(500); // Prevent switching after menu loads up
     /*
@@ -730,20 +744,28 @@ int rotation = 1;
   }
 
   void battery_loop() {
-    delay(300);
-    int battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
-    if (battery != oldbattery){
-      Serial.println("Battery level:");
-      Serial.println(battery);
-      Serial.printf("Raw: %d\n", analogRead(VBAT_PIN));
-      battery_drawmenu(battery);
+    // Read 30 battery values to calculate the average (avoiding unprecise and close values)
+    uint16_t batteryValues = 0;
+    for(uint8_t i = 0; i < 30; i++) { // 30 iterations X 100ms = 3 seconds for each refresh
+      delay(100);
+      batteryValues += ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
+      M5Cardputer.update();
+      if(M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) { // If any key is pressed
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 1;
+        break;
+      }
     }
-    if (check_select_press()) {
-      rstOverride = false;
-      isSwitching = true;
-     current_proc = 1;
+
+    if(!isSwitching) { // If is not switching, calculate battery average
+      uint8_t battery = batteryValues / 30; // Iteration times
+      Serial.printf("Battery Level: %d\n", battery);
+      if(battery != oldBattery) { // Only draw a new screen if value is different
+        oldBattery = battery;
+        battery_drawmenu(battery);
+      }
     }
-    oldbattery = battery;
   }
 #endif // Cardputer
 
