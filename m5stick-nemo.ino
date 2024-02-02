@@ -15,6 +15,7 @@
 #define BGCOLOR  BLACK
 #define FGCOLOR  GREEN
 #define FGCOLOR2 WHITE
+#define FGCOLOR3 RED
 
 #ifndef NEMO_VERSION
   #define NEMO_VERSION "dev"
@@ -1417,21 +1418,29 @@ void aj_adv(){
 
 /// CREDITS ///
 void credits_setup(){
-  DISP.fillScreen(WHITE);
-  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 22, 100, 5);
-  DISP.setTextColor(BLACK, WHITE);
+  DISP.fillScreen(BGCOLOR);
+  // Title
+  DISP.fillRect(0, 0, 145, 48, FGCOLOR);
+  DISP.setTextColor(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(0, 10);
-  DISP.print(" M5-NEMO\n");
+  DISP.setCursor(12, 5);
+  DISP.print("M5-NEMO");
+  // Version
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("  %s\n",NEMO_VERSION);
-  DISP.println(" For M5Stack");
-  DISP.printf(" %s\n\n", platformName);
-  DISP.println("Contributors:");
-  DISP.setCursor(155, 5);
-  DISP.println("GitHub");
-  DISP.setCursor(155, 17);
-  DISP.println("Source:");
+  DISP.setCursor(0, 30);
+  DISP.printf(" %s\n", NEMO_VERSION);
+  // Platform
+  DISP.setTextColor(FGCOLOR);
+  DISP.setCursor(0, 56);
+  DISP.printf(" M5Stack\n %s\n", platformName);
+  // GitHub Source Qr Code
+  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 0, 95, 3);
+  // Contributors
+  DISP.fillRect(0, 95, 240, 45, FGCOLOR3);
+  DISP.setCursor(0, 98);
+  DISP.setTextColor(BGCOLOR);
+  DISP.println(" Contributors:");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(250);
   cursor = 0;
   advtime = 0;
@@ -1439,15 +1448,16 @@ void credits_setup(){
 
 void credits_loop(){
   if(millis() > advtime){
-    DISP.setTextColor(BLACK, WHITE);  
+    DISP.setTextColor(FGCOLOR2, FGCOLOR3);
     DISP.setCursor(0, 115);
-    DISP.println("                   ");
+    DISP.println("                    ");
     DISP.setCursor(0, 115);
+    DISP.print(" ");
     DISP.println(contributors[cursor]);
     cursor++;  
     cursor = cursor % (sizeof(contributors)/sizeof(contributors[0]));
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    advtime=millis() + 2000;
+    advtime = millis() + 2000;
   }
 }
 
