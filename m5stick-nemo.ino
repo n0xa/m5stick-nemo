@@ -269,14 +269,19 @@ void drawmenu(MENU thismenu[], int size) {
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
-    for (
-      int i = 0 ; i < size ; i++ ) {
+    for ( int i = 0 ; i < size ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -288,14 +293,19 @@ void number_drawmenu(int nums) {
   // scrolling menu
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
-    for (
-      int i = 0 ; i < nums ; i++ ) {
+    for ( int i = 0 ; i < nums ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -1623,19 +1633,30 @@ void wscan_drawmenu() {
   // scrolling menu
   if (cursor > 4) {
     for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
     for ( int i = 0 ; i < wifict ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
+  DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict) ? ">" : " ");
+  DISP.setTextColor((cursor == wifict) ? BLACK : WHITE, (cursor == wifict) ? FGCOLOR : BGCOLOR);
   DISP.println(TXT_WF_RESCAN);
+  DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict + 1) ? ">" : " ");
+  DISP.setTextColor((cursor == wifict+1) ? BLACK : WHITE, (cursor == wifict+1) ? FGCOLOR : BGCOLOR);
   DISP.println(String(TXT_BACK));
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 void wscan_result_setup() {
@@ -1790,8 +1811,11 @@ void qrmenu_drawmenu() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(qrcodes) / sizeof(QRCODE) ) ; i++ ) {
+    DISP.setTextColor(FGCOLOR);
     DISP.print((cursor == i) ? ">" : " ");
+    DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
     DISP.println(qrcodes[i].name);
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
   }
 }
 
