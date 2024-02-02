@@ -12,8 +12,9 @@
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
 
-#define BGCOLOR BLACK
-#define FGCOLOR GREEN
+#define BGCOLOR  BLACK
+#define FGCOLOR  GREEN
+#define FGCOLOR2 WHITE
 
 #ifndef NEMO_VERSION
   #define NEMO_VERSION "dev"
@@ -271,7 +272,7 @@ void drawmenu(MENU thismenu[], int size) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
@@ -279,7 +280,7 @@ void drawmenu(MENU thismenu[], int size) {
     for ( int i = 0 ; i < size ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
@@ -295,7 +296,7 @@ void number_drawmenu(int nums) {
     for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
@@ -303,7 +304,7 @@ void number_drawmenu(int nums) {
     for ( int i = 0 ; i < nums ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
@@ -1635,7 +1636,7 @@ void wscan_drawmenu() {
     for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
@@ -1643,18 +1644,18 @@ void wscan_drawmenu() {
     for ( int i = 0 ; i < wifict ; i++ ) {
       DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
-      DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
   DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict) ? ">" : " ");
-  DISP.setTextColor((cursor == wifict) ? BLACK : WHITE, (cursor == wifict) ? FGCOLOR : BGCOLOR);
+  DISP.setTextColor((cursor == wifict) ? BGCOLOR : FGCOLOR2, (cursor == wifict) ? FGCOLOR : BGCOLOR);
   DISP.println(TXT_WF_RESCAN);
   DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict + 1) ? ">" : " ");
-  DISP.setTextColor((cursor == wifict+1) ? BLACK : WHITE, (cursor == wifict+1) ? FGCOLOR : BGCOLOR);
+  DISP.setTextColor((cursor == wifict+1) ? BGCOLOR : FGCOLOR2, (cursor == wifict+1) ? FGCOLOR : BGCOLOR);
   DISP.println(String(TXT_BACK));
   DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
@@ -1763,30 +1764,30 @@ void bootScreen(){
   #endif
   // Background
   DISP.fillScreen(BGCOLOR);
-  DISP.fillRect(0,  0, 240, 50, GREEN); // Title Rect
-  DISP.drawRect(0,  0, 240, 50, WHITE); // Title Border
+  DISP.fillRect(0,  0, 240, 50, FGCOLOR);  // Title Rect
+  DISP.drawRect(0,  0, 240, 50, FGCOLOR2); // Title Border
   // Title
   DISP.setTextSize(BIG_TEXT);
-  DISP.setTextColor(BLACK);
+  DISP.setTextColor(BGCOLOR);
   DISP.setCursor(40, 1);
   DISP.println("M5-NEMO");
   // Version
   DISP.setCursor(0, 32);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.setTextColor(BLACK);
+  DISP.setTextColor(BGCOLOR);
   DISP.printf("%s-%s\n", NEMO_VERSION, platformName);
 #if defined(CARDPUTER)
   // Instructions
   DISP.setCursor(0, 56);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.setTextColor(GREEN);
+  DISP.setTextColor(FGCOLOR);
   DISP.println(TXT_INST_NXT);
   DISP.println(TXT_INST_PRV);
   DISP.println(TXT_INST_SEL);
   DISP.println(TXT_INST_HOME);
   // Press any key to continue
   DISP.setTextSize(TINY_TEXT);
-  DISP.setTextColor(WHITE);
+  DISP.setTextColor(FGCOLOR2);
   DISP.setCursor(0, 124);
   DISP.println(TXT_INST_PRSS_KEY);
   DISP.setTextColor(FGCOLOR);
@@ -1813,7 +1814,7 @@ void qrmenu_drawmenu() {
   for ( int i = 0 ; i < ( sizeof(qrcodes) / sizeof(QRCODE) ) ; i++ ) {
     DISP.setTextColor(FGCOLOR);
     DISP.print((cursor == i) ? ">" : " ");
-    DISP.setTextColor((cursor == i) ? BLACK : WHITE, (cursor == i) ? FGCOLOR : BGCOLOR);
+    DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
     DISP.println(qrcodes[i].name);
     DISP.setTextColor(FGCOLOR, BGCOLOR);
   }
