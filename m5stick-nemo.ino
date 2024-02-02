@@ -12,8 +12,10 @@
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
 
-#define BGCOLOR BLACK
-#define FGCOLOR GREEN
+#define BGCOLOR  BLACK
+#define FGCOLOR  GREEN
+#define FGCOLOR2 WHITE
+#define FGCOLOR3 RED
 
 #ifndef NEMO_VERSION
   #define NEMO_VERSION "dev"
@@ -269,14 +271,19 @@ void drawmenu(MENU thismenu[], int size) {
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
-    for (
-      int i = 0 ; i < size ; i++ ) {
+    for ( int i = 0 ; i < size ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -288,14 +295,19 @@ void number_drawmenu(int nums) {
   // scrolling menu
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
-    for (
-      int i = 0 ; i < nums ; i++ ) {
+    for ( int i = 0 ; i < nums ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -1406,21 +1418,29 @@ void aj_adv(){
 
 /// CREDITS ///
 void credits_setup(){
-  DISP.fillScreen(WHITE);
-  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 22, 100, 5);
-  DISP.setTextColor(BLACK, WHITE);
+  DISP.fillScreen(BGCOLOR);
+  // Title
+  DISP.fillRect(0, 0, 145, 48, FGCOLOR);
+  DISP.setTextColor(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(0, 10);
-  DISP.print(" M5-NEMO\n");
+  DISP.setCursor(12, 5);
+  DISP.print("M5-NEMO");
+  // Version
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("  %s\n",NEMO_VERSION);
-  DISP.println(" For M5Stack");
-  DISP.printf(" %s\n\n", platformName);
-  DISP.println("Contributors:");
-  DISP.setCursor(155, 5);
-  DISP.println("GitHub");
-  DISP.setCursor(155, 17);
-  DISP.println("Source:");
+  DISP.setCursor(0, 30);
+  DISP.printf(" %s\n", NEMO_VERSION);
+  // Platform
+  DISP.setTextColor(FGCOLOR);
+  DISP.setCursor(0, 56);
+  DISP.printf(" M5Stack\n %s\n", platformName);
+  // GitHub Source Qr Code
+  DISP.qrcode("https://github.com/n0xa/m5stick-nemo", 145, 0, 95, 3);
+  // Contributors
+  DISP.fillRect(0, 95, 240, 45, FGCOLOR3);
+  DISP.setCursor(0, 98);
+  DISP.setTextColor(BGCOLOR);
+  DISP.println(TXT_CONTRIBUTORS);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(250);
   cursor = 0;
   advtime = 0;
@@ -1428,15 +1448,16 @@ void credits_setup(){
 
 void credits_loop(){
   if(millis() > advtime){
-    DISP.setTextColor(BLACK, WHITE);  
+    DISP.setTextColor(FGCOLOR2, FGCOLOR3);
     DISP.setCursor(0, 115);
-    DISP.println("                   ");
+    DISP.println("                    ");
     DISP.setCursor(0, 115);
+    DISP.print(" ");
     DISP.println(contributors[cursor]);
     cursor++;  
     cursor = cursor % (sizeof(contributors)/sizeof(contributors[0]));
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    advtime=millis() + 2000;
+    advtime = millis() + 2000;
   }
 }
 
@@ -1623,19 +1644,30 @@ void wscan_drawmenu() {
   // scrolling menu
   if (cursor > 4) {
     for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
     for ( int i = 0 ; i < wifict ; i++ ) {
+      DISP.setTextColor(FGCOLOR);
       DISP.print((cursor == i) ? ">" : " ");
+      DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
+  DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict) ? ">" : " ");
+  DISP.setTextColor((cursor == wifict) ? BGCOLOR : FGCOLOR2, (cursor == wifict) ? FGCOLOR : BGCOLOR);
   DISP.println(TXT_WF_RESCAN);
+  DISP.setTextColor(FGCOLOR);
   DISP.print((cursor == wifict + 1) ? ">" : " ");
+  DISP.setTextColor((cursor == wifict+1) ? BGCOLOR : FGCOLOR2, (cursor == wifict+1) ? FGCOLOR : BGCOLOR);
   DISP.println(String(TXT_BACK));
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 void wscan_result_setup() {
@@ -1740,20 +1772,35 @@ void bootScreen(){
   BITMAP;
   delay(3000);
   #endif
+  // Background
   DISP.fillScreen(BGCOLOR);
+  DISP.fillRect(0, 0, 240, 50, FGCOLOR);  // Title Rect
+  DISP.drawRect(0, 0, 240, 50, FGCOLOR2); // Title Border
+  // Title
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(40, 0);
+  DISP.setTextColor(BGCOLOR);
+  DISP.setCursor(5, 1);
   DISP.println("M5-NEMO");
-  DISP.setCursor(10, 30);
+  // Version
+  DISP.setCursor(5, 32);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.printf("%s-%s\n",NEMO_VERSION,platformName);
+  DISP.setTextColor(BGCOLOR);
+  DISP.printf("%s-%s\n", NEMO_VERSION, platformName);
 #if defined(CARDPUTER)
+  // Instructions
+  DISP.setCursor(0, 56);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR);
   DISP.println(TXT_INST_NXT);
   DISP.println(TXT_INST_PRV);
   DISP.println(TXT_INST_SEL);
   DISP.println(TXT_INST_HOME);
-  delay(1500);
+  // Press any key to continue
+  DISP.setTextSize(TINY_TEXT);
+  DISP.setTextColor(FGCOLOR2);
+  DISP.setCursor(0, 124);
   DISP.println(TXT_INST_PRSS_KEY);
+  DISP.setTextColor(FGCOLOR);
   while(true){
     M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
@@ -1775,8 +1822,11 @@ void qrmenu_drawmenu() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 8, 1);
   for ( int i = 0 ; i < ( sizeof(qrcodes) / sizeof(QRCODE) ) ; i++ ) {
+    DISP.setTextColor(FGCOLOR);
     DISP.print((cursor == i) ? ">" : " ");
+    DISP.setTextColor((cursor == i) ? BGCOLOR : FGCOLOR2, (cursor == i) ? FGCOLOR : BGCOLOR);
     DISP.println(qrcodes[i].name);
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
   }
 }
 
