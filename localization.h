@@ -66,7 +66,7 @@
   #define TXT_STK_NXT "Next: Side Button"
   #define TXT_STK_SEL "Sel : M5 Button"
   #define TXT_STK_HOME "Home: Power Button"
-
+  #define TXT_CONTRIBUTORS " Contributors:"
 #endif
 
 #if defined(LANGUAGE_PT_BR)
@@ -137,4 +137,5 @@
   #define TXT_STK_NXT "Prox: Botao do Lado"
   #define TXT_STK_SEL "Sel : Botao M5"
   #define TXT_STK_HOME "Home: Botao Power"
+  #define TXT_CONTRIBUTORS " Contribuidores:"
 #endif

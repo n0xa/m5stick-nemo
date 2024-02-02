@@ -1439,7 +1439,7 @@ void credits_setup(){
   DISP.fillRect(0, 95, 240, 45, FGCOLOR3);
   DISP.setCursor(0, 98);
   DISP.setTextColor(BGCOLOR);
-  DISP.println(" Contributors:");
+  DISP.println(TXT_CONTRIBUTORS);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(250);
   cursor = 0;
@@ -1774,15 +1774,15 @@ void bootScreen(){
   #endif
   // Background
   DISP.fillScreen(BGCOLOR);
-  DISP.fillRect(0,  0, 240, 50, FGCOLOR);  // Title Rect
-  DISP.drawRect(0,  0, 240, 50, FGCOLOR2); // Title Border
+  DISP.fillRect(0, 0, 240, 50, FGCOLOR);  // Title Rect
+  DISP.drawRect(0, 0, 240, 50, FGCOLOR2); // Title Border
   // Title
   DISP.setTextSize(BIG_TEXT);
   DISP.setTextColor(BGCOLOR);
-  DISP.setCursor(40, 1);
+  DISP.setCursor(5, 1);
   DISP.println("M5-NEMO");
   // Version
-  DISP.setCursor(0, 32);
+  DISP.setCursor(5, 32);
   DISP.setTextSize(SMALL_TEXT);
   DISP.setTextColor(BGCOLOR);
   DISP.printf("%s-%s\n", NEMO_VERSION, platformName);
