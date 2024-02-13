@@ -1117,7 +1117,7 @@ void btmenu_loop() {
 }
 
 MENU ajmenu[] = {
-  { TXT_BACK, 29},
+  { TXT_BACK, 30},
   { "AirPods", 1},
   { TXT_AJ_TRANSF_NM, 27},
   { "AirPods Pro", 2},
@@ -1136,6 +1136,7 @@ MENU ajmenu[] = {
   { "Beats Studio Pro", 15},
   { "Beats Fit Pro", 16},
   { "Beats Studio Buds+", 17},
+  { "Apple Vision Pro", 29},
   { "AppleTV Setup", 18},
   { "AppleTV Pair", 19},
   { "AppleTV New User", 20},
@@ -1263,6 +1264,9 @@ void aj_loop(){
         data = SetupNewPhone;
         break;
       case 29:
+        data = AppleVisionPro;
+        break;
+      case 30:
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
