@@ -2049,6 +2049,7 @@ void portal_loop(){
     current_proc = 12;
     delay(500);
   }
+  check_select_press();
 }
 
 /// ENTRY ///
