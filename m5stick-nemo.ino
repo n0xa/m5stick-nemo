@@ -1541,32 +1541,29 @@ void wifispam_loop() {
   delay(1);
   digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
-  currentTime = millis();
-  if (currentTime - attackTime > 100) {
-    switch(spamtype) {
-      case 1:
-        len = sizeof(funnyssids);
-        while(i < len){
-          i++;
-        }
-        beaconSpamList(funnyssids);
-        break;
-      case 2:
-        len = sizeof(rickrollssids);
-        while(i < len){
-          i++;
-        }
-        beaconSpamList(rickrollssids);
-        break;
-      case 3:
-        char* randoms = randomSSID();
-        len = sizeof(randoms);
-        while(i < len){
-          i++;
-        }
-        beaconSpamList(randoms);
-        break;        
-    }
+  switch(spamtype) {
+    case 1:
+      len = sizeof(funnyssids);
+      while(i < len){
+        i++;
+      }
+      beaconSpamList(funnyssids);
+      break;
+    case 2:
+      len = sizeof(rickrollssids);
+      while(i < len){
+        i++;
+      }
+      beaconSpamList(rickrollssids);
+      break;
+    case 3:
+      char* randoms = randomSSID();
+      len = sizeof(randoms);
+      while(i < len){
+        i++;
+      }
+      beaconSpamList(randoms);
+      break;
   }
 }
 
