@@ -1541,7 +1541,6 @@ void wifispam_loop() {
   delay(1);
   digitalWrite(M5LED, M5LED_OFF); //LED OFF on Stick C Plus
 #endif
-  currentTime = millis();
   switch(spamtype) {
     case 1:
       len = sizeof(funnyssids);
