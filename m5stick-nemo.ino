@@ -2063,9 +2063,9 @@ void beep_writeOK() {
 }
 
 void cls() {
-  M5.Lcd.setTextColor(YELLOW);
+  M5.Lcd.setTextColor(FGCOLOR);
   M5.Lcd.setTextSize(1);
-  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.fillScreen(BGCOLOR);
   M5.Lcd.setCursor(0, 0);
 }
 
@@ -2073,9 +2073,9 @@ void nfc_setup() {
   M5.begin();
   M5.Power.begin();
   //M5.Lcd.setRotation(1);
-  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.fillScreen(BGCOLOR);
   M5.Lcd.setCursor(0, 0);
- // M5.Lcd.setTextColor(YELLOW);
+  M5.Lcd.setTextColor(FGCOLOR);
   M5.Lcd.setTextSize(1);
   M5.Lcd.setTextFont(4);
   M5.Lcd.setCursor(0, 0);
@@ -2133,7 +2133,7 @@ void readCard() {
         &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
     M5.Lcd.setTextColor(RED);
     M5.Lcd.println(F("Not a MIFARE Classic card."));
-    M5.Lcd.setTextColor(YELLOW);
+    M5.Lcd.setTextColor(FGCOLOR);
     beep_error();
     delay(1000);
     return;
@@ -2170,7 +2170,7 @@ void writeCard() {
     M5.Lcd.println();
     M5.Lcd.println(F("Write failed."));
     beep_error();
-    M5.Lcd.setTextColor(YELLOW);
+    M5.Lcd.setTextColor(FGCOLOR);
   }
 
   mfrc522.PICC_HaltA();
