@@ -266,6 +266,8 @@ bool clone_flg = false;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <Wire.h>
+#include "MFRC522_I2C.h"
 #if defined(DEAUTHER)
   #include "deauth.h"                                                               //DEAUTH
   #include "esp_wifi.h"                                                             //DEAUTH
@@ -407,14 +409,14 @@ MENU mmenu[] = {
 #if defined(RTC)
   { TXT_CLOCK, 0},
 #endif
+#if defined(RFID2)
+  {"RFID2",30},
+#endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
   { "WiFi", 12},
   { "QR Codes", 18},
   { TXT_SETTINGS, 2},
-  #if defined(RFID2)
-  {"RFID2",30},
-  #endif
 };
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
@@ -2003,8 +2005,7 @@ void portal_setup(){
 }
 /// NFC Setup
  
-#include <Wire.h>
-#include "MFRC522_I2C.h"
+
 //#include "M5StickCPlus2.h"
 
 // 0x28 is i2c address on SDA.
