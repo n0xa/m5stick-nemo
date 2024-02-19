@@ -132,6 +132,32 @@ esptool.py --chip esp32s3 merge_bin --output final.bin 0x0000 m5stick-nemo.ino.b
 esptool.exe write_flash -z 0 final.bin
 ```
 
+## Building from Source (Docker)
+
+- Install Docker
+- Run `./scripts/docker-build.sh <configs/.env.>`
+- Run `./scripts/flash.sh --device=<your-device-port>`
+
+```sh
+# This will build an image will all required libraries based on the configured platform, and it will compile, output and merge binaries
+# By default this will compile for the M5Cardputer in en-us locale, ./config/.env.M5Cardputer
+./scripts/docker-build.sh 
+
+# If you want to select a different build config you can pass it as a parameter. See ./configs/ for various configurations
+./scripts/docker-build.sh ./config/.env.M5Cardputer
+
+# Binary files will be output to ./build
+ls ./build
+
+# This will flash the build output from the build step, it reuses the container image from the previous step.
+# By default this will compile for the M5Cardputer in en-us locale, ./config/.env.M5Cardputer
+./scipts/flash.sh --device=/dev/ttyusb0 
+
+# If you passed a different build config make sure to pass it along to the flash script
+./scipts/flash.sh --device=/dev/ttyusb0 --build-config=./config/.env.M5Cardputer
+```
+
+
 
 ## Troubleshooting
 * Several features output debugging information to the serial monitor. Use the Serial Monitor feature in Arduino IDE or M5Burner to gather this information. It may have useful hints. When filing a bug report, it often helps to include serial monitor output.
