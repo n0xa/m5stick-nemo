@@ -1,5 +1,5 @@
 ---
-name: Compile NEMO Firmware
+name: Compile Develop Brench
 
 on:
   push:
