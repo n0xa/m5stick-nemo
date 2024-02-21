@@ -1988,7 +1988,8 @@ void qrmenu_loop() {
   }
 }
 
-/// NEMO PORTAL
+// RFID
+// Thanks to : https://github.com/aat440hz/RFIDCopy-M5StickCPlus/blob/main/RFIDCopy-m5stickcplus.ino
 
 void portal_setup(){
   setupWiFi();
