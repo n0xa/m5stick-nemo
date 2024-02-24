@@ -12,8 +12,9 @@
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
 
-#define BGCOLOR BLACK
-#define FGCOLOR GREEN
+// -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
+uint16_t BGCOLOR=0x0000;
+uint16_t FGCOLOR=0x07E0;
 
 #ifndef NEMO_VERSION
   #define NEMO_VERSION "dev"
@@ -196,6 +197,7 @@
 // 19 - NEMO Portal
 // 20 - Attack menu
 // 21 - Deauth Attack
+// 22 - Color Settings
 // .. - ..
 // 97 - Mount/UnMount SD Card on M5Stick devices, if SDCARD is declared
 
@@ -291,21 +293,27 @@ QRCODE qrcodes[] = {
 void drawmenu(MENU thismenu[], int size) {
   DISP.setTextSize(SMALL_TEXT);
   DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
+  DISP.setCursor(0, 0);
   // scrolling menu
   if (cursor < 0) {
     cursor = size - 1;  // rollover hack for up-arrow on cardputer
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(thismenu[i].name);
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19s\n",thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
     for (
       int i = 0 ; i < size ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(thismenu[i].name);
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19s\n",thismenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -313,18 +321,24 @@ void drawmenu(MENU thismenu[], int size) {
 void number_drawmenu(int nums) {
   DISP.setTextSize(SMALL_TEXT);
   DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
+  DISP.setCursor(0, 0);
   // scrolling menu
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < nums ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(i);
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19d\n",i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
     for (
       int i = 0 ; i < nums ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
-      DISP.println(i);
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19d\n",i);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
 }
@@ -489,7 +503,7 @@ int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
 void dmenu_setup() {
   DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
+  DISP.setCursor(0, 0);
   DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
   cursor = 0;
@@ -512,7 +526,7 @@ void dmenu_loop() {
       EEPROM.commit();
     #endif
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
+    DISP.setCursor(0, 0);
     DISP.println(String(TXT_SET_BRIGHT));
     delay(1000);
     cursor = brightness / 10;
@@ -558,6 +572,7 @@ MENU smenu[] = {
     { TXT_SDCARD, 97},
   #endif
 #endif
+  { TXT_COLOR, 22},
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
 #if defined(USE_EEPROM)
@@ -612,6 +627,157 @@ void smenu_loop() {
       clearSettings();
     }
     current_proc = smenu[cursor].command;
+  }
+}
+
+MENU cmenu[] = {
+  { TXT_BACK, 0},
+  { TXT_BLACK, 1},
+  { TXT_NAVY, 2},
+  { TXT_DARKGREEN, 3},
+  { TXT_DARKCYAN, 4},
+  { TXT_MAROON, 5},
+  { TXT_PURPLE, 6},
+  { TXT_OLIVE, 7},
+  { TXT_LIGHTGREY, 8},
+  { TXT_DARKGREY, 9},
+  { TXT_BLUE, 10},
+  { TXT_GREEN, 11},
+  { TXT_CYAN, 12},
+  { TXT_RED, 13},
+  { TXT_MAGENTA, 14},
+  { TXT_YELLOW, 15},
+  { TXT_WHITE, 16},
+  { TXT_ORANGE, 17},
+  { TXT_GREENYELLOW, 18},
+  { TXT_PINK, 19},
+};
+int cmenu_size = sizeof(cmenu) / sizeof (MENU);
+
+void setcolor(bool fg, int col){
+  uint16_t color = 0x0000;
+  switch (col){
+    case 1:
+      color=0x0000;
+      break; 
+    case 2:
+      color=0x000F;
+      break;
+    case 3:
+      color=0x03E0;
+      break;
+    case 4:
+      color=0x03EF;
+      break;
+    case 5:
+      color=0x7800;
+      break;
+    case 6:
+      color=0x780F;
+      break;
+    case 7:
+      color=0x7BE0;
+      break;
+    case 8:
+      color=0xC618;
+      break;
+    case 9:
+      color=0x7BEF;
+      break;
+    case 10:
+      color=0x001F;
+      break;
+    case 11:
+      color=0x07E0;
+      break;
+    case 12:
+      color=0x07FF;
+      break;
+    case 13:
+      color=0xF800;
+      break;
+    case 14:
+      color=0xF81F;
+      break;
+    case 15:
+      color=0xFFE0;
+      break;
+    case 16:
+      color=0xFFFF;
+      break;
+    case 17:
+      color=0xFDA0;
+      break;
+    case 18:
+      color=0xB7E0;
+      break;
+    case 19:
+      color=0xFC9F;
+      break;
+  }
+  if(fg){
+    if(color == BGCOLOR){
+      cursor++;
+      cursor = cursor % cmenu_size;
+    }else{
+      FGCOLOR=color;
+    }
+  }else{
+    if(color == FGCOLOR){
+      cursor++;
+      cursor = cursor % cmenu_size;
+    }else{
+      BGCOLOR=color;
+    }
+  }
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+}
+
+void color_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(String(TXT_SET_FGCOLOR));
+  cursor = 0;
+  rstOverride = true;
+  delay(1000);  
+  drawmenu(cmenu, cmenu_size);
+}
+
+void color_loop() {
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % cmenu_size;
+    setcolor(true, cursor);
+    drawmenu(cmenu, cmenu_size);
+    delay(250);
+  }
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(4, cursor);
+      EEPROM.commit();
+    #endif
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.println(String(TXT_SET_BGCOLOR));
+    delay(1000);
+    setcolor(false, cursor);
+    drawmenu(cmenu, cmenu_size);
+    while( !check_select_press()) {
+      if (check_next_press()) {
+        cursor++;
+        cursor = cursor % cmenu_size ;
+        setcolor(false, cursor);
+        drawmenu(cmenu, cmenu_size);
+        delay(250);
+       }
+    }
+    #if defined(USE_EEPROM)
+      EEPROM.write(5, cursor);
+      EEPROM.commit();
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2;
   }
 }
 
@@ -809,7 +975,7 @@ int rotation = 1;
 void tvbgone_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(SMALL_TEXT);
   irsend.begin();
@@ -848,7 +1014,7 @@ int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 void tvbgmenu_setup() {  
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.println(TXT_REGION);
@@ -904,7 +1070,7 @@ void sendAllCodes() {
     const uint8_t numpairs = powerCode->numpairs;
     DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(BIG_TEXT);
-    DISP.setCursor(5, 1);
+    DISP.setCursor(0, 0);
     DISP.println("TV-B-Gone");
     DISP.setTextSize(SMALL_TEXT);
     DISP.println(TXT_FK_GP);
@@ -956,7 +1122,7 @@ void sendAllCodes() {
   }
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println("TV-B-Gone");
   DISP.setTextSize(SMALL_TEXT);
   DISP.println(TXT_SEL_GO_PAUSE);
@@ -988,7 +1154,7 @@ void sendAllCodes() {
   void timeset_setup() {
     rstOverride = true;
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
+    DISP.setCursor(0, 0);
     DISP.println(TXT_SET_HOUR);
     delay(2000);
   }
@@ -1012,7 +1178,7 @@ void sendAllCodes() {
     }
     int hour = cursor;
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
+    DISP.setCursor(0, 0);
     DISP.println(TXT_SET_MIN);
     delay(2000);
     #if defined(STICK_C_PLUS2)
@@ -1031,7 +1197,7 @@ void sendAllCodes() {
     }
     int minute = cursor;
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
+    DISP.setCursor(0, 0);
     #if defined(STICK_C_PLUS2)
        StickCP2.Rtc.setDateTime( { { dt.date.year, dt.date.month, dt.date.date }, { hour, minute, 0 } } );
     #else
@@ -1083,8 +1249,10 @@ void btmenu_loop() {
     int option = btmenu[cursor].command;
     DISP.fillScreen(BGCOLOR);
     DISP.setTextSize(MEDIUM_TEXT);
-    DISP.setCursor(5, 1);
-    DISP.println(TXT_BT_SPAM);
+    DISP.setCursor(0, 0);
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+    DISP.printf(" %-12s\n", TXT_BT_SPAM);
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
     DISP.setTextSize(SMALL_TEXT);
     DISP.print(TXT_ADV);
 
@@ -1175,8 +1343,10 @@ int ajmenu_size = sizeof(ajmenu) / sizeof (MENU);
 void aj_setup(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(5, 1);
-  DISP.println("AppleJuice");
+  DISP.setCursor(0, 0);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.println(" AppleJuice  ");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(1000);  
   cursor = 0;
   sourApple = false;
@@ -1297,8 +1467,10 @@ void aj_loop(){
     if (current_proc == 8 && isSwitching == false){
       DISP.fillScreen(BGCOLOR);
       DISP.setTextSize(MEDIUM_TEXT);
-      DISP.setCursor(5, 1);
-      DISP.println("AppleJuice");
+      DISP.setCursor(0, 0);
+      DISP.setTextColor(BGCOLOR, FGCOLOR);
+      DISP.println(" AppleJuice  ");
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
       DISP.setTextSize(SMALL_TEXT);
       DISP.print(TXT_ADV);
       DISP.print(ajmenu[cursor].name);
@@ -1505,7 +1677,7 @@ void wifispam_setup() {
 
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println(TXT_WF_SP);
   delay(1000);
   DISP.setTextSize(TINY_TEXT);
@@ -1656,23 +1828,37 @@ void wscan_drawmenu() {
   char ssid[19];
   DISP.setTextSize(SMALL_TEXT);
   DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 5, 1);
+  DISP.setCursor(0, 0);
   // scrolling menu
   if (cursor > 4) {
     for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.print(" ");
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
     for ( int i = 0 ; i < wifict ; i++ ) {
-      DISP.print((cursor == i) ? ">" : " ");
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.print(" ");
       DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
-  DISP.print((cursor == wifict) ? ">" : " ");
+  if(cursor == wifict){
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
   DISP.println(TXT_WF_RESCAN);
-  DISP.print((cursor == wifict + 1) ? ">" : " ");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  if(cursor == wifict + 1){
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
   DISP.println(String(TXT_BACK));
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 void wscan_result_setup() {
@@ -1721,21 +1907,25 @@ void wscan_result_loop(){
       encryptType = TXT_WF_OPEN;
       break ;
     }
-    
-    DISP.setTextSize(SMALL_TEXT);
-    if(WiFi.SSID(cursor).length() > 12){
-      DISP.setTextSize(TINY_TEXT);
-    }       
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(5, 1);
+    DISP.setCursor(0, 0);
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+    if(WiFi.SSID(cursor).length() > 12){
+      DISP.setTextSize(SMALL_TEXT);
+    }else if(WiFi.SSID(cursor).length() > 20){
+      DISP.setTextSize(TINY_TEXT);
+    }else{
+      DISP.setTextSize(MEDIUM_TEXT);
+    }
     DISP.println(WiFi.SSID(cursor));
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
     DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
     DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
     DISP.printf(TXT_SEL_BACK);
-    DISP.setTextColor(TFT_RED, BGCOLOR);
-    DISP.printf(TXT_HOLD_ATTACK);
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+    DISP.printf(" %-19s\n", TXT_HOLD_ATTACK);
     DISP.setTextColor(FGCOLOR, BGCOLOR);
    if(check_select_press()){
       apMac=WiFi.BSSIDstr(cursor);
@@ -1756,7 +1946,7 @@ void wscan_setup(){
   cursor = 0;
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println(TXT_WF_SCN);
   delay(2000);
 }
@@ -1764,12 +1954,12 @@ void wscan_setup(){
 void wscan_loop(){
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   DISP.println(TXT_WF_SCNING);
   wifict = WiFi.scanNetworks();
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(SMALL_TEXT);
-  DISP.setCursor(5, 1);
+  DISP.setCursor(0, 0);
   if(wifict > 0){
     isSwitching = true;
     current_proc=15;
@@ -1847,7 +2037,7 @@ void wsAmenu_loop() {
 
 
     DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 5, 1);
+    DISP.setCursor(0, 0);
     DISP.setTextSize(BIG_TEXT);
     DISP.setTextColor(TFT_RED, BGCOLOR);
     DISP.println("Deauth Atk");
@@ -2070,7 +2260,9 @@ void setup() {
     Serial.printf("EEPROM 1 - Dim Time:   %d\n", EEPROM.read(1));
     Serial.printf("EEPROM 2 - Brightness: %d\n", EEPROM.read(2));
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1) {
+    Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
+    Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
@@ -2080,13 +2272,17 @@ void setup() {
       #endif
       EEPROM.write(1, 15);   // 15 second auto dim time
       EEPROM.write(2, 100);  // 100% brightness
-      EEPROM.write(3, 0); // TVBG NA Region
+      EEPROM.write(3, 0);    // TVBG NA Region
+      EEPROM.write(4, 11);   // FGColor Green
+      EEPROM.write(5, 1);    // BGcolor Black
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
     screen_dim_time = EEPROM.read(1);
     brightness = EEPROM.read(2);
     region = EEPROM.read(3);
+    setcolor(true, EEPROM.read(4));
+    setcolor(false, EEPROM.read(5));
   #endif
   getSSID();
   
@@ -2219,6 +2415,9 @@ void loop() {
           deauth_setup();
           break;
       #endif
+        case 22:
+          color_setup();
+          break;
     }
   }
 
@@ -2304,7 +2503,9 @@ void loop() {
         deauth_loop();                                                // DEAUTH
         break;                                                        // DEAUTH
     #endif                                                            // DEAUTH
-
+      case 22:
+        color_loop();
+        break;
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
         case 97:
