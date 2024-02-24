@@ -2,7 +2,7 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-// #define STICK_C_PLUS
+#define STICK_C_PLUS
 // #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
@@ -13,8 +13,8 @@
 // #define LANGUAGE_PT_BR
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
-uint16_t BGCOLOR=0x0000;
-uint16_t FGCOLOR=0x07E0;
+uint16_t BGCOLOR=0x0001; // placeholder
+uint16_t FGCOLOR=0xFFF1; // placeholder
 
 #ifndef NEMO_VERSION
   #define NEMO_VERSION "dev"
@@ -197,7 +197,8 @@ uint16_t FGCOLOR=0x07E0;
 // 19 - NEMO Portal
 // 20 - Attack menu
 // 21 - Deauth Attack
-// 22 - Color Settings
+// 22 - Custom Color Settings
+// 23 - Pre-defined color themes
 // .. - ..
 // 97 - Mount/UnMount SD Card on M5Stick devices, if SDCARD is declared
 
@@ -293,7 +294,7 @@ QRCODE qrcodes[] = {
 void drawmenu(MENU thismenu[], int size) {
   DISP.setTextSize(SMALL_TEXT);
   DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 0);
+  DISP.setCursor(0, 0, 1);
   // scrolling menu
   if (cursor < 0) {
     cursor = size - 1;  // rollover hack for up-arrow on cardputer
@@ -572,7 +573,7 @@ MENU smenu[] = {
     { TXT_SDCARD, 97},
   #endif
 #endif
-  { TXT_COLOR, 22},
+  { TXT_THEME, 23},
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
 #if defined(USE_EEPROM)
@@ -738,6 +739,9 @@ void color_setup() {
   DISP.setCursor(0, 0);
   DISP.println(String(TXT_SET_FGCOLOR));
   cursor = 0;
+  #if defined(USE_EEPROM)
+    cursor=EEPROM.read(4); // get current fg color
+  #endif
   rstOverride = true;
   delay(1000);  
   drawmenu(cmenu, cmenu_size);
@@ -753,8 +757,10 @@ void color_loop() {
   }
   if (check_select_press()) {
     #if defined(USE_EEPROM)
+      Serial.printf("EEPROM WRITE (4) FGCOLOR: %d\n", cursor);
       EEPROM.write(4, cursor);
       EEPROM.commit();
+      cursor=EEPROM.read(5); // get current bg color
     #endif
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -772,6 +778,7 @@ void color_loop() {
        }
     }
     #if defined(USE_EEPROM)
+      Serial.printf("EEPROM WRITE (5) BGCOLOR: %d\n", cursor);
       EEPROM.write(5, cursor);
       EEPROM.commit();
     #endif
@@ -780,6 +787,118 @@ void color_loop() {
     current_proc = 2;
   }
 }
+
+MENU thmenu[] = {
+  { TXT_BACK, 0},
+  { "Nemo", 1},
+  { "Tux", 2},
+  { "Bill", 3},
+  { "Steve", 4},
+  { "Lilac", 5},
+  { "Contrast", 6},
+  { "NightShift", 7},
+  { "Camo", 8},
+  { "BubbleGum", 9},
+  { TXT_COLOR, 99},
+};
+int thmenu_size = sizeof(thmenu) / sizeof (MENU);
+
+void theme_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(String(TXT_THEME));
+  cursor = 0;
+  rstOverride = true;
+  delay(1000);  
+  drawmenu(thmenu, thmenu_size);
+}
+
+void theme_loop() {
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % thmenu_size;
+    switch (thmenu[cursor].command){
+      case 0:
+        FGCOLOR=11;
+        BGCOLOR=1;
+        break;       
+      case 1: // Nemo
+        FGCOLOR=11;
+        BGCOLOR=1;
+        break;
+      case 2: // Tux
+        FGCOLOR=8;
+        BGCOLOR=1;
+        break;  
+      case 3: // Bill
+        FGCOLOR=16;
+        BGCOLOR=10;
+        break;
+      case 4: // Steve
+        FGCOLOR=1;
+        BGCOLOR=8;
+        break;        
+      case 5: // Lilac
+        FGCOLOR=19;
+        BGCOLOR=6;
+        break;
+      case 6: // Contrast
+        FGCOLOR=16;
+        BGCOLOR=1;
+        break;
+      case 7: // NightShift
+        FGCOLOR=5;
+        BGCOLOR=1;
+         break;
+      case 8: // Camo
+        FGCOLOR=1;
+        BGCOLOR=7;
+        break;
+      case 9: // BubbleGum
+        FGCOLOR=1;
+        BGCOLOR=19;
+        break;
+      case 99:
+        FGCOLOR=11;
+        BGCOLOR=1;
+        break;
+     }
+    setcolor(true, FGCOLOR);
+    setcolor(false, BGCOLOR);
+    drawmenu(thmenu, thmenu_size);
+    delay(250);
+  }
+  if (check_select_press()) {
+    switch (thmenu[cursor].command){
+      case 99:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 22;
+        break;
+      case 0:
+        #if defined(USE_EEPROM)
+          setcolor(true, EEPROM.read(4));
+          setcolor(false, EEPROM.read(5));
+        #endif
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 2;
+        break;
+      default:
+        #if defined(USE_EEPROM)
+          Serial.printf("EEPROM WRITE (4) FGCOLOR: %d\n", FGCOLOR);
+          EEPROM.write(4, FGCOLOR);
+          Serial.printf("EEPROM WRITE (5) BGCOLOR: %d\n", BGCOLOR);
+          EEPROM.write(5, BGCOLOR);
+        #endif
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 2;
+    }
+  }
+}
+
+
 
 int rotation = 1;
 #if defined(ROTATION)
@@ -2418,6 +2537,9 @@ void loop() {
         case 22:
           color_setup();
           break;
+        case 23:
+          theme_setup();
+          break;
     }
   }
 
@@ -2505,6 +2627,9 @@ void loop() {
     #endif                                                            // DEAUTH
       case 22:
         color_loop();
+        break;
+      case 23:
+        theme_loop();
         break;
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
