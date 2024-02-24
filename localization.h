@@ -92,9 +92,10 @@
   #define TXT_ORANGE "Orange"
   #define TXT_GREENYELLOW "Green Yellow"
   #define TXT_PINK "Pink"
-  #define TXT_COLOR "Color"
+  #define TXT_COLOR "Custom Colors"
   #define TXT_SET_FGCOLOR "MAIN COLOR"
   #define TXT_SET_BGCOLOR "BACKGROUND COLOR"
+  #define TXT_THEME "Color Theme"
 #endif
 
 #if defined(LANGUAGE_PT_BR)
@@ -191,7 +192,8 @@
   #define TXT_ORANGE "Alaranjado"
   #define TXT_GREENYELLOW "Verde Amarelo"
   #define TXT_PINK "Rosa"
-  #define TXT_COLOR "Cor"
+  #define TXT_COLOR "Mudar Cores"
   #define TXT_SET_FGCOLOR "COR PRINCIPAL"
   #define TXT_SET_BGCOLOR "COR DE FUNDO"
+  #define TXT_THEME "Tema De Cores"
 #endif
