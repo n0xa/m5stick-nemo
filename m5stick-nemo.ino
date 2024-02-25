@@ -11,6 +11,7 @@
 // -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
+// #define LANGUAGE_IT_IT
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
 uint16_t BGCOLOR=0x0001; // placeholder
@@ -24,7 +25,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define CARDPUTER
 #endif
 
-#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR)
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT)
   #define LANGUAGE_EN_US
 #endif
 
