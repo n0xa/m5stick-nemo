@@ -2,7 +2,7 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+// #define STICK_C_PLUS
 // #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
