@@ -162,7 +162,7 @@
   #define TXT_INST_PRV "Precedente: Up Arrow"
   #define TXT_INST_SEL "Sel. : Enter or ->"
   #define TXT_INST_HOME "Home: Esc   or <- "
-  #define TXT_INST_PRSS_KEY "         Premi un tasto"
+  #define TXT_INST_PRSS_KEY "Premi un tasto"
   #define TXT_STK_NXT "Avanti: Side Button"
   #define TXT_STK_SEL "Seleziona : M5 Button"
   #define TXT_STK_HOME "Home: Tasto Accensione"
