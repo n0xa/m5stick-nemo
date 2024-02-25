@@ -1,5 +1,5 @@
 // ===== Settings ===== //
-const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // used Wi-Fi channels (available: 1-14)
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}; // used Wi-Fi channels (available: 1-14)
 const bool wpa2 = true; // WPA2 networks
 int spamtype = 1; // 1 = funny, 2 = rickroll, maybe more later
 

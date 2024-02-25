@@ -139,7 +139,7 @@
   #define TXT_AD_SPAM "Android Spam"
   #define TXT_AJ_TRANSF_NM "Transfer Number"
   #define TXT_AJ_TV_COLOR "TV Color Balance"
-  #define TXT_STP_NW_PH "Impostazione Nuovo Telefono"
+  #define TXT_STP_NW_PH "Setup New Phone"
   #define TXT_SA_ADV "SourApple Advertisement: "
   #define TXT_SP_ADV "SwiftPair Advertisement: '%s' - "
   #define TXT_AD_SPAM_ADV "Android Spam Advertisement: "

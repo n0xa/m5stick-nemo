@@ -2,7 +2,7 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-// #define STICK_C_PLUS
+#define STICK_C_PLUS
 // #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
@@ -11,14 +11,14 @@
 // -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
-// #define LANGUAGE_IT_IT
+#define LANGUAGE_IT_IT
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
 uint16_t BGCOLOR=0x0001; // placeholder
 uint16_t FGCOLOR=0xFFF1; // placeholder
 
 #ifndef NEMO_VERSION
-  #define NEMO_VERSION "dev"
+  #define NEMO_VERSION "dev-it"
 #endif
 
 #if !defined(CARDPUTER) && !defined(STICK_C_PLUS2) && !defined(STICK_C_PLUS) && !defined(STICK_C)
@@ -48,8 +48,8 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
-  #define SDCARD   //Requires a custom-built adapter
-  // #define SONG
+  //#define SDCARD   //Requires a custom-built adapter
+  //#define SONG
 
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd

