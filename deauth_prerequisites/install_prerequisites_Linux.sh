@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# 
-
 baseFolder="$HOME/.arduino15/packages/m5stack/hardware/esp32"
 
 # Find the latest version of the folder
-latestVersion=$(find "$baseFolder" -maxdepth 1 -type d -exec basename {} \; | sort -V | head -n 1)
+latestVersion=$(find "$baseFolder" -maxdepth 1 -type d -exec basename {} \; | sed '/esp32/d' | sort -V -r | head -n 1)
 
 if [ -z "$latestVersion" ]; then
     echo "No version found."
@@ -51,8 +49,4 @@ awk -v prefix="$prefix" -v option="$option" -v prefix2="$prefix2" -v option2="$o
 # Add the ready mark to the end of the file
 echo "$readyMark" >> "$file"
 
-# Open the latest version of the folder in Finder
-open "$baseFolder/$latestVersion"
-
 echo "Done."
-read -p "Press Enter to exit."
