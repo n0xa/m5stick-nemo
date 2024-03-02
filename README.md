@@ -89,6 +89,7 @@ If you want to customize NEMO or contribute to the project, you should be famili
 * Install necessary libraries. In Sketch -> Include Library -> Library Manager, search for and install the following libraries and any dependencies they require:
   * M5StickCPlus, M5StickC or M5Cardputer
   * IRRemoteESP8266
+  * ESPAsyncWebServer
 * Un-comment the appropriate `#define` line near the top for your platform (STICK_C, STICK_C_PLUS or CARDPUTER)
 * Switch partition schemes. `Tools` -> `Partition Scheme` -> `No OTA (Large APP)` - sometimes this option is labeled `Huge APP` 
 * Configuration
