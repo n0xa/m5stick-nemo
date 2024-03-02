@@ -1487,6 +1487,20 @@ void aj_loop(){
   if (check_select_press() || maelstrom) {
     deviceType = ajmenu[cursor].command;
     if (maelstrom) {
+      uint8_t newMAC[ESP_BD_ADDR_LEN];
+      esp_read_mac(newMAC, ESP_MAC_BT);
+      
+      // Keep ESP Manufactorer ID 
+      newMAC[0] = 0x02;
+      newMAC[1] = 0xE5;
+
+      // Generate random values for the MAC address and add them to the ESP ID
+      uint32_t randomBytes = esp_random();
+      memcpy(&newMAC[2], &randomBytes, 4);
+
+      // Set new MAC address
+      esp_base_mac_addr_set(newMAC, ESP_BT_MAC_ADDR_TYPE_PUBLIC);
+
       deviceType = random(1, 28);
     }
     switch(deviceType) {
