@@ -199,6 +199,10 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
 // 21 - Deauth Attack
 // 22 - Custom Color Settings
 // 23 - Pre-defined color themes
+// 24 - Bad USB
+// 25 - Bad USB Wifi Scan
+// 26 - Bad USB Wifi scan results
+// 27 - Run Payload 0
 // .. - ..
 // 97 - Mount/UnMount SD Card on M5Stick devices, if SDCARD is declared
 
@@ -268,6 +272,8 @@ bool clone_flg = false;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include "payloads.h"
+
 #if defined(DEAUTHER)
   #include "deauth.h"                                                               //DEAUTH
   #include "esp_wifi.h"                                                             //DEAUTH
@@ -424,6 +430,7 @@ MENU mmenu[] = {
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
   { "WiFi", 12},
+  { "Bad USB", 24},
   { "QR Codes", 18},
   { TXT_SETTINGS, 2},
 };
@@ -1888,6 +1895,41 @@ void btmaelstrom_loop(){
   }
 }
 
+/// BAD USB MENU ///
+
+void bumenu_setup() {
+  cursor = 0;
+  rstOverride = true;
+  drawmenuL();
+  delay(500); // Prevent switching after menu loads up
+}
+
+void bumenu_loop() {
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % bumenu_size;
+    drawmenuL();
+    delay(250);
+  }
+  if (check_select_press()) {
+    int option = bumenu[cursor].command;
+    rstOverride = false;
+    isSwitching = true;
+    switch(option) {
+      case 0:
+        current_proc = 1;
+        break;
+      case 1:
+        rootPayload0();
+        break;
+      default:
+        rstOverride = true;
+        isSwitching = false;
+        payloads_menu(option);
+    }
+  }
+}
+
 /// WIFI MENU ///
 MENU wsmenu[] = {
   { TXT_BACK, 5},
@@ -2540,6 +2582,17 @@ void loop() {
         case 23:
           theme_setup();
           break;
+        case 24:
+          bumenu_setup();
+          break;
+        case 25:
+          busb_setup();
+          break;
+        case 26:
+          busb_result_setup();
+          break;
+        case 27:
+          run_payload_setup();
     }
   }
 
@@ -2631,6 +2684,17 @@ void loop() {
       case 23:
         theme_loop();
         break;
+      case 24:
+        bumenu_loop();
+        break;
+      case 25:
+        busb_loop();
+        break;
+      case 26:
+        busb_result_loop();
+        break;
+      case 27:
+        run_payload_loop();
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
         case 97:
