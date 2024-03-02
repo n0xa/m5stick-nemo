@@ -111,6 +111,7 @@ arduino-cli core install m5stack:esp32  --additional-urls https://m5stack.oss-cn
 # Install required library
 arduino-cli lib install M5Cardputer --log-level warn --verbose
 arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
+arduino-cli lib install ESPAsyncWebServer --log-level warn --verbose
 
 # Compile sketch
 arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property build.partitions=huge_app --build-property upload.maximum_size=3145728 ./m5stick-nemo.ino

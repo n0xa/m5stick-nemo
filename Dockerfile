@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install m5stack boards
 COPY ./package_m5stack_index.json /package_m5stack_index.json
 RUN arduino-cli core install m5stack:esp32 --additional-urls "file:///package_m5stack_index.json" --log-level warn --verbose
-
+RUN arduino-cli lib install ESPAsyncWebServer --log-level warn --verbose
 RUN arduino-cli core search m5stack
 RUN arduino-cli board listall
 #
