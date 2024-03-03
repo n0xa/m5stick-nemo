@@ -200,9 +200,6 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
 // 22 - Custom Color Settings
 // 23 - Pre-defined color themes
 // 24 - Bad USB
-// 25 - Bad USB Wifi Scan
-// 26 - Bad USB Wifi scan results
-// 27 - Run Payload 0
 // .. - ..
 // 97 - Mount/UnMount SD Card on M5Stick devices, if SDCARD is declared
 
@@ -1914,20 +1911,9 @@ void bumenu_loop() {
   }
   if (check_select_press()) {
     int option = bumenu[cursor].command;
-    rstOverride = false;
-    isSwitching = true;
-    switch(option) {
-      case 0:
-        current_proc = 1;
-        break;
-      case 1:
-        rootPayload0();
-        break;
-      default:
-        rstOverride = true;
-        isSwitching = false;
-        payloads_menu(option);
-    }
+    rstOverride = true;
+    isSwitching = false;
+    payloads_menu(option);
   }
 }
 
@@ -2586,14 +2572,6 @@ void loop() {
         case 24:
           bumenu_setup();
           break;
-        case 25:
-          busb_setup();
-          break;
-        case 26:
-          busb_result_setup();
-          break;
-        case 27:
-          run_payload_setup();
     }
   }
 
@@ -2686,16 +2664,8 @@ void loop() {
         theme_loop();
         break;
       case 24:
-        bumenu_loop();
-        break;
-      case 25:
-        busb_loop();
-        break;
-      case 26:
-        busb_result_loop();
-        break;
-      case 27:
-        run_payload_loop();
+          bumenu_loop();
+          break;
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
         case 97:

