@@ -78,27 +78,27 @@ String ip2String(const IPAddress& address){
 String printDirectory_listing(File dir, int numTabs) {
   String response = "";
   dir.rewindDirectory();
-  
+  // for (uint8_t i=0; i<numTabs; i++) {
+  //   Serial.print('\t');   // we'll have a nice indentation
+  // }
   while(true) {
-     File entry =  dir.openNextFile();
-     if (!entry) {
-       // no more files
-       //Serial.println("**nomorefiles**");
-       break;
-     }
-     for (uint8_t i=0; i<numTabs; i++) {
-       Serial.print('\t');   // we'll have a nice indentation
-     }
-     // Recurse for directories, otherwise print the file size
-     if (entry.isDirectory()) {
-       printDirectory_listing(entry, numTabs+1);
-     } else {
-       response += String("<a href='") + String(entry.name()) + String("'>") + String(entry.name()) + String("</a>") + String("</br>");
-     }
-     entry.close();
-   }
+    File entry =  dir.openNextFile();
+    if (!entry) {
+    // no more files
+    // Serial.println("**nomorefiles**");
+    break;
+    }
+    // Recurse for directories, otherwise print the file size
+    // if (entry.isDirectory()) {
+    //   printDirectory_listing(entry, numTabs+1);
+    // }
+    if (!entry.isDirectory()){
+      response += String("<a href='") + String(entry.name()) + String("'>") + String(entry.name()) + String("</a>") + String("</br>");
+    }
+    entry.close();
+  }
 
-   return String("List files in <b>/</b>win-chrm:<br>") + response;
+  return String("List files in <b>/</b>win-chrm:<br>") + response;
 }
 
 String filename_exists(String filename, int count, String filename_original){
