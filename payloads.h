@@ -202,7 +202,7 @@ void run_payload_setup(){
   Keyboard.print(cmd);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
-  DISP.println("done.");
+  DISP.print("done.");
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.printf(TXT_SEL_BACK);
 }
