@@ -1488,7 +1488,6 @@ void aj_loop(){
     deviceType = ajmenu[cursor].command;
     if (maelstrom) {
       uint8_t newMAC[ESP_BD_ADDR_LEN];
-      esp_read_mac(newMAC, ESP_MAC_BT);
       
       // Keep ESP Manufactorer ID 
       newMAC[0] = 0x02;
