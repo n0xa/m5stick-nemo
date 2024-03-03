@@ -247,6 +247,8 @@ int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
 void payloads_menu(int option){ // edit this to add payloads!
     switch(option) {
       case 0:
+        rstOverride = false;
+        isSwitching = true;
         current_proc = 1;
         break;
       case 1:
