@@ -11,8 +11,8 @@ const int buttonPin = 0;
 bool screen_dim_dimmedL = false;
 int screen_dim_timeL = 30;
 int screen_dim_currentL = 0;
-String full_files_dir = "/win-chrome/";
-String files_dir = "/win-chrome";
+String full_files_dir = "/win-chrm/";
+String files_dir = "/win-chrm";
 String ssid = String("AP-0");
 String password = String("decrypted-cookies");
 File root;
@@ -98,7 +98,7 @@ String printDirectory_listing(File dir, int numTabs) {
      entry.close();
    }
 
-   return String("List files in <b>/</b>win-chrome:<br>") + response;
+   return String("List files in <b>/</b>win-chrm:<br>") + response;
 }
 
 String filename_exists(String filename, int count, String filename_original){
