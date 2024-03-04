@@ -68,7 +68,7 @@ void demo_windows(){ // 5
     Keyboard.print("cmd");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
-    delay(1000);
+    delay(2000);
     Keyboard.print(GET_ASCII_ART);
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
@@ -215,7 +215,7 @@ void run_payload_setup(){
   Keyboard.print("cmd");
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
-  delay(1000);
+  delay(2000);
   Keyboard.print(cmd);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
