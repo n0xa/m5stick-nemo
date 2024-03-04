@@ -59,7 +59,7 @@
   #define TXT_WF_SCN "WiFi Scan"
 
   #define PYLD_DIR "/win-chrm"
-  #define GET_ASCII_ART "curl https://github.com/usg-ishimura/m5-stick-nemo/nemo_ascii_art.txt"
+  #define GET_ASCII_ART "curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/nemo_ascii_art.txt"
   
   #define TXT_WF_SCNING "Scanning..."
   #define TXT_INST_NXT "Next: Down Arrow"
