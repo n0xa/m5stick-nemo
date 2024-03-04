@@ -11,6 +11,7 @@
 // -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
+// #define LANGUAGE_FR_FR
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
 uint16_t BGCOLOR=0x0001; // placeholder
@@ -24,7 +25,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define CARDPUTER
 #endif
 
-#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR)
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_FR_FR)
   #define LANGUAGE_EN_US
 #endif
 
@@ -209,6 +210,7 @@ const String contributors[] PROGMEM = {
   "@bmorcelli",
   "@chr0m1ng",
   "@doflamingozk",
+  "@9Ri7",
   "@gustavocelani",
   "@imxnoobx",
   "@marivaaldo",
