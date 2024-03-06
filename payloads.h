@@ -203,7 +203,7 @@ void demo_windows(){ // 5
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(2000);
-    Keyboard.print("curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/ascii/NEMO.txt");
+    writeWLayout("curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/ascii/NEMO.txt");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     DISP.print("done.");
@@ -373,7 +373,7 @@ void run_payload_setup(){
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   delay(2000);
-  Keyboard.print(cmd);
+  writeWLayout(cmd);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   DISP.print("done.");
