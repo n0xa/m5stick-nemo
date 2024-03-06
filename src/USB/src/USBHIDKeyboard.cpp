@@ -22,69 +22,15 @@
 #if SOC_USB_OTG_SUPPORTED
 
 #if CONFIG_TINYUSB_HID_ENABLED
-
+#include "layouts.h"
 #include "USBHIDKeyboard.h"
 
 ESP_EVENT_DEFINE_BASE(ARDUINO_USB_HID_KEYBOARD_EVENTS);
 esp_err_t arduino_usb_event_post(esp_event_base_t event_base, int32_t event_id, void *event_data, size_t event_data_size, TickType_t ticks_to_wait);
 esp_err_t arduino_usb_event_handler_register_with(esp_event_base_t event_base, int32_t event_id, esp_event_handler_t event_handler, void *event_handler_arg);
 
-static const uint8_t report_descriptor[] = {
-    TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_REPORT_ID_KEYBOARD))
-};
-
-USBHIDKeyboard::USBHIDKeyboard(): hid(HID_ITF_PROTOCOL_KEYBOARD), shiftKeyReports(true){
-    static bool initialized = false;
-    if(!initialized){
-        initialized = true;
-        memset(&_keyReport, 0, sizeof(KeyReport));
-        hid.addDevice(this, sizeof(report_descriptor));
-    }
-}
-
-uint16_t USBHIDKeyboard::_onGetDescriptor(uint8_t* dst){
-    memcpy(dst, report_descriptor, sizeof(report_descriptor));
-    return sizeof(report_descriptor);
-}
-
-void USBHIDKeyboard::begin(){
-    hid.begin();
-}
-
-void USBHIDKeyboard::end(){
-}
-
-void USBHIDKeyboard::onEvent(esp_event_handler_t callback){
-    onEvent(ARDUINO_USB_HID_KEYBOARD_ANY_EVENT, callback);
-}
-void USBHIDKeyboard::onEvent(arduino_usb_hid_keyboard_event_t event, esp_event_handler_t callback){
-    arduino_usb_event_handler_register_with(ARDUINO_USB_HID_KEYBOARD_EVENTS, event, callback, this);
-}
-
-void USBHIDKeyboard::_onOutput(uint8_t report_id, const uint8_t* buffer, uint16_t len){
-    if(report_id == HID_REPORT_ID_KEYBOARD){
-        arduino_usb_hid_keyboard_event_data_t p;
-        p.leds = buffer[0];
-        arduino_usb_event_post(ARDUINO_USB_HID_KEYBOARD_EVENTS, ARDUINO_USB_HID_KEYBOARD_LED_EVENT, &p, sizeof(arduino_usb_hid_keyboard_event_data_t), portMAX_DELAY);
-    }
-}
-
-void USBHIDKeyboard::sendReport(KeyReport* keys)
-{
-    hid_keyboard_report_t report;
-    report.reserved = 0;
-    report.modifier = keys->modifiers;
-    memcpy(report.keycode, keys->keys, 6);
-    hid.SendReport(HID_REPORT_ID_KEYBOARD, &report, sizeof(report));
-}
-
-void USBHIDKeyboard::setShiftKeyReports(bool set)
-{
-    shiftKeyReports = set;
-}
-
 #define SHIFT 0x80
-const uint8_t _asciimap[128] =
+uint8_t _asciimap[128] =
 {
     0x00,          // NUL
     0x00,          // SOH
@@ -216,6 +162,70 @@ const uint8_t _asciimap[128] =
     0x35|SHIFT,    // ~
     0              // DEL
 };
+
+static const uint8_t report_descriptor[] = {
+    TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_REPORT_ID_KEYBOARD))
+};
+
+USBHIDKeyboard::USBHIDKeyboard(): hid(HID_ITF_PROTOCOL_KEYBOARD), shiftKeyReports(true){
+    static bool initialized = false;
+    if(!initialized){
+        initialized = true;
+        memset(&_keyReport, 0, sizeof(KeyReport));
+        hid.addDevice(this, sizeof(report_descriptor));
+    }
+}
+
+uint16_t USBHIDKeyboard::_onGetDescriptor(uint8_t* dst){
+    memcpy(dst, report_descriptor, sizeof(report_descriptor));
+    return sizeof(report_descriptor);
+}
+
+void USBHIDKeyboard::begin(int layout_switch){
+    switch (layout_switch) {
+        case 1:
+            memcpy(_asciimap, _it_asciimap, sizeof(_it_asciimap));
+            break;
+        case 2:
+            memcpy(_asciimap, _es_asciimap, sizeof(_es_asciimap));
+            break;
+        default:
+            memcpy(_asciimap, _us_asciimap, sizeof(_us_asciimap));
+    }
+    hid.begin();
+}
+
+void USBHIDKeyboard::end(){
+}
+
+void USBHIDKeyboard::onEvent(esp_event_handler_t callback){
+    onEvent(ARDUINO_USB_HID_KEYBOARD_ANY_EVENT, callback);
+}
+void USBHIDKeyboard::onEvent(arduino_usb_hid_keyboard_event_t event, esp_event_handler_t callback){
+    arduino_usb_event_handler_register_with(ARDUINO_USB_HID_KEYBOARD_EVENTS, event, callback, this);
+}
+
+void USBHIDKeyboard::_onOutput(uint8_t report_id, const uint8_t* buffer, uint16_t len){
+    if(report_id == HID_REPORT_ID_KEYBOARD){
+        arduino_usb_hid_keyboard_event_data_t p;
+        p.leds = buffer[0];
+        arduino_usb_event_post(ARDUINO_USB_HID_KEYBOARD_EVENTS, ARDUINO_USB_HID_KEYBOARD_LED_EVENT, &p, sizeof(arduino_usb_hid_keyboard_event_data_t), portMAX_DELAY);
+    }
+}
+
+void USBHIDKeyboard::sendReport(KeyReport* keys)
+{
+    hid_keyboard_report_t report;
+    report.reserved = 0;
+    report.modifier = keys->modifiers;
+    memcpy(report.keycode, keys->keys, 6);
+    hid.SendReport(HID_REPORT_ID_KEYBOARD, &report, sizeof(report));
+}
+
+void USBHIDKeyboard::setShiftKeyReports(bool set)
+{
+    shiftKeyReports = set;
+}
 
 size_t USBHIDKeyboard::pressRaw(uint8_t k) 
 {

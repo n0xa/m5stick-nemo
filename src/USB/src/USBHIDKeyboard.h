@@ -59,6 +59,11 @@ typedef union {
 #define KEY_RIGHT_ALT   0x86
 #define KEY_RIGHT_GUI   0x87
 
+#define KEY_QUOTE (  52  | 0xF000 )
+#define KEY_SEMICOLON (  51  | 0xF000 )
+#define KEY_LEFT_BRACE (  47  | 0xF000 )
+#define KEY_RIGHT_BRACE (  48  | 0xF000 )
+
 #define KEY_UP_ARROW    0xDA
 #define KEY_DOWN_ARROW  0xD9
 #define KEY_LEFT_ARROW  0xD8
@@ -300,7 +305,7 @@ private:
     bool shiftKeyReports;
 public:
     USBHIDKeyboard(void);
-    void begin(void);
+    void begin(int layout_switch);
     void end(void);
     size_t write(uint8_t k);
     size_t write(const uint8_t *buffer, size_t size);

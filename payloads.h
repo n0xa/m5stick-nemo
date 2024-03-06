@@ -27,6 +27,57 @@ void demo_android(void);
 void demo_ios(void);
 void demo_macos(void);
 void demo_windows(void);
+void demo_char_test(void);
+
+void writeWLayout(char * str)
+{
+    int len = strlen(str);
+    for (int i = 0; i < len; i++) {
+        switch(str[i]) {
+          case '#':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(KEY_QUOTE); 
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          case '@':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(KEY_SEMICOLON);
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          case '[':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(KEY_LEFT_BRACE);
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          case ']':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(KEY_RIGHT_BRACE); 
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          case '{':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(HID_KEY_SHIFT_LEFT);
+            Keyboard.pressRaw(KEY_LEFT_BRACE); 
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          case '}':
+            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
+            Keyboard.pressRaw(HID_KEY_SHIFT_LEFT);  
+            Keyboard.pressRaw(KEY_RIGHT_BRACE);
+            delay(100);
+            Keyboard.releaseAll();
+            break;
+          default:
+            Keyboard.press(str[i]);          // Keydown
+            Keyboard.release(str[i]);        // Keyup       
+        }
+    }
+}
 
 static MENUL bumenu[] = { // edit this to add payloads!
   { TXT_BACK, 0},
@@ -35,6 +86,7 @@ static MENUL bumenu[] = { // edit this to add payloads!
   { "demo_ios", 3},
   { "demo_macos", 4},
   { "demo_windows", 5},
+  { "demo_char_test", 6},
 };
 
 int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
@@ -60,6 +112,9 @@ void payloads_menu(int option){ // edit this to add payloads!
         break;
       case 5:
         demo_windows();
+        break;
+      case 6:
+        demo_char_test();
         break;
     }
 }
@@ -103,7 +158,7 @@ void demo_ios(){ // 3
 }
 
 void demo_macos(){ // 4
-    Keyboard.begin();
+    Keyboard.begin(1);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -124,7 +179,7 @@ void demo_macos(){ // 4
 }
 
 void demo_windows(){ // 5
-    Keyboard.begin();
+    Keyboard.begin(1);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -151,6 +206,29 @@ void demo_windows(){ // 5
     Keyboard.print("curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/ascii/NEMO.txt");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
+    DISP.print("done.");
+    DISP.printf(TXT_SEL_BACK);
+}
+
+void demo_char_test(){ // 6
+    Keyboard.begin(1);
+    USB.begin();
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+    DISP.println("char test demo");
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000);
+
+    // To open GUI menu:
+    
+    // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    // delay(500);
+    // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+
+    //Keyboard.print(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}");
+    writeWLayout(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}");
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
@@ -264,7 +342,7 @@ IPAddress runPayloadServer(){
 }
 
 void run_payload_setup(){
-  Keyboard.begin();
+  Keyboard.begin(1);
   USB.begin();
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
