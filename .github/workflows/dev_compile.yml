@@ -189,45 +189,6 @@ jobs:
         with:
           name: M5Nemo-${{ matrix.board.name }}.${{ matrix.locale }}
           path: M5Nemo-*.bin
+          retention-days: 5
           if-no-files-found: error
 
-  create_release:
-    runs-on: ubuntu-latest
-    environment: github_release
-    needs: [compile_sketch]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-    steps:
-    - id: nemo_version
-      name: Get NEMO Version
-      run: |
-        set -x
-
-        if [[ "${{ github.ref_type }}" == "tag" ]]; then
-          version=${{ github.ref_name }}
-        else
-          version="${GITHUB_SHA::7}"
-        fi
-
-        echo "version=${version}" > $GITHUB_OUTPUT
-
-    - uses: actions/download-artifact@v4
-      with:
-        merge-multiple: true
-
-    - name: List all files
-      if: always()
-      run: |
-        set -x
-        pwd
-        ls -all
-        tree
-
-    - name: Create Release ${{ steps.nemo_version.outputs.version }}
-      uses: softprops/action-gh-release@v1
-      with:
-        name: NEMO Release ${{ steps.nemo_version.outputs.version }}
-        tag_name: ${{ steps.nemo_version.outputs.version }}
-        generate_release_notes: true
-        files: |
-          M5Nemo-*.bin
