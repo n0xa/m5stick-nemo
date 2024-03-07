@@ -81,7 +81,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define SDCARD   //Requires a custom-built adapter
   #define PWRMGMT
   #define SPEAKER M5.Speaker
-  #define SONG
+  // #define SONG
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -814,6 +814,9 @@ void theme_setup() {
 }
 
 void theme_loop() {
+  int sfgcolor; //var to save the right number into eeprom
+  int sbgcolor; //var to save the right number into eeprom
+               //as it is saving uint16_t value to eeprom and getting wrong color on restart
   if (check_next_press()) {
     cursor++;
     cursor = cursor % thmenu_size;
@@ -863,6 +866,8 @@ void theme_loop() {
         BGCOLOR=1;
         break;
      }
+    sfgcolor=FGCOLOR;
+    sbgcolor=BGCOLOR;
     setcolor(true, FGCOLOR);
     setcolor(false, BGCOLOR);
     drawmenu(thmenu, thmenu_size);
@@ -887,9 +892,10 @@ void theme_loop() {
       default:
         #if defined(USE_EEPROM)
           Serial.printf("EEPROM WRITE (4) FGCOLOR: %d\n", FGCOLOR);
-          EEPROM.write(4, FGCOLOR);
+          EEPROM.write(4, sfgcolor);
           Serial.printf("EEPROM WRITE (5) BGCOLOR: %d\n", BGCOLOR);
-          EEPROM.write(5, BGCOLOR);
+          EEPROM.write(5, sbgcolor);
+          EEPROM.commit();
         #endif
         rstOverride = false;
         isSwitching = true;
@@ -900,7 +906,7 @@ void theme_loop() {
 
 
 
-int rotation = 1;
+int rotation = 0;
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
@@ -928,12 +934,15 @@ int rotation = 1;
       rstOverride = false;
       isSwitching = true;
       rotation = rmenu[cursor].command;
-      DISP.setRotation(rotation);
-      #if defined(USE_EEPROM)
-        EEPROM.write(0, rotation);
-        EEPROM.commit();
-      #endif
+      if (rotation>0) {
+        DISP.setRotation(rotation);
+        #if defined(USE_EEPROM)
+          EEPROM.write(0, rotation);
+          EEPROM.commit();
+        #endif
+      }
       current_proc = 2;
+
     }
   }
 #endif //ROTATION
