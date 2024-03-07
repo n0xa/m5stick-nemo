@@ -906,7 +906,7 @@ void theme_loop() {
 
 
 
-int rotation = EEPROM.read(0);
+int rotation = 0;
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
@@ -934,12 +934,15 @@ int rotation = EEPROM.read(0);
       rstOverride = false;
       isSwitching = true;
       rotation = rmenu[cursor].command;
-      DISP.setRotation(rotation);
-      #if defined(USE_EEPROM)
-        EEPROM.write(0, rotation);
-        EEPROM.commit();
-      #endif
+      if (rotation>0) {
+        DISP.setRotation(rotation);
+        #if defined(USE_EEPROM)
+          EEPROM.write(0, rotation);
+          EEPROM.commit();
+        #endif
+      }
       current_proc = 2;
+
     }
   }
 #endif //ROTATION
