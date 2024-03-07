@@ -68,7 +68,7 @@ static MENUL bumenu[] = { // edit this to add payloads!
   /*{ "demo_ios", 3},*/
   { "demo_macos", 4},
   { "demo_windows", 5},
-  { "demo_char_test", 6},
+  { "char_test", 6},
 };
 
 int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
