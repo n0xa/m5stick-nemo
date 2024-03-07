@@ -906,7 +906,7 @@ void theme_loop() {
 
 
 
-int rotation = 1;
+int rotation = EEPROM.read(0);
 #if defined(ROTATION)
   /// Rotation MENU ///
   MENU rmenu[] = {
