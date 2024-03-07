@@ -155,6 +155,17 @@ void demo_macos(){ // 4
     // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
     // delay(500);
     // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press(KEY_SPACE);
+    Keyboard.releaseAll();
+    delay(1000);
+    Keyboard.print("terminal");
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    delay(2000);
+    Keyboard.writeWLayout("curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/NEMO.txt");
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
 
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
