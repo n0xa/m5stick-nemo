@@ -65,7 +65,7 @@ static MENUL bumenu[] = { // edit this to add payloads!
   { TXT_BACK, 0},
   { "win-chrm_C_stealer", 1},
   { "demo_android", 2},
-  { "demo_ios", 3},
+  /*{ "demo_ios", 3},*/
   { "demo_macos", 4},
   { "demo_windows", 5},
   { "demo_char_test", 6},
@@ -102,6 +102,8 @@ void payloads_menu(int option){ // edit this to add payloads!
 }
 
 void demo_android(){ // 2
+    Keyboard.begin(current_layout);
+    USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
@@ -115,12 +117,26 @@ void demo_android(){ // 2
     // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
     // delay(500);
     // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press('b');
+    Keyboard.releaseAll();
+    delay(600);
+    Keyboard.press(KEY_LEFT_CTRL);
+    Keyboard.press('l');
+    Keyboard.releaseAll();
+    delay(400);
+    Keyboard.writeWLayout("https://github.com/usg-ishimura/m5stick-nemo/");
+    delay(100);
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
 
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
 
 void demo_ios(){ // 3
+    Keyboard.begin(current_layout);
+    USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
@@ -134,7 +150,23 @@ void demo_ios(){ // 3
     // Keyboard.pressRaw(HID_KEY_GUI_LEFT);
     // delay(500);
     // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
-
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press('h');
+    Keyboard.releaseAll();
+    delay(1000);
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press(KEY_SPACE);
+    Keyboard.releaseAll();
+    delay(250);
+    Keyboard.writeWLayout("https://github.com/usg-ishimura/m5stick-nemo/");
+    delay(75);
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    /*TAB
+    DELAY 75
+    ENTER
+    DELAY 150
+    ENTER*/
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
