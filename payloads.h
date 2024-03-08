@@ -1,8 +1,5 @@
 #include <FS.h>
 #include <WiFi.h>
-#include <HTTPClient.h>
-#include <WiFiMulti.h>
-#include <WiFiClientSecure.h>
 #include "USB.h"
 #include "src/USB/lib/USBHIDKeyboard.h"
 #include <ESPAsyncWebServer.h>
