@@ -55,7 +55,6 @@ void layouts_menu(int option){ // edit this to add layouts!
         break;
       case 5:
         rstOverride = false;
-        isSwitching = true;
         current_proc = 1;
         break;
     }
@@ -65,7 +64,7 @@ static MENUL bumenu[] = { // edit this to add payloads!
   { TXT_BACK, 0},
   { "win-chrm_C_stealer", 1},
   { "demo_android", 2},
-  /*{ "demo_ios", 3},*/
+  /*{ "demo_ios", 3}, // not tested. */ 
   { "demo_macos", 4},
   { "demo_windows", 5},
   { "char_test", 6},
@@ -121,15 +120,30 @@ void demo_android(){ // 2
     Keyboard.press('b');
     Keyboard.releaseAll();
     delay(600);
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    delay(1000);
     Keyboard.press(KEY_LEFT_CTRL);
     Keyboard.press('l');
     Keyboard.releaseAll();
-    delay(400);
+    delay(100);
     Keyboard.writeWLayout("https://github.com/usg-ishimura/m5stick-nemo/");
     delay(100);
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
-
+    delay(500);
+    Keyboard.print('f');
+    /*GUI b
+    DELAY 600
+    ENTER
+    DELAY 1000
+    CTRL l
+    DELAY 100
+    STRING https://github.com/Flipper-XFW/Xtreme-Firmware
+    DELAY 100
+    ENTER
+    DELAY 500
+    STRING f*/
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
@@ -160,9 +174,21 @@ void demo_ios(){ // 3
     delay(250);
     Keyboard.writeWLayout("https://github.com/usg-ishimura/m5stick-nemo/");
     delay(75);
+    Keyboard.press(KEY_TAB);
+    Keyboard.releaseAll();
+    delay(75);
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
-    /*TAB
+    delay(150);
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    /*GUI h
+    DELAY 1000
+    GUI SPACE
+    DELAY 250
+    STRING https://github.com/Flipper-XFW/Xtreme-Firmware
+    DELAY 75
+    TAB
     DELAY 75
     ENTER
     DELAY 150
