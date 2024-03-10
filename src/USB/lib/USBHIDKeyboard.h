@@ -74,8 +74,6 @@ typedef union {
 #define KEY_TAB         0xB3
 #define KEY_RETURN      0xB0
 
-#define KEY_ENTER       0x28
-
 #define KEY_ESC         0xB1
 #define KEY_INSERT      0xD1
 #define KEY_DELETE      0xD4
@@ -130,6 +128,8 @@ typedef union {
 #define HID_KEY_SHIFT_RIGHT               0xE5
 #define HID_KEY_ALT_RIGHT                 0xE6
 #define HID_KEY_GUI_RIGHT                 0xE7
+
+#define HID_KEY_ENTER                     0x28
 
 //  Low level key report: up to 6 keys and shift, ctrl etc at once
 typedef struct
