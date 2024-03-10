@@ -121,7 +121,7 @@ void payloads_menu(int option){ // edit this to add payloads!
     }
 }
 
-void demo_android(){ // 2
+void demo_android(){ // 6
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -169,7 +169,7 @@ void demo_android(){ // 2
     DISP.printf(TXT_SEL_BACK);
 }
 
-void demo_ios(){ // 3
+void demo_ios(){ // 7
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -217,7 +217,7 @@ void demo_ios(){ // 3
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
-void demo_linux(){ // 10
+void demo_linux(){ // 8
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -242,7 +242,7 @@ void demo_linux(){ // 10
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
-void demo_macos(){ // 4
+void demo_macos(){ // 9
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -276,7 +276,7 @@ void demo_macos(){ // 4
     DISP.printf(TXT_SEL_BACK);
 }
 
-void demo_windows(){ // 5
+void demo_windows(){ // 10
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -308,7 +308,7 @@ void demo_windows(){ // 5
     DISP.printf(TXT_SEL_BACK);
 }
 
-void demo_char_test(){ // 6
+void demo_char_test(){ // 5
     Keyboard.begin(current_layout);
     USB.begin();
     DISP.fillScreen(BGCOLOR);
@@ -503,7 +503,7 @@ void rootPayload0(){ // 1
     }
 }
 
-void custom_linux(){ // 7
+void custom_linux(){ // 2
     if(!setupSdCard()){
         rstOverride = true;
         isSwitching = false;
@@ -561,7 +561,7 @@ void custom_linux(){ // 7
     }
 }
 
-void custom_macos(){ // 8
+void custom_macos(){ // 3
     if(!setupSdCard()){
         rstOverride = true;
         isSwitching = false;
@@ -621,7 +621,7 @@ void custom_macos(){ // 8
     }
 }
 
-void custom_windows(){ // 9
+void custom_windows(){ // 4
     if(!setupSdCard()){
         rstOverride = true;
         isSwitching = false;
