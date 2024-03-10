@@ -370,6 +370,124 @@ ALT_GR_CHARS us_asciimap[128] =
 { '~', {HID_KEY_SHIFT_LEFT, 0x35}},       // 126 ~ OK
 };
 
+// SPANISH
+
+#define SHIFT_MASK		0x0040
+#define ALTGR_MASK		0x0080
+#define DEADKEYS_MASK		0x0700
+#define	CIRCUMFLEX_BITS		0x0100
+#define ACUTE_ACCENT_BITS	0x0200
+#define GRAVE_ACCENT_BITS	0x0300
+#define TILDE_BITS		0x0400
+#define DIAERESIS_BITS		0x0500
+#define KEYCODE_TYPE		uint16_t
+#define KEYCODE_MASK		0x07FF
+#define DEADKEY_CIRCUMFLEX	KEY_LEFT_BRACE + SHIFT_MASK
+#define DEADKEY_ACUTE_ACCENT	KEY_QUOTE
+#define DEADKEY_GRAVE_ACCENT	KEY_LEFT_BRACE
+#define DEADKEY_TILDE		KEY_4 + ALTGR_MASK
+#define DEADKEY_DIAERESIS	KEY_QUOTE + SHIFT_MASK
+#define KEY_NON_US_100		63
+
+ALT_GR_CHARS es_asciimap[128] =
+{
+{ ' ', {KEY_SPACE}}, 	        				    // 32' 'OK   
+{ '!', {HID_KEY_SHIFT_LEFT, KEY_1}}, 	    // 33 ! OK
+{ '"', {HID_KEY_SHIFT_LEFT, KEY_2}}, 	    // 34 " OK
+{ '#', {HID_KEY_ALT_RIGHT, KEY_3}}, 	    // 35 # OK
+{ '$', {HID_KEY_SHIFT_LEFT, KEY_4}}, 	    // 36 $ OK
+{ '%', {HID_KEY_SHIFT_LEFT, KEY_5}}, 	    // 37 % OK
+{ '&', {HID_KEY_SHIFT_LEFT, KEY_6}},      // 38 & OK
+{ '\'', {KEY_MINUS}}, 	                  // 39 ' OK
+{ '(', {HID_KEY_SHIFT_LEFT, KEY_8}}, 	    // 40 ( OK
+{ ')', {HID_KEY_SHIFT_LEFT, KEY_9}},			// 41 ) OK
+{ '*', {HID_KEY_SHIFT_LEFT, KEY_RIGHT_BRACE}},  // 42 * OK
+{ '+', {KEY_RIGHT_BRACE}}, 	              // 43 + OK
+{ ',', {KEY_COMMA}}, 				              // 44 , OK
+{ '-', {KEY_SLASH}}, 				              // 45 - OK
+{ '.', {KEY_PERIOD}}, 			              // 46 . OK
+{ '/', {HID_KEY_SHIFT_LEFT, KEY_7}},      // 47 / OK
+{ '0', {KEY_0}}, 						              // 48 0 OK
+{ '1', {KEY_1}}, 						              // 49 1 OK
+{ '2', {KEY_2}}, 						              // 50 2 OK
+{ '3', {KEY_3}}, 						              // 51 3 OK
+{ '4', {KEY_4}}, 						              // 52 4 OK
+{ '5', {KEY_5}}, 						              // 53 5 OK
+{ '6', {KEY_6}}, 						              // 54 6 OK
+{ '7', {KEY_7}}, 						              // 55 7 OK
+{ '8', {KEY_8}}, 						              // 55 8 OK
+{ '9', {KEY_9}}, 						              // 57 9 OK
+{ ':', {HID_KEY_SHIFT_LEFT, KEY_PERIOD}}, // 58 : OK
+{ ';', {HID_KEY_SHIFT_LEFT, KEY_COMMA}},  // 59 ; OK
+{ '<', {0x64}}, 	                        // 60 < OK
+{ '=', {HID_KEY_SHIFT_LEFT, KEY_0}}, 	    // 61 = OK 
+{ '>', {HID_KEY_SHIFT_LEFT, 0x64}},       // 62 > OK
+{ '?', {HID_KEY_SHIFT_LEFT, KEY_MINUS}},  // 63 ? OK
+{ '@', {HID_KEY_ALT_RIGHT, KEY_2}},       // 64 @ OK
+{ 'A', {HID_KEY_SHIFT_LEFT, KEY_A}},  		// 65 A OK
+{ 'B', {HID_KEY_SHIFT_LEFT, KEY_B}}, 			// 66 B OK
+{ 'C', {HID_KEY_SHIFT_LEFT, KEY_C}}, 			// 67 C OK
+{ 'D', {HID_KEY_SHIFT_LEFT, KEY_D}}, 			// 68 D OK
+{ 'E', {HID_KEY_SHIFT_LEFT, KEY_E}}, 			// 69 E OK
+{ 'F', {HID_KEY_SHIFT_LEFT, KEY_F}}, 			// 70 F OK
+{ 'G', {HID_KEY_SHIFT_LEFT, KEY_G}},  		// 71 G OK
+{ 'H', {HID_KEY_SHIFT_LEFT, KEY_H}}, 			// 72 H OK
+{ 'I', {HID_KEY_SHIFT_LEFT, KEY_I}}, 			// 73 I OK
+{ 'J', {HID_KEY_SHIFT_LEFT, KEY_J}}, 			// 74 J OK
+{ 'K', {HID_KEY_SHIFT_LEFT, KEY_K}}, 			// 75 K OK
+{ 'L', {HID_KEY_SHIFT_LEFT, KEY_L}}, 			// 76 L OK
+{ 'M', {HID_KEY_SHIFT_LEFT, KEY_M}}, 			// 77 M OK
+{ 'N', {HID_KEY_SHIFT_LEFT, KEY_N}}, 			// 78 N OK
+{ 'O', {HID_KEY_SHIFT_LEFT, KEY_O}}, 			// 79 O OK
+{ 'P', {HID_KEY_SHIFT_LEFT, KEY_P}}, 			// 80 P OK
+{ 'Q', {HID_KEY_SHIFT_LEFT, KEY_Q}}, 			// 81 Q OK
+{ 'R', {HID_KEY_SHIFT_LEFT, KEY_R}}, 			// 82 R OK
+{ 'S', {HID_KEY_SHIFT_LEFT, KEY_S}}, 			// 83 S OK
+{ 'T', {HID_KEY_SHIFT_LEFT, KEY_T}}, 			// 84 T OK
+{ 'U', {HID_KEY_SHIFT_LEFT, KEY_U}}, 			// 85 U OK
+{ 'V', {HID_KEY_SHIFT_LEFT, KEY_V}}, 			// 86 V OK
+{ 'W', {HID_KEY_SHIFT_LEFT, KEY_W}},  		// 87 W OK
+{ 'X', {HID_KEY_SHIFT_LEFT, KEY_X}}, 			// 88 X OK
+{ 'Y', {HID_KEY_SHIFT_LEFT, KEY_Y}}, 			// 89 Y OK
+{ 'Z', {HID_KEY_SHIFT_LEFT, KEY_Z}},      // 90 Z OK
+{ '[', {HID_KEY_ALT_RIGHT, KEY_LEFT_BRACE}},  // 91 [ OK
+{ '\\', {HID_KEY_ALT_RIGHT, KEY_TILDE}}, 	// 92 \ OK
+{ ']', {HID_KEY_ALT_RIGHT, KEY_RIGHT_BRACE}}, // 93 ] OK
+{ '^', {0}},		                          // 94 ^ KO
+{ '_', {HID_KEY_SHIFT_LEFT, KEY_SLASH}},  // 95 _ OK
+{ '`', {0}},                              // 96 ` KO
+{ 'a', {KEY_A}}, 						// 97 a  OK
+{ 'b', {KEY_B}}, 						// 98 b  OK
+{ 'c', {KEY_C}}, 						// 99 c  OK
+{ 'd', {KEY_D}}, 						// 100 d OK
+{ 'e', {KEY_E}}, 						// 101 e OK
+{ 'f', {KEY_F}}, 						// 102 f OK
+{ 'g', {KEY_G}}, 						// 103 g OK
+{ 'h', {KEY_H}}, 						// 104 h OK
+{ 'i', {KEY_I}}, 						// 105 i Ok
+{ 'j', {KEY_J}}, 						// 106 j OK
+{ 'k', {KEY_K}}, 						// 107 k OK
+{ 'l', {KEY_L}}, 						// 108 l OK
+{ 'm', {KEY_M}}, 						// 109 m OK
+{ 'n', {KEY_N}}, 						// 110 n OK
+{ 'o', {KEY_O}}, 						// 111 o OK
+{ 'p', {KEY_P}}, 						// 112 p OK
+{ 'q', {KEY_Q}}, 						// 113 q Ok
+{ 'r', {KEY_R}}, 						// 114 r OK
+{ 's', {KEY_S}}, 						// 115 s OK
+{ 't', {KEY_T}}, 						// 116 t OK
+{ 'u', {KEY_U}}, 						// 117 u OK
+{ 'v', {KEY_V}}, 						// 118 v OK
+{ 'w', {KEY_W}}, 						// 119 w OK
+{ 'x', {KEY_X}}, 						// 120 x OK
+{ 'y', {KEY_Y}}, 						// 121 y OK
+{ 'z', {KEY_Z}}, 						// 122 z OK
+{ '{', {HID_KEY_ALT_RIGHT, KEY_QUOTE}},    // 123 { OK
+{ '|', {HID_KEY_ALT_RIGHT, KEY_1}},        // 124 | OK
+{ '}', {HID_KEY_ALT_RIGHT, KEY_BACKSLASH}},// 125 } OK 
+{ '~', {0}},                               // 126 ~ KO
+};
+
 // PORTUGUESE BRAZILIAN
 
 #define SHIFT_MASK		0x0040

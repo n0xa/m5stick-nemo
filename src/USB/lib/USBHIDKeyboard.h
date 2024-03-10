@@ -73,6 +73,9 @@ typedef union {
 #define KEY_BACKSPACE   0xB2
 #define KEY_TAB         0xB3
 #define KEY_RETURN      0xB0
+
+#define KEY_ENTER       0x28
+
 #define KEY_ESC         0xB1
 #define KEY_INSERT      0xD1
 #define KEY_DELETE      0xD4

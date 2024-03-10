@@ -24,14 +24,19 @@ void rootPayload0(void);
 void demo_android(void);
 void demo_ios(void);
 void demo_macos(void);
+void demo_linux(void);
 void demo_windows(void);
 void demo_char_test(void);
+void custom_linux(void);
+void custom_macos(void);
+void custom_windows(void);
 
 static MENUL layouts[] = { // edit this to add layouts!
   { TXT_BACK, 5},
   { "en-US", 0},
-  { "it-IT", 1},
-  { "pt-BR", 2},
+  { "es-ES", 1},
+  { "it-IT", 2},
+  { "pt-BR", 3},
 };
 
 int layouts_size = sizeof(layouts) / sizeof (MENUL);
@@ -50,6 +55,9 @@ void layouts_menu(int option){ // edit this to add layouts!
       case 2:
         current_layout = 2;
         break;
+      case 3:
+        current_layout = 3;
+        break;
       case 5:
         rstOverride = false;
         current_proc = 1;
@@ -60,11 +68,15 @@ void layouts_menu(int option){ // edit this to add layouts!
 static MENUL bumenu[] = { // edit this to add payloads!
   { TXT_BACK, 0},
   { "win-chrm_C_stealer", 1},
-  { "demo_android", 2},
-  /*{ "demo_ios", 3}, // not tested. */ 
-  { "demo_macos", 4},
-  { "demo_windows", 5},
-  { "char_test", 6},
+  { "custom_linux", 2},
+  { "custom_macos", 3},
+  { "custom_windows", 4},
+  { "char_test", 5},
+  { "demo_android", 6},
+  { "demo_ios", 7}, // not tested. */ 
+  { "demo_linux", 8},
+  { "demo_macos", 9},
+  { "demo_windows", 10},
 };
 
 int bumenu_size = sizeof(bumenu) / sizeof (MENUL);
@@ -80,19 +92,31 @@ void payloads_menu(int option){ // edit this to add payloads!
         rootPayload0();
         break;
       case 2:
-        demo_android();
+        custom_linux();
         break;
       case 3:
-        demo_ios();
+        custom_macos();
         break;
       case 4:
-        demo_macos();
+        custom_windows();
         break;
       case 5:
-        demo_windows();
+        demo_char_test();
         break;
       case 6:
-        demo_char_test();
+        demo_android();
+        break;
+      case 7:
+        demo_ios();
+        break; 
+      case 8:
+        demo_linux();
+        break; 
+      case 9:
+        demo_macos();
+        break;
+      case 10:
+        demo_windows();
         break;
     }
 }
@@ -193,7 +217,31 @@ void demo_ios(){ // 3
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
 }
+void demo_linux(){ // 10
+    Keyboard.begin(current_layout);
+    USB.begin();
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+    DISP.println("linux demo");
+    DISP.setTextColor(FGCOLOR, BGCOLOR);
+    DISP.println("Running payload...");
+    delay(2000); 
+    Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+    delay(500);
+    Keyboard.releaseRaw(HID_KEY_GUI_LEFT); 
+    delay(1000);
+    Keyboard.print("MATE Terminal");
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
+    delay(2000);
+    Keyboard.writeWLayout("curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/NEMO.txt");
+    Keyboard.press(KEY_RETURN);
+    Keyboard.releaseAll();
 
+    DISP.print("done.");
+    DISP.printf(TXT_SEL_BACK);
+}
 void demo_macos(){ // 4
     Keyboard.begin(current_layout);
     USB.begin();
@@ -215,12 +263,14 @@ void demo_macos(){ // 4
     Keyboard.releaseAll();
     delay(1000);
     Keyboard.print("terminal");
-    Keyboard.press(KEY_RETURN);
-    Keyboard.releaseAll();
+    Keyboard.pressRaw(KEY_ENTER);
+    delay(100);
+    Keyboard.releaseRaw(KEY_ENTER);  
     delay(2000);
     Keyboard.writeWLayout("curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/NEMO.txt");
-    Keyboard.press(KEY_RETURN);
-    Keyboard.releaseAll();
+    Keyboard.pressRaw(KEY_ENTER);
+    delay(100);
+    Keyboard.releaseRaw(KEY_ENTER);  
 
     DISP.print("done.");
     DISP.printf(TXT_SEL_BACK);
@@ -450,6 +500,182 @@ void rootPayload0(){ // 1
         DISP.println("Failed to create payloads DIR, is the SDCARD inserted? Can't continue with the execution...");
         DISP.printf(TXT_SEL_BACK);
       }
+    }
+}
+
+void custom_linux(){ // 7
+    if(!setupSdCard()){
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
+        DISP.printf(TXT_SEL_BACK);
+    } else {
+        if (SD.exists("/lnx-payload.txt")) {
+          File payloadFile = SD.open("/lnx-payload.txt", "r");
+          if (payloadFile) {
+              String fileContent = "";
+              while (payloadFile.available()) {
+                fileContent += (char)payloadFile.read();
+              }
+              payloadFile.close();
+              Keyboard.begin(current_layout);
+              USB.begin();
+              DISP.fillScreen(BGCOLOR);
+              DISP.setCursor(0, 0);
+              DISP.setTextColor(BGCOLOR, FGCOLOR);
+              DISP.setTextSize(SMALL_TEXT);
+              DISP.println("linux custom");
+              DISP.setTextColor(FGCOLOR, BGCOLOR);
+              DISP.println("Running payload...");
+              delay(2000);  
+              Keyboard.pressRaw(HID_KEY_GUI_LEFT);
+              delay(500);
+              Keyboard.releaseRaw(HID_KEY_GUI_LEFT); 
+              delay(1000);
+              Keyboard.print("MATE Terminal");
+              Keyboard.press(KEY_RETURN);
+              Keyboard.releaseAll();
+              delay(2000);
+              Keyboard.writeWLayout(fileContent.c_str());
+              Keyboard.press(KEY_RETURN);
+              Keyboard.releaseAll();
+              DISP.print("done.");
+              DISP.printf(TXT_SEL_BACK);
+          } 
+        } else {
+          rstOverride = true;
+          isSwitching = false;
+          DISP.fillScreen(BGCOLOR);
+          DISP.setCursor(0, 0);
+          DISP.setTextColor(BGCOLOR, FGCOLOR);
+          DISP.setTextSize(SMALL_TEXT);
+          DISP.print("/lnx-payload.txt");
+          DISP.setTextColor(FGCOLOR, BGCOLOR);
+          DISP.print(" doesn't exist in SDCARD, create it and write it one-liner in BASH. Can't continue with the execution...");
+          DISP.printf(TXT_SEL_BACK);
+        }
+    }
+}
+
+void custom_macos(){ // 8
+    if(!setupSdCard()){
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
+        DISP.printf(TXT_SEL_BACK);
+    } else {
+        if (SD.exists("/osx-payload.txt")) {
+          File payloadFile = SD.open("/osx-payload.txt", "r");
+          if (payloadFile) {
+              String fileContent = "";
+              while (payloadFile.available()) {
+                fileContent += (char)payloadFile.read();
+              }
+              payloadFile.close();
+              Keyboard.begin(current_layout);
+              USB.begin();
+              DISP.fillScreen(BGCOLOR);
+              DISP.setCursor(0, 0);
+              DISP.setTextColor(BGCOLOR, FGCOLOR);
+              DISP.setTextSize(SMALL_TEXT);
+              DISP.println("macos custom");
+              DISP.setTextColor(FGCOLOR, BGCOLOR);
+              DISP.println("Running payload...");
+              delay(2000);  
+              Keyboard.press(KEY_LEFT_GUI);
+              Keyboard.press(KEY_SPACE);
+              Keyboard.releaseAll();
+              delay(1000);
+              Keyboard.print("Terminal");
+              Keyboard.pressRaw(KEY_ENTER);
+              delay(100);
+              Keyboard.releaseRaw(KEY_ENTER);  
+              delay(2000);
+              Keyboard.writeWLayout(fileContent.c_str());
+              Keyboard.pressRaw(KEY_ENTER);
+              delay(100);
+              Keyboard.releaseRaw(KEY_ENTER);  
+              DISP.print("done.");
+              DISP.printf(TXT_SEL_BACK);
+          } 
+        } else {
+          rstOverride = true;
+          isSwitching = false;
+          DISP.fillScreen(BGCOLOR);
+          DISP.setCursor(0, 0);
+          DISP.setTextColor(BGCOLOR, FGCOLOR);
+          DISP.setTextSize(SMALL_TEXT);
+          DISP.print("/osx-payload.txt");
+          DISP.setTextColor(FGCOLOR, BGCOLOR);
+          DISP.print(" doesn't exist in SDCARD, create it and write it one-liner in BASH. Can't continue with the execution...");
+          DISP.printf(TXT_SEL_BACK);
+        }
+    }
+}
+
+void custom_windows(){ // 9
+    if(!setupSdCard()){
+        rstOverride = true;
+        isSwitching = false;
+        DISP.fillScreen(BGCOLOR);
+        DISP.setCursor(0, 0);
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+        DISP.setTextSize(SMALL_TEXT);
+        DISP.println("Failed to mount SDCARD, is it inserted? Can't continue with payload execution...");
+        DISP.printf(TXT_SEL_BACK);
+    } else {
+        if (SD.exists("/win-payload.txt")) {
+          File payloadFile = SD.open("/win-payload.txt", "r");
+          if (payloadFile) {
+              String fileContent = "";
+              while (payloadFile.available()) {
+                fileContent += (char)payloadFile.read();
+              }
+              payloadFile.close();
+              Keyboard.begin(current_layout);
+              USB.begin();
+              DISP.fillScreen(BGCOLOR);
+              DISP.setCursor(0, 0);
+              DISP.setTextColor(BGCOLOR, FGCOLOR);
+              DISP.setTextSize(SMALL_TEXT);
+              DISP.println("windows custom");
+              DISP.setTextColor(FGCOLOR, BGCOLOR);
+              DISP.println("Running payload...");
+              delay(2000);  
+              Keyboard.press(KEY_LEFT_GUI);
+              Keyboard.press('r');
+              Keyboard.releaseAll();
+              delay(1000);
+              Keyboard.print("powershell");
+              Keyboard.press(KEY_RETURN);
+              Keyboard.releaseAll();
+              delay(2000);
+              Keyboard.writeWLayout(fileContent.c_str());
+              Keyboard.press(KEY_RETURN);
+              Keyboard.releaseAll();
+              DISP.print("done.");
+              DISP.printf(TXT_SEL_BACK);
+          } 
+        } else {
+          rstOverride = true;
+          isSwitching = false;
+          DISP.fillScreen(BGCOLOR);
+          DISP.setCursor(0, 0);
+          DISP.setTextColor(BGCOLOR, FGCOLOR);
+          DISP.setTextSize(SMALL_TEXT);
+          DISP.print("/win-payload.txt");
+          DISP.setTextColor(FGCOLOR, BGCOLOR);
+          DISP.print(" doesn't exist in SDCARD, create it and write it one-liner in Powershell. Can't continue with the execution...");
+          DISP.printf(TXT_SEL_BACK);
+        }
     }
 }
 

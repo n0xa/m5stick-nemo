@@ -33,9 +33,12 @@ esp_err_t arduino_usb_event_handler_register_with(esp_event_base_t event_base, i
 void USBHIDKeyboard::begin(int layout_switch){ // edit this to add layouts!
     switch (layout_switch) {
         case 1:
-            memcpy(&asciimap, &it_asciimap, sizeof(it_asciimap));
+            memcpy(&asciimap, &es_asciimap, sizeof(es_asciimap));
             break;
         case 2:
+            memcpy(&asciimap, &it_asciimap, sizeof(it_asciimap));
+            break;
+        case 3:
             memcpy(&asciimap, &pt_br_asciimap, sizeof(pt_br_asciimap));
             break;
         default:
