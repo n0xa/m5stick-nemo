@@ -269,7 +269,7 @@ void demo_macos(){ // 9
     delay(2000);
     Keyboard.writeWLayout("curl -L https://github.com/usg-ishimura/m5stick-nemo/releases/download/v0.1/NEMO.txt");
     Keyboard.pressRaw(KEY_ENTER);
-    delay(100);
+    delay(200);
     Keyboard.releaseRaw(KEY_ENTER);  
 
     DISP.print("done.");
@@ -601,7 +601,7 @@ void custom_macos(){ // 3
               delay(2000);
               Keyboard.writeWLayout(fileContent.c_str());
               Keyboard.pressRaw(KEY_ENTER);
-              delay(100);
+              delay(200);
               Keyboard.releaseRaw(KEY_ENTER);  
               DISP.print("done.");
               DISP.printf(TXT_SEL_BACK);
