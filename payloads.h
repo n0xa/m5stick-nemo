@@ -33,10 +33,13 @@ void custom_windows(void);
 
 static MENUL layouts[] = { // edit this to add layouts!
   { TXT_BACK, 5},
+  { "de-DE", 1},
+  { "en-UK", 2},
   { "en-US", 0},
-  { "es-ES", 1},
-  { "it-IT", 2},
-  { "pt-BR", 3},
+  { "es-ES", 3},
+  { "fr-FR", 4},
+  { "it-IT", 6},
+  { "pt-BR", 7},
 };
 
 int layouts_size = sizeof(layouts) / sizeof (MENUL);
@@ -58,9 +61,18 @@ void layouts_menu(int option){ // edit this to add layouts!
       case 3:
         current_layout = 3;
         break;
+      case 4:
+        current_layout = 4;
+        break;
       case 5:
         rstOverride = false;
         current_proc = 1;
+        break;
+      case 6:
+        current_layout = 6;
+        break;
+      case 7:
+        current_layout = 7;
         break;
     }
 }
@@ -153,7 +165,8 @@ void demo_android(){ // 6
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(500);
-    Keyboard.print('f');
+    Keyboard.press('f');
+    Keyboard.release('f');
     /*GUI b
     DELAY 600
     ENTER
@@ -231,7 +244,7 @@ void demo_linux(){ // 8
     delay(500);
     Keyboard.releaseRaw(HID_KEY_GUI_LEFT); 
     delay(1000);
-    Keyboard.print("MATE Terminal");
+    Keyboard.writeWLayout("MATE Terminal");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(2000);
@@ -262,7 +275,7 @@ void demo_macos(){ // 9
     Keyboard.press(KEY_SPACE);
     Keyboard.releaseAll();
     delay(1000);
-    Keyboard.print("terminal");
+    Keyboard.writeWLayout("terminal");
     Keyboard.pressRaw(HID_KEY_ENTER);
     delay(200);
     Keyboard.releaseRaw(HID_KEY_ENTER);  
@@ -297,7 +310,7 @@ void demo_windows(){ // 10
     Keyboard.press('r');
     Keyboard.releaseAll();
     delay(1000);
-    Keyboard.print("cmd");
+    Keyboard.writeWLayout("cmd");
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     delay(2000);
@@ -465,7 +478,7 @@ void run_payload_setup(){
   Keyboard.press('r');
   Keyboard.releaseAll();
   delay(1000);
-  Keyboard.print("cmd");
+  Keyboard.writeWLayout("cmd");
   Keyboard.press(KEY_RETURN);
   Keyboard.releaseAll();
   delay(2000);
@@ -536,7 +549,7 @@ void custom_linux(){ // 2
               delay(500);
               Keyboard.releaseRaw(HID_KEY_GUI_LEFT); 
               delay(1000);
-              Keyboard.print("MATE Terminal");
+              Keyboard.writeWLayout("MATE Terminal");
               Keyboard.press(KEY_RETURN);
               Keyboard.releaseAll();
               delay(2000);
@@ -594,7 +607,7 @@ void custom_macos(){ // 3
               Keyboard.press(KEY_SPACE);
               Keyboard.releaseAll();
               delay(1000);
-              Keyboard.print("Terminal");
+              Keyboard.writeWLayout("Terminal");
               Keyboard.pressRaw(HID_KEY_ENTER);
               delay(200);
               Keyboard.releaseRaw(HID_KEY_ENTER);  
@@ -654,7 +667,7 @@ void custom_windows(){ // 4
               Keyboard.press('r');
               Keyboard.releaseAll();
               delay(1000);
-              Keyboard.print("powershell");
+              Keyboard.writeWLayout("powershell");
               Keyboard.press(KEY_RETURN);
               Keyboard.releaseAll();
               delay(2000);
