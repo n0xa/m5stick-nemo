@@ -31,6 +31,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * WiFi Spam - Funny SSIDs, WiFi Rickrolling, and a Random mode that creates hundreds of randomly-named SSIDs per minute
 * WiFi NEMO Portal - A captive portal that tries to social engineer email credentials - saves usernames and passwords to SD Card (if inserted into a supported reader)
 * WiFi SSID Scanner - Display 2.4 GHz SSIDs nearby, get information about them, and even clone the SSIDs in NEMO Portal
+* Bad USB - Keyboard layouts, predefined payloads, OS demos and user-defined payloads execution from SDCARD.
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
 * EEPROM-backed Settings for rotation, brightness, automatic dimming and NEMO Portal SSID
 * Battery level and credits in settings menu
@@ -63,6 +64,13 @@ In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" 
 * If your device has an SD Card reader with a FAT filesystem formatted card inserted, the usernames and passwords will be logged to nemo-portal-creds.txt on the SD Card for you to peruse later. 
 * SD Card support is only enabled by default on the M5Stack Cardputer platform. It can be enabled on M5Stick devices but an SD Card reader must be built and attached to the front panel pin header.
 * NEMO Portal is only for use on professional engagements with a valid scope of work, educational or demonstration purposes. Storage, sale, or use of personal information without consent is against the law. 🤓
+
+## Bad USB win-chrm_C_stealer payload
+This payload in Bad USB menu, decrypt Google Chrome cookies in Windows and sends them to a spawned NEMO HTTP Server, you will be able to download them later connecting to the respective AP and importing them in Cookie-Editor, having access to all sites on which was performed authentication in the victim browser even if the authentication process involved a second factor.
+### Requirements on the victim machine:
+* Windows
+* Google Chrome
+* Internet connection
 
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO
