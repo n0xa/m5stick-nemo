@@ -69,7 +69,7 @@ In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" 
 This payload in Bad USB menu, decrypt Google Chrome cookies in Windows and sends them to a spawned NEMO HTTP Server, you will be able to download them later connecting to the respective AP and importing them in Cookie-Editor, having access to all sites on which was performed authentication in the victim browser even if the authentication process involved a second factor.
 ### Requirements on the victim machine:
 * Windows
-* cURL
+* cURL (Installed by default from version 1803 of Windows 10)
 * Google Chrome
 * Internet connection
 
