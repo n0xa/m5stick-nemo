@@ -1159,7 +1159,16 @@ void tvbgmenu_loop() {
       rstOverride = false; 
       return;
     }
-
+    #ifdef (SDCARD)
+      if (region == 2) {
+        DISP.fillScreen(BGCOLOR);
+        DISP.println(TXT_TRIG_TV);
+        DISP.println(TXT_RG_EXTRA);
+        Serial.println("Start other");
+        otherIRcodes();
+      }
+    #endif
+    
     #if defined(USE_EEPROM)
       EEPROM.write(3, region);
       EEPROM.commit();
