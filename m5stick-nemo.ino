@@ -3,7 +3,7 @@
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
 // #define STICK_C_PLUS
-// #define STICK_C_PLUS2
+#define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
@@ -47,7 +47,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
-  #define SDCARD   //Requires a custom-built adapter
+  // #define SDCARD   //Requires a custom-built adapter
   // #define SONG
 
   // -=-=- ALIASES -=-=-
@@ -78,7 +78,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ROTATION
   #define USE_EEPROM
   #define RTC      //TODO: plus2 has a BM8563 RTC but the class isn't the same, needs work.
-  #define SDCARD   //Requires a custom-built adapter
+  //#define SDCARD   //Requires a custom-built adapter
   #define PWRMGMT
   #define SPEAKER M5.Speaker
   //#define SONG
@@ -97,6 +97,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define SD_CS_PIN 14 //can be -1, but sends a lot of messages of error in serial monitor
   #define M5LED_ON HIGH
   #define M5LED_OFF LOW
+  #define RFID2
 #endif
 
 #if defined(STICK_C)
@@ -270,6 +271,8 @@ bool clone_flg = false;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <Wire.h>
+#include "MFRC522_I2C.h"
 #if defined(DEAUTHER)
   #include "deauth.h"                                                               //DEAUTH
   #include "esp_wifi.h"                                                             //DEAUTH
@@ -422,6 +425,9 @@ bool check_select_press(){
 MENU mmenu[] = {
 #if defined(RTC)
   { TXT_CLOCK, 0},
+#endif
+#if defined(RFID2)
+  {"RFID2",30},
 #endif
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
@@ -2294,7 +2300,8 @@ void qrmenu_loop() {
   }
 }
 
-/// NEMO PORTAL
+// RFID
+// Thanks to : https://github.com/aat440hz/RFIDCopy-M5StickCPlus/blob/main/RFIDCopy-m5stickcplus.ino
 
 void portal_setup(){
   setupWiFi();
@@ -2309,6 +2316,180 @@ void portal_setup(){
   #endif                                                                                     // DEAUTH
   delay(500); // Prevent switching after menu loads up
 }
+/// NFC Setup
+ 
+
+//#include "M5StickCPlus2.h"
+
+// 0x28 is i2c address on SDA.
+MFRC522 mfrc522(0x28);   // Create MFRC522 instance.
+
+enum state {
+  read_mode,
+  write_mode
+} currentState;
+
+bool readUID = false;
+
+// UID can be several sizes.
+byte UID[20];
+uint8_t UIDLength = 0;
+
+void displayReadMode() {
+  //M5.Lcd.println(F("RFID Cloner. V1.0"));
+  M5.Lcd.setTextFont(2);
+  M5.Lcd.println(F("(Press 'A' key to write after reading card...)"));
+ // M5.Lcd.println();
+  //M5.Lcd.setTextFont(4);
+  M5.Lcd.println(F("Ready to READ..."));
+ // M5.Lcd.println();
+}
+
+void displayWriteMode() {
+  //M5.Lcd.println(F("RFID Cloner. V1.0"));
+  M5.Lcd.setTextFont(2);
+ // M5.Lcd.println(F("(Press 'A' key to read a new card...)"));
+ // M5.Lcd.println();
+  M5.Lcd.setTextFont(4);
+  M5.Lcd.println(F("Ready to WRITE..."));
+ // M5.Lcd.println();
+  displayUID();
+}
+void beep_attention() {
+  M5.Speaker.tone(882, 40);
+  delay(100);
+  
+}
+
+void beep_error() {
+  M5.Speaker.tone(495, 60);
+  delay(60);
+  
+}
+
+void beep_writeOK() {
+  M5.Speaker.tone(661, 60);
+  delay(60);
+  M5.Speaker.tone(882, 100);
+  delay(100);
+  
+}
+
+void cls() {
+  M5.Lcd.setTextColor(FGCOLOR);
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.fillScreen(BGCOLOR);
+  M5.Lcd.setCursor(0, 0);
+}
+
+void nfc_setup() {
+  M5.begin();
+  M5.Power.begin();
+  //M5.Lcd.setRotation(1);
+  M5.Lcd.fillScreen(BGCOLOR);
+  M5.Lcd.setCursor(0, 0);
+  M5.Lcd.setTextColor(FGCOLOR);
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.setTextFont(4);
+  M5.Lcd.setCursor(0, 0);
+  Serial.begin(115200);           // Initialize serial communications with the PC
+  Wire.begin();                   // Initialize I2C
+  mfrc522.PCD_Init();
+  currentState = read_mode;
+  displayReadMode();
+}
+
+void nfc_loop() {
+  M5.update();
+
+  if (M5.BtnA.wasReleased() && readUID) {
+    cls();
+    switch (currentState) {
+      case read_mode:
+        currentState = write_mode;
+        displayWriteMode();
+        break;
+      case write_mode:
+        currentState = read_mode;
+        displayReadMode();
+        readUID = false;
+        break;
+    }
+  }
+
+  // Look for new cards
+  if ( ! mfrc522.PICC_IsNewCardPresent())
+    return;
+  if ( ! mfrc522.PICC_ReadCardSerial())
+    return;
+
+  cls();
+
+  switch (currentState) {
+    case read_mode: displayReadMode(); readCard(); break;
+    case write_mode: displayWriteMode(); writeCard(); break;
+  }
+
+  mfrc522.PICC_HaltA();
+}
+
+
+void readCard() {
+  MFRC522::PICC_Type piccType = (MFRC522::PICC_Type)mfrc522.PICC_GetType(mfrc522.uid.sak);
+  M5.Lcd.print(F(""));
+  M5.Lcd.print(mfrc522.PICC_GetTypeName(piccType));
+  M5.Lcd.print(F(" (SAK "));
+  M5.Lcd.print(mfrc522.uid.sak);
+  M5.Lcd.print(")\r\n");
+  if (  piccType != MFRC522::PICC_TYPE_MIFARE_MINI
+        &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
+        &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
+    M5.Lcd.setTextColor(RED);
+    M5.Lcd.println(F("Not a MIFARE Classic card."));
+    M5.Lcd.setTextColor(FGCOLOR);
+    beep_error();
+    delay(1000);
+    return;
+  }
+
+  M5.Lcd.println("");
+  readUID = true;
+  UIDLength = mfrc522.uid.size;
+  for (byte i = 0; i < UIDLength; i++) {
+    UID[i] = mfrc522.uid.uidByte[i];
+  }
+  Serial.println();
+  displayUID();
+  beep_attention();
+  delay(1000);
+}
+
+void displayUID() {
+  M5.Lcd.println(F(" User ID: "));
+  for (byte i = 0; i < UIDLength; i++) {
+    M5.Lcd.print(UID[i] < 0x10 ? " 0" : " ");
+    M5.Lcd.print(UID[i], HEX);
+  }
+}
+
+void writeCard() {
+  if ( mfrc522.MIFARE_SetUid(UID, (byte)UIDLength, true) ) {
+    M5.Lcd.println();
+    M5.Lcd.println(F("Wrote UID."));
+    M5.Lcd.println();
+    beep_writeOK();
+  } else {
+    M5.Lcd.setTextColor(RED);
+    M5.Lcd.println();
+    M5.Lcd.println(F("Write failed."));
+    beep_error();
+    M5.Lcd.setTextColor(FGCOLOR);
+  }
+
+  mfrc522.PICC_HaltA();
+  delay(1000);
+}
+
 
 void portal_loop(){
   if ((millis() - lastTick) > PortalTickTimer) {
@@ -2529,7 +2710,7 @@ void loop() {
       case 19:
         portal_setup();
         break;
-            case 20:
+      case 20:
         wsAmenu_setup();
         break;
       #if defined(DEAUTHER)
@@ -2542,6 +2723,9 @@ void loop() {
           break;
         case 23:
           theme_setup();
+          break;
+        case 30:
+          nfc_setup();
           break;
     }
   }
@@ -2634,6 +2818,9 @@ void loop() {
       case 23:
         theme_loop();
         break;
+      case 30:
+        nfc_loop();
+        break;   
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
         case 97:
