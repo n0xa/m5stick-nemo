@@ -81,7 +81,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define SDCARD   //Requires a custom-built adapter
   #define PWRMGMT
   #define SPEAKER M5.Speaker
-  #define SONG
+  //#define SONG
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 19
@@ -114,6 +114,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ROTATION
   #define USE_EEPROM
   #define SDCARD   //Requires a custom-built adapter
+  //#define SONG
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
   #define IRLED 9
@@ -140,6 +141,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ACTIVE_LOW_IR
   #define USE_EEPROM
   #define SDCARD
+  //#define SONG
   // -=-=- ALIASES -=-=-
   #define DISP M5Cardputer.Display
   #define IRLED 44
@@ -457,7 +459,7 @@ int screen_dim_current = 0;
 void screenBrightness(int bright){
   Serial.printf("Brightness: %d\n", bright);
   #if defined(AXP)
-    M5.Axp.ScreenBreath(bright);
+    M5.Axp.ScreenBreath(10 + round(((100 - 10) * bright / 100)));
   #endif
   #if defined(BACKLIGHT)
     int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
@@ -1276,6 +1278,7 @@ void sendAllCodes() {
       DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
     #endif
     delay(250);
+    check_select_press();
   }
 
   /// TIME SETTING ///
