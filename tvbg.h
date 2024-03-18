@@ -4,7 +4,7 @@ By Anton Grimpelhuber (anton.grimpelhuber@gmail.com)
 */
 
 /*
-Last Updated: 29 Fev. 2024
+Last Updated: 18 Mar. 2024
 By Isaac Louzeiro (Github: @IsaacLouzeiro)
 */
 
@@ -19,7 +19,6 @@ By Isaac Louzeiro (Github: @IsaacLouzeiro)
 // Three regions!
 #define NA 0 //set by a HIGH on REGIONSWITCH pin
 #define EU 1 //set by a LOW on REGIONSWITCH pin
-#define CUSTOM 2
 
 // Lets us calculate the size of the NA/EU databases
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)));
