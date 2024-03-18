@@ -1,13 +1,22 @@
 /*
-Last Updated: 30 Mar. 2018
+30 Mar. 2018
 By Anton Grimpelhuber (anton.grimpelhuber@gmail.com)
+*/
+
+/*
+Last Updated: 18 Mar. 2024
+By Isaac Louzeiro (Github: @IsaacLouzeiro)
 */
 
 // The TV-B-Gone for Arduino can use either the EU (European Union) or the NA (North America) database of POWER CODES
 // EU is for Europe, Middle East, Australia, New Zealand, and some countries in Africa and South America
 // NA is for North America, Asia, and the rest of the world not covered by EU
+// CUSTOM is for NEW CODES added through the 'codes' folder and included via the 'Custom_Ir_Codes.h' file
 
-// Two regions!
+#ifndef _TVBG_H_
+#define _TVBG_H_
+
+// Three regions!
 #define NA 0 //set by a HIGH on REGIONSWITCH pin
 #define EU 1 //set by a LOW on REGIONSWITCH pin
 
@@ -52,7 +61,8 @@ uint16_t rawData[300];
 IRsend irsend(IRLED);  // Set the GPIO to be used to sending the message.
 extern const IrCode* const NApowerCodes[];
 extern const IrCode* const EUpowerCodes[];
-extern uint8_t num_NAcodes, num_EUcodes;
+extern const IrCode* const CUSTOMpowerCodes[];
+extern uint8_t num_NAcodes, num_EUcodes, num_CUSTOMcodes;
 uint8_t bitsleft_r = 0;
 uint8_t bits_r = 0;
 uint8_t code_ptr;
@@ -102,3 +112,5 @@ void quickflashLEDx( uint8_t x ) {
     quickflashLED();
   }
 }
+
+#endif
