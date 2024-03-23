@@ -141,7 +141,7 @@ void demo_android(){ // 6
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("android demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000);
 
     // To open GUI menu:
@@ -190,7 +190,7 @@ void demo_ios(){ // 7
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("ios demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000);
 
     // To open GUI menu:
@@ -238,7 +238,7 @@ void demo_linux(){ // 8
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("linux demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000); 
     Keyboard.pressRaw(HID_KEY_GUI_LEFT);
     delay(500);
@@ -263,7 +263,7 @@ void demo_macos(){ // 9
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("macos demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000);
 
     // To open GUI menu:
@@ -297,7 +297,7 @@ void demo_windows(){ // 10
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("windows demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000);   
 
     // To open GUI menu:
@@ -329,7 +329,7 @@ void demo_char_test(){ // 5
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.println("char test demo");
     DISP.setTextColor(FGCOLOR, BGCOLOR);
-    DISP.println("Running payload...");
+    DISP.println("Sending payload...");
     delay(2000);
 
     // To open GUI menu:
@@ -447,7 +447,7 @@ IPAddress runPayloadServer(){
 
   DISP.println("HTTP server started");
   DISP.print("@ http://");
-  DISP.print(IP);
+  DISP.println(IP);
   return IP;
 }
 
@@ -472,7 +472,7 @@ void run_payload_setup(){
   const char *cmd_final = cmd.c_str();
   
   DISP.setTextColor(BGCOLOR, FGCOLOR);
-  DISP.println("Running payload...");
+  DISP.println("Sending payload...");
   delay(2000);   
   Keyboard.press(KEY_LEFT_GUI);
   Keyboard.press('r');
@@ -543,7 +543,7 @@ void custom_linux(){ // 2
               DISP.setTextSize(SMALL_TEXT);
               DISP.println("linux custom");
               DISP.setTextColor(FGCOLOR, BGCOLOR);
-              DISP.println("Running payload...");
+              DISP.println("Sending payload...");
               delay(2000);  
               Keyboard.pressRaw(HID_KEY_GUI_LEFT);
               delay(500);
@@ -601,7 +601,7 @@ void custom_macos(){ // 3
               DISP.setTextSize(SMALL_TEXT);
               DISP.println("macos custom");
               DISP.setTextColor(FGCOLOR, BGCOLOR);
-              DISP.println("Running payload...");
+              DISP.println("Sending payload...");
               delay(2000);  
               Keyboard.press(KEY_LEFT_GUI);
               Keyboard.press(KEY_SPACE);
@@ -661,7 +661,7 @@ void custom_windows(){ // 4
               DISP.setTextSize(SMALL_TEXT);
               DISP.println("windows custom");
               DISP.setTextColor(FGCOLOR, BGCOLOR);
-              DISP.println("Running payload...");
+              DISP.println("Sending payload...");
               delay(2000);  
               Keyboard.press(KEY_LEFT_GUI);
               Keyboard.press('r');
