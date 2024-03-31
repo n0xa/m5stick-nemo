@@ -15,7 +15,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ## My Changelog
 * Adjusted .github/workflow/compile.yml to compile with the DEAUTH function.
-* Added suport to SONG on StickC Plus and Plus2
+* Added support to SONG on StickC Plus and Plus2
 * Added an "Attack Menu" when seeing details of an Access Point
   - Clone Portal (Creates an Evil portal with the same SSID of the target)
   - Deauth attack (broadcasts deauthentication frames to devices connected to this Access Point)
@@ -120,7 +120,7 @@ arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property b
 
 ```
 
-- This will create multiple binaries based on partition sketch, you can merge a single binary using `esptool``
+- This will create multiple binaries based on partition sketch, you can merge a single binary using `esptool`
 - Install esptool - `pip install -U esptool`
 
 ```bash
@@ -154,7 +154,7 @@ ls ./build
 
 # This will flash the build output from the build step, it reuses the container image from the previous step.
 # By default this will compile for the M5Cardputer in en-us locale, ./config/.env.M5Cardputer
-./scipts/flash.sh --device=/dev/ttyusb0 
+./scripts/flash.sh --device=/dev/ttyusb0 
 
 # If you passed a different build config make sure to pass it along to the flash script
 ./scipts/flash.sh --device=/dev/ttyusb0 --build-config=./config/.env.M5Cardputer
@@ -181,7 +181,7 @@ Please report bugs via GitHub Issues. These are easier to track than comments on
 
 ## Contributing
 Contributions are welcome. 
-* Pliease look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
+* Please look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
 * When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.
 * Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
 * Feel free to add your github to the contributors array as part of your pull request.
