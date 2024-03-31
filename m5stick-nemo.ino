@@ -719,19 +719,12 @@ void setcolor(bool fg, int col){
       break;
   }
   if(fg){
-    if(color == BGCOLOR){
-      cursor++;
-      cursor = cursor % cmenu_size;
-    }else{
-      FGCOLOR=color;
-    }
+    FGCOLOR=color;
   }else{
-    if(color == FGCOLOR){
-      cursor++;
-      cursor = cursor % cmenu_size;
-    }else{
-      BGCOLOR=color;
-    }
+    BGCOLOR=color;
+  }
+  if(FGCOLOR == BGCOLOR){
+    BGCOLOR = FGCOLOR ^ 0xFFFF;
   }
   DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
@@ -751,6 +744,7 @@ void color_setup() {
 
 void color_loop() {
   if (check_next_press()) {
+    setcolor(EEPROM.read(5), false);
     cursor++;
     cursor = cursor % cmenu_size;
     setcolor(true, cursor);
@@ -815,58 +809,61 @@ void theme_setup() {
   drawmenu(thmenu, thmenu_size);
 }
 
+int BG=0;
+int FG=0;
+
 void theme_loop() {
   if (check_next_press()) {
     cursor++;
     cursor = cursor % thmenu_size;
     switch (thmenu[cursor].command){
       case 0:
-        FGCOLOR=11;
-        BGCOLOR=1;
+        FG=11;
+        BG=1;
         break;       
       case 1: // Nemo
-        FGCOLOR=11;
-        BGCOLOR=1;
+        FG=11;
+        BG=1;
         break;
       case 2: // Tux
-        FGCOLOR=8;
-        BGCOLOR=1;
+        FG=8;
+        BG=1;
         break;  
       case 3: // Bill
-        FGCOLOR=16;
-        BGCOLOR=10;
+        FG=16;
+        BG=10;
         break;
       case 4: // Steve
-        FGCOLOR=1;
-        BGCOLOR=8;
+        FG=1;
+        BG=8;
         break;        
       case 5: // Lilac
-        FGCOLOR=19;
-        BGCOLOR=6;
+        FG=19;
+        BG=6;
         break;
       case 6: // Contrast
-        FGCOLOR=16;
-        BGCOLOR=1;
+        FG=16;
+        BG=1;
         break;
       case 7: // NightShift
-        FGCOLOR=5;
-        BGCOLOR=1;
+        FG=5;
+        BG=1;
          break;
       case 8: // Camo
-        FGCOLOR=1;
-        BGCOLOR=7;
+        FG=1;
+        BG=7;
         break;
       case 9: // BubbleGum
-        FGCOLOR=1;
-        BGCOLOR=19;
+        FG=1;
+        BG=19;
         break;
       case 99:
-        FGCOLOR=11;
-        BGCOLOR=1;
+        FG=11;
+        BG=1;
         break;
      }
-    setcolor(true, FGCOLOR);
-    setcolor(false, BGCOLOR);
+    setcolor(true, FG);
+    setcolor(false, BG);
     drawmenu(thmenu, thmenu_size);
     delay(250);
   }
@@ -888,10 +885,11 @@ void theme_loop() {
         break;
       default:
         #if defined(USE_EEPROM)
-          Serial.printf("EEPROM WRITE (4) FGCOLOR: %d\n", FGCOLOR);
-          EEPROM.write(4, FGCOLOR);
-          Serial.printf("EEPROM WRITE (5) BGCOLOR: %d\n", BGCOLOR);
-          EEPROM.write(5, BGCOLOR);
+          Serial.printf("EEPROM WRITE (4) FGCOLOR: %d\n", FG);
+          EEPROM.write(4, FG);
+          Serial.printf("EEPROM WRITE (5) BGCOLOR: %d\n", BG);
+          EEPROM.write(5, BG);
+          EEPROM.commit();
         #endif
         rstOverride = false;
         isSwitching = true;
@@ -899,8 +897,6 @@ void theme_loop() {
     }
   }
 }
-
-
 
 int rotation = 1;
 #if defined(ROTATION)
@@ -1256,11 +1252,11 @@ void sendAllCodes() {
 #if defined(RTC)
   void clock_setup() {
     DISP.fillScreen(BGCOLOR);
-    DISP.setTextSize(MEDIUM_TEXT);
+    DISP.setTextSize(1);
   }
 
   void clock_loop() {
-    DISP.setCursor(40, 40, 2);
+    DISP.setCursor(10, 40, 7);
     #if defined(STICK_C_PLUS2)
       auto dt = StickCP2.Rtc.getDateTime();
       DISP.printf("%02d:%02d:%02d\n", dt.time.hours, dt.time.minutes, dt.time.seconds);
@@ -1268,7 +1264,6 @@ void sendAllCodes() {
       M5.Rtc.GetBm8563Time();
       DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
     #endif
-    delay(250);
     check_select_press();
   }
 
