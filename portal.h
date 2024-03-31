@@ -3,7 +3,7 @@
 // Retaining the Portuguese translations since this project has a large
 // fan base in Brazil. Shouts to CyberJulio as well.
 
-#define DEFAULT_AP_SSID_NAME "Free WiFi"
+#define DEFAULT_AP_SSID_NAME "NEMO Free WiFi"
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
 
