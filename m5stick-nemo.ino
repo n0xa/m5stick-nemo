@@ -11,6 +11,7 @@
 // -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
 // #define LANGUAGE_EN_US
 // #define LANGUAGE_PT_BR
+// #define LANGUAGE_IT_IT
 // #define LANGUAGE_FR_FR
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
@@ -25,7 +26,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define CARDPUTER
 #endif
 
-#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_FR_FR)
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT) && !defined(LANGUAGE_FR_FR)
   #define LANGUAGE_EN_US
 #endif
 
@@ -48,8 +49,8 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define ACTIVE_LOW_IR
   #define ROTATION
   #define USE_EEPROM
-  #define SDCARD   //Requires a custom-built adapter
-  // #define SONG
+  //#define SDCARD   //Requires a custom-built adapter
+  //#define SONG
 
   // -=-=- ALIASES -=-=-
   #define DISP M5.Lcd
