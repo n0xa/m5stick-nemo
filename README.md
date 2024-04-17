@@ -10,6 +10,20 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ![M5-Nemo on M5StickC family and M5Cardputer](https://github.com/n0xa/m5stick-nemo/blob/main/M5-Nemo.jpg)
 
+## My Changelog
+* Adjusted .github/workflow/compile.yml to compile with the DEAUTH function.
+* Added support to SONG on StickC Plus and Plus2
+* Added an "Attack Menu" when seeing details of an Access Point
+  - Clone Portal (Creates an Evil portal with the same SSID of the target)
+  - Deauth attack (broadcasts deauthentication frames to devices connected to this Access Point)
+  - Deauth+Clone (Creates the evil portal with the same SSID and sends deauthentication frames to that AP)
+* Added option in Settings to Mount/Unmount SDCard when using M5StickC devices
+* Created new file to handle SPI/SD if not using CARDPUTER
+* SDCARD is now working on M5StickC Plus2
+
+## My ToDo list
+* ideas?
+
 ## Features
 * [TV B-Gone](http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html) port (thanks to MrArm's [HAKRWATCH](https://github.com/MrARM/hakrwatch)) to shut off many infrared-controlled TVs, projectors and other devices
 * [AppleJuice](https://github.com/ECTO-1A/AppleJuice) iOS Bluetooth device pairing spam
@@ -103,7 +117,7 @@ arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property b
 
 ```
 
-- This will create multiple binaries based on partition sketch, you can merge a single binary using `esptool``
+- This will create multiple binaries based on partition sketch, you can merge a single binary using `esptool`
 - Install esptool - `pip install -U esptool`
 
 ```bash
@@ -117,6 +131,32 @@ esptool.py --chip esp32s3 merge_bin --output final.bin 0x0000 m5stick-nemo.ino.b
 
 esptool.exe write_flash -z 0 final.bin
 ```
+
+## Building from Source (Docker)
+
+- Install Docker
+- Run `./scripts/docker-build.sh <configs/.env.>`
+- Run `./scripts/flash.sh --device=<your-device-port>`
+
+```sh
+# This will build an image will all required libraries based on the configured platform, and it will compile, output and merge binaries
+# By default this will compile for the M5Cardputer in en-us locale, ./config/.env.M5Cardputer
+./scripts/docker-build.sh 
+
+# If you want to select a different build config you can pass it as a parameter. See ./configs/ for various configurations
+./scripts/docker-build.sh ./config/.env.M5Cardputer
+
+# Binary files will be output to ./build
+ls ./build
+
+# This will flash the build output from the build step, it reuses the container image from the previous step.
+# By default this will compile for the M5Cardputer in en-us locale, ./config/.env.M5Cardputer
+./scripts/flash.sh --device=/dev/ttyusb0 
+
+# If you passed a different build config make sure to pass it along to the flash script
+./scipts/flash.sh --device=/dev/ttyusb0 --build-config=./config/.env.M5Cardputer
+```
+
 
 
 ## Troubleshooting
@@ -138,7 +178,7 @@ Please report bugs via GitHub Issues. These are easier to track than comments on
 
 ## Contributing
 Contributions are welcome. 
-* Pliease look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
+* Please look at the GitHub Issues for the project. There are feature suggestions and bugs reported there, and I'd appreciate PRs that address those.
 * When submitting a Pull Request, please target the develop branch. The easiest way to do this is to fork ALL branches, or to simply create a "develop" branch in your own fork, then use GitHub to Sync your develop branch.
 * Take note of how certain hardware (like the LED and RTC) are defined and gated in the code and try to stick to those patterns. Also, use the definitions for FGCOLOR, BGCOLOR, TEXT_SIZE* and the DISP alias when outputting things to the built-in display.
 * Feel free to add your github to the contributors array as part of your pull request.

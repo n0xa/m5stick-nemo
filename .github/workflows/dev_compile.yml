@@ -1,5 +1,5 @@
 ---
-name: Compile NEMO Firmware
+name: Compile Develop Brench
 
 on:
   push:
@@ -110,12 +110,7 @@ jobs:
           
           # Find the latest version of the folder
           latestVersion=$(find "$baseFolder" -maxdepth 1 -type d -exec basename {} \; | sort -V | head -n 1)
-          
-          if [ -z "$latestVersion" ]; then
-              echo "No version found."
-              read -p "Press Enter to exit."
-              exit 1
-          fi
+
           
           # Full path to the file to be edited
           file="$baseFolder/$latestVersion/platform.txt"
@@ -236,4 +231,3 @@ jobs:
         generate_release_notes: true
         files: |
           M5Nemo-*.bin
-
