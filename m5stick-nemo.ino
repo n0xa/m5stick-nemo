@@ -1107,8 +1107,11 @@ void tvbgone_setup() {
   if(region == NA) {
     DISP.print(TXT_RG_AMERICAS);
   }
-  else {
+  else if (region == EU) {
     DISP.println(TXT_RG_EMEA);
+  } 
+  else {
+    DISP.println(TXT_RG_CUSTOM);
   }
   DISP.println(TXT_SEL_GO_PAUSE);
   DISP.println(TXT_SEL_EXIT);
@@ -1129,6 +1132,7 @@ MENU tvbgmenu[] = {
   { TXT_BACK, 3},
   { TXT_MN_AMERICA, 0},
   { TXT_MN_EMEA, 1},
+  { TXT_MN_CUSTOM, 2}
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -1176,16 +1180,21 @@ void sendAllCodes() {
   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
   if (region == NA) {
     num_codes = num_NAcodes;
-  } else {
+  } else if (region == EU) {
     num_codes = num_EUcodes;
+  } else {
+    num_codes = num_CUSTOMcodes;
   }
   for (i = 0 ; i < num_codes; i++)
   {
     if (region == NA) {
       powerCode = NApowerCodes[i];
     }
-    else {
+    else if (region == EU) {
       powerCode = EUpowerCodes[i];
+    }
+    else {
+      powerCode = CUSTOMpowerCodes[i];
     }
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
@@ -2399,7 +2408,7 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 2 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
