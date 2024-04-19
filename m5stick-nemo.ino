@@ -2393,7 +2393,7 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 2 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
