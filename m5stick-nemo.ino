@@ -1180,12 +1180,24 @@ void tvbgmenu_loop() {
 }
 
 void sendAllCodes() {
-  bool endingEarly = false; //will be set to true if the user presses the button during code-sending
-  if (region == NA) {
-    num_codes = num_NAcodes;
-  } else {
-    num_codes = num_EUcodes;
-  }
+   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
+   if (region == NA) {
+     num_codes = num_NAcodes;
+   } 
+   else if (region == EU) {
+     num_codes = num_EUcodes;
+   }
+   else {
+     #if defined(SDCARD)
+       if (region == 2) {
+         DISP.fillScreen(BGCOLOR);
+         DISP.println(TXT_TRIG_TV);
+         DISP.println(TXT_RG_EXTRA);
+         Serial.println("Start other");
+         otherIRcodes();
+       }
+     #endif
+   }
   for (i = 0 ; i < num_codes; i++)
   {
     if (region == NA) {
