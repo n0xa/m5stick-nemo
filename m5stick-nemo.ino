@@ -1107,8 +1107,11 @@ void tvbgone_setup() {
   if(region == NA) {
     DISP.print(TXT_RG_AMERICAS);
   }
-  else {
+  else if (region == EU) {
     DISP.println(TXT_RG_EMEA);
+  } 
+  else {
+    DISP.println(TXT_RG_CUSTOM);
   }
   DISP.println(TXT_SEL_GO_PAUSE);
   DISP.println(TXT_SEL_EXIT);
@@ -1129,6 +1132,8 @@ MENU tvbgmenu[] = {
   { TXT_BACK, 3},
   { TXT_MN_AMERICA, 0},
   { TXT_MN_EMEA, 1},
+  { TXT_MN_CUSTOM, 2}
+  { TXT_MN_CUSTOM,"2", 4}
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -1160,17 +1165,7 @@ void tvbgmenu_loop() {
       isSwitching = true;
       rstOverride = false; 
       return;
-    }
-    #ifdef (SDCARD)
-      if (region == 2) {
-        DISP.fillScreen(BGCOLOR);
-        DISP.println(TXT_TRIG_TV);
-        DISP.println(TXT_RG_EXTRA);
-        Serial.println("Start other");
-        otherIRcodes();
-      }
-    #endif
-    
+    }    
     #if defined(USE_EEPROM)
       EEPROM.write(3, region);
       EEPROM.commit();
@@ -1182,31 +1177,33 @@ void tvbgmenu_loop() {
 }
 
 void sendAllCodes() {
-   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
-   if (region == NA) {
-     num_codes = num_NAcodes;
-   } 
-   else if (region == EU) {
-     num_codes = num_EUcodes;
-   }
-   else {
-     #if defined(SDCARD)
-       if (region == 2) {
-         DISP.fillScreen(BGCOLOR);
-         DISP.println(TXT_TRIG_TV);
-         DISP.println(TXT_RG_EXTRA);
-         Serial.println("Start other");
-         otherIRcodes();
-       }
-     #endif
-   }
+  bool endingEarly = false; //will be set to true if the user presses the button during code-sending
+  if (region == NA) {
+    num_codes = num_NAcodes;
+  } else if (region == EU) {
+    num_codes = num_EUcodes;
+  } else if {
+    num_codes = num_CUSTOMcodes;
+  }
+  else {
+    #if defined(SD_CARD)
+      DISP.fillScreen(BGCOLOR);
+      DISP.println(TXT_TRIG_TV);
+      DISP.println(TXT_RG_EXTRA);
+      Serial.println("Start other");
+      otherIRcodes();
+    #endif
+  }
   for (i = 0 ; i < num_codes; i++)
   {
     if (region == NA) {
       powerCode = NApowerCodes[i];
     }
-    else {
+    else if (region == EU) {
       powerCode = EUpowerCodes[i];
+    }
+    else {
+      powerCode = CUSTOMpowerCodes[i];
     }
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
@@ -1448,6 +1445,21 @@ void btmenu_loop() {
   }
 }
 
+void random_MAC(){
+  uint8_t tempMAC[ESP_BD_ADDR_LEN];
+      
+  // Keep ESP Manufactorer ID 
+  tempMAC[0] = 0x02;
+  tempMAC[1] = 0xE5;
+
+  // Generate random values for the MAC address and add them to the ESP ID
+  uint32_t randomBytes = esp_random();
+  memcpy(&tempMAC[2], &randomBytes, 4);
+
+  // Set new MAC address
+  esp_base_mac_addr_set(tempMAC);
+}
+
 MENU ajmenu[] = {
   { TXT_BACK, 30},
   { "AirPods", 1},
@@ -1510,6 +1522,7 @@ void aj_loop(){
   if (check_select_press() || maelstrom) {
     deviceType = ajmenu[cursor].command;
     if (maelstrom) {
+      random_MAC();
       deviceType = random(1, 28);
     }
     switch(deviceType) {
@@ -2404,7 +2417,7 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 2 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
