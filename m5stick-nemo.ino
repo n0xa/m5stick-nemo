@@ -13,6 +13,7 @@
 // #define LANGUAGE_PT_BR
 // #define LANGUAGE_IT_IT
 // #define LANGUAGE_FR_FR
+// #define LANGUAGE_ES_ES
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
 uint16_t BGCOLOR=0x0001; // placeholder
@@ -26,7 +27,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define CARDPUTER
 #endif
 
-#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT) && !defined(LANGUAGE_FR_FR)
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT) && !defined(LANGUAGE_FR_FR) && !defined(LANGUAGE_ES_ES)
   #define LANGUAGE_EN_US
 #endif
 
