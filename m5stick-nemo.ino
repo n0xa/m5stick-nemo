@@ -281,7 +281,11 @@ bool clone_flg = false;
   wifi_ap_record_t ap_record;                                                       //DEAUTH
 #endif
 struct MENU {
-  char name[19];
+  #if defined(LANGUAGE_ES_ES)
+    char *name;
+  #else
+    char name[19];
+  #endif
   int command;
 };
 

