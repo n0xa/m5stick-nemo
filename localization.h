@@ -58,7 +58,7 @@
   #define TXT_WF_CRYPT "Crypt: %s\n"
   #define TXT_SEL_BACK "\nNext: Back\n"
   #define TXT_HOLD_CLONE "Hold Select: Clone\n"
-  #define TXT_WF_SCN "WiFi Scan"
+  #define TXT_WF_SCN "WiFi Scan"  
   #define TXT_WF_SCNING "Scanning..."
   #define TXT_INST_NXT "Next: Down Arrow"
   #define TXT_INST_PRV "Prev: Up Arrow"

@@ -31,6 +31,7 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 * WiFi Spam - Funny SSIDs, WiFi Rickrolling, and a Random mode that creates hundreds of randomly-named SSIDs per minute
 * WiFi NEMO Portal - A captive portal that tries to social engineer email credentials - saves usernames and passwords to SD Card (if inserted into a supported reader)
 * WiFi SSID Scanner - Display 2.4 GHz SSIDs nearby, get information about them, and even clone the SSIDs in NEMO Portal
+* Bad USB - Keyboard layouts, predefined payloads, OS demos and user-defined payloads execution from SDCARD.
 * User-adjustable 24 Hour digital clock backed by the M5 Stick RTC so it holds relatively stable time even in deep sleep and low battery mode
 * EEPROM-backed Settings for rotation, brightness, automatic dimming and NEMO Portal SSID
 * Battery level and credits in settings menu
@@ -64,6 +65,14 @@ In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" 
 * SD Card support is only enabled by default on the M5Stack Cardputer platform. It can be enabled on M5Stick devices but an SD Card reader must be built and attached to the front panel pin header.
 * NEMO Portal is only for use on professional engagements with a valid scope of work, educational or demonstration purposes. Storage, sale, or use of personal information without consent is against the law. 🤓
 
+## Bad USB win-chrm_C_stealer payload
+This payload in Bad USB menu, decrypt Google Chrome cookies in Windows and sends them to a spawned NEMO HTTP Server, you will be able to download them later connecting to the respective AP and importing them in Cookie-Editor, having access to all sites on which was performed authentication in the victim browser even if the authentication process involved a second factor.
+### Requirements on the victim machine:
+* Windows
+* cURL (Installed by default from version 1803 of Windows 10)
+* Google Chrome
+* Internet connection
+
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO
 * [M5Stick C Plus Quick Start](https://docs.m5stack.com/en/quick_start/m5stickc_plus/uiflow) has links to the M5Burner app for Linux, MacOS and Windows. This is the official tool to install UIFlow and other official firmware. I provide up-to-date binaries for NEMO there.
@@ -89,6 +98,7 @@ If you want to customize NEMO or contribute to the project, you should be famili
 * Install necessary libraries. In Sketch -> Include Library -> Library Manager, search for and install the following libraries and any dependencies they require:
   * M5StickCPlus, M5StickC or M5Cardputer
   * IRRemoteESP8266
+  * ESPAsyncWebServer
 * Un-comment the appropriate `#define` line near the top for your platform (STICK_C, STICK_C_PLUS or CARDPUTER)
 * Switch partition schemes. `Tools` -> `Partition Scheme` -> `No OTA (Large APP)` - sometimes this option is labeled `Huge APP` 
 * Configuration
@@ -111,6 +121,7 @@ arduino-cli core install m5stack:esp32  --additional-urls https://m5stack.oss-cn
 # Install required library
 arduino-cli lib install M5Cardputer --log-level warn --verbose
 arduino-cli lib install IRRemoteESP8266 --log-level warn --verbose
+arduino-cli lib install ESPAsyncWebServer --log-level warn --verbose
 
 # Compile sketch
 arduino-cli compile --fqbn m5stack:esp32:m5stack_cardputer -e --build-property build.partitions=huge_app --build-property upload.maximum_size=3145728 ./m5stick-nemo.ino

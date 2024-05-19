@@ -203,6 +203,8 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
 // 21 - Deauth Attack
 // 22 - Custom Color Settings
 // 23 - Pre-defined color themes
+// 24 - Bad USB / Layouts
+// 25 - Bad USB / Payloads
 // .. - ..
 // 97 - Mount/UnMount SD Card on M5Stick devices, if SDCARD is declared
 
@@ -221,7 +223,8 @@ const String contributors[] PROGMEM = {
   "@niximkk",
   "@unagironin",
   "@vladimirpetrov",
-  "@vs4vijay"
+  "@vs4vijay",
+  "@usg-ishimura"
 };
 
 int advtime = 0; 
@@ -275,6 +278,10 @@ bool clone_flg = false;
 #include "localization.h"
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#if defined(CARDPUTER)
+  #include "payloads.h"
+#endif
+
 #if defined(DEAUTHER)
   #include "deauth.h"                                                               //DEAUTH
   #include "esp_wifi.h"                                                             //DEAUTH
@@ -431,6 +438,9 @@ MENU mmenu[] = {
   { "TV-B-Gone", 13}, // We jump to the region menu first
   { "Bluetooth", 16},
   { "WiFi", 12},
+#if defined(CARDPUTER)
+  { "Bad USB", 24},
+#endif
   { "QR Codes", 18},
   { TXT_SETTINGS, 2},
 };
@@ -1986,6 +1996,57 @@ void btmaelstrom_loop(){
   }
 }
 
+/// BAD USB MENU ///
+
+// Layouts
+#if defined(CARDPUTER)
+void bumenu_setup() { // 24
+  cursor = 0;
+  rstOverride = true;
+  drawmenuLO();
+  delay(500); // Prevent switching after menu loads up
+}
+
+void bumenu_loop() {  // 24
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % layouts_size;
+    drawmenuLO();
+    delay(250);
+  }
+  if (check_select_press()) {
+    int option = layouts[cursor].command;
+    rstOverride = true;
+    isSwitching = false;
+    layouts_menu(option);
+  }
+}
+
+// Payloads
+
+void bumenu_payld_setup() { // 25
+  cursor = 0;
+  rstOverride = true;
+  drawmenuL();
+  delay(500); // Prevent switching after menu loads up
+}
+
+void bumenu_payld_loop() { // 25
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % bumenu_size;
+    drawmenuL();
+    delay(250);
+  }
+  if (check_select_press()) {
+    int option = bumenu[cursor].command;
+    rstOverride = true;
+    isSwitching = false;
+    payloads_menu(option);
+  }
+}
+#endif
+
 /// WIFI MENU ///
 MENU wsmenu[] = {
   { TXT_BACK, 5},
@@ -2638,6 +2699,13 @@ void loop() {
         case 23:
           theme_setup();
           break;
+      #if defined(CARDPUTER)
+        case 24:
+          bumenu_setup();
+          break;
+        case 25:
+          bumenu_payld_setup();
+      #endif
     }
   }
 
@@ -2729,6 +2797,13 @@ void loop() {
       case 23:
         theme_loop();
         break;
+    #if defined(CARDPUTER)
+      case 24:
+          bumenu_loop();
+          break;
+      case 25:
+          bumenu_payld_loop();
+    #endif
     #if defined(SDCARD)                                                // SDCARD M5Stick
       #ifndef CARDPUTER                                                // SDCARD M5Stick
         case 97:
