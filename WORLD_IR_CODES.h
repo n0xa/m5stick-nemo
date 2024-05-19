@@ -13,11 +13,14 @@ TV-B-Gone Firmware version 1.2
  (c) Mitch Altman + Limor Fried 2009
 
 */
+#ifndef _WORLD_IR_CODES_H_
+#define _WORLD_IR_CODES_H_
 
 //Codes captured from Generation 3 TV-B-Gone by Limor Fried & Mitch Altman
 //table of POWER codes
 
 #include "tvbg.h"
+#include "Custom_Ir_Codes.h"
 
 const uint16_t code_na000Times[] = {
   60, 60,
@@ -8831,5 +8834,20 @@ const IrCode* const EUpowerCodes[] = {
   &code_eu139Code,
 };
 
+const IrCode* const CUSTOMpowerCodes[] = {
+  &code_FoxCode,
+  &code_LGCode,
+  &code_TeslaCode,
+  &code_BlueberryCode,
+  &code_VoxCode,
+  &code_MtsSTBCode,
+  &code_D3MINISTBCode,
+  &code_DenverSTBCode,
+  &code_AlphaCode
+};
+
 uint8_t num_NAcodes = NUM_ELEM(NApowerCodes);
 uint8_t num_EUcodes = NUM_ELEM(EUpowerCodes);
+uint8_t num_CUSTOMcodes = NUM_ELEM(CUSTOMpowerCodes);
+
+#endif

