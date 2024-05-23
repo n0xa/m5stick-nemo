@@ -1134,6 +1134,7 @@ MENU tvbgmenu[] = {
   { TXT_MN_AMERICA, 0},
   { TXT_MN_EMEA, 1},
   { TXT_MN_CUSTOM, 2}
+  { TXT_MN_CUSTOM,"2", 4}
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
@@ -1165,8 +1166,7 @@ void tvbgmenu_loop() {
       isSwitching = true;
       rstOverride = false; 
       return;
-    }
-
+    }    
     #if defined(USE_EEPROM)
       EEPROM.write(3, region);
       EEPROM.commit();
@@ -1183,8 +1183,16 @@ void sendAllCodes() {
     num_codes = num_NAcodes;
   } else if (region == EU) {
     num_codes = num_EUcodes;
-  } else {
+  } else if {
     num_codes = num_CUSTOMcodes;
+  }
+  else {
+    #if defined(SD_CARD)
+      DISP.fillScreen(BGCOLOR);
+      DISP.println(TXT_TRIG_TV);
+      DISP.println(TXT_RG_CUSTOM,"2");
+      otherIRcodes();
+    #endif
   }
   for (i = 0 ; i < num_codes; i++)
   {
