@@ -1957,7 +1957,12 @@ void wscan_drawmenu() {
         DISP.setTextColor(BGCOLOR, FGCOLOR);
       }
       DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
+      if (WiFi.SSID(i) != "") {
+        DISP.println(WiFi.SSID(i).substring(0,19));
+        }
+      else {
+        DISP.println(WiFi.BSSIDstr(i));
+        }
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   } else {
@@ -1966,7 +1971,12 @@ void wscan_drawmenu() {
         DISP.setTextColor(BGCOLOR, FGCOLOR);
       }
       DISP.print(" ");
-      DISP.println(WiFi.SSID(i).substring(0,19));
+      if (WiFi.SSID(i) != "") {
+        DISP.println(WiFi.SSID(i).substring(0,19));
+        }
+      else {
+        DISP.println(WiFi.BSSIDstr(i));
+        }
       DISP.setTextColor(FGCOLOR, BGCOLOR);
     }
   }
@@ -2043,7 +2053,7 @@ void wscan_result_loop(){
     DISP.setTextSize(SMALL_TEXT);
     DISP.printf(TXT_WF_CHANN, WiFi.channel(cursor));
     DISP.printf(TXT_WF_CRYPT, encryptType);
-    DISP.print("BSSID:\n" + WiFi.BSSIDstr(i));
+    DISP.print("BSSID:\n" + WiFi.BSSIDstr(cursor));
     DISP.printf(TXT_SEL_BACK);
     DISP.setTextColor(BGCOLOR, FGCOLOR);
     DISP.printf(" %-19s\n", TXT_HOLD_ATTACK);
@@ -2077,7 +2087,7 @@ void wscan_loop(){
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setCursor(0, 0);
   DISP.println(TXT_WF_SCNING);
-  wifict = WiFi.scanNetworks();
+  wifict = WiFi.scanNetworks(false, true);
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(SMALL_TEXT);
   DISP.setCursor(0, 0);
