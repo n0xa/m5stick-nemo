@@ -4,11 +4,8 @@ Firmware for high-tech pranks on M5Stack ESP32 Devices
 ![M5-Nemo Matrix Logo](https://github.com/n0xa/m5stick-nemo/blob/main/NEMOMatrix.png)
 Logo by @unagironin
 
-## Archived ## 
-As announced earlier this year, M5Stick-NEMO has been archived and is no longer under active development. The project exceeded all of my personal goals and it was amazing to see the community come together, get excited about the project, contribute to it, and get inspired by it.   
-As far as I am concerned, the project reached the limit of what the M5Stick family is capable of, for these sort of tricks and pranks, without adding external hardware such as SD Cards, radio modems, larger LEDs, RFID modules or other things. The battery life is also sub-optimal for driving these external peripherals. Many feature requests revolve around support for these external devices, and I don't have the resources or time to add these, but the good news is others have carried on the spirit with, honestly, better features. One project that has a lot of promise is [CatHack](https://github.com/Stachugit/CatHack).  
+## Okay so maybe we're back...
 
-So long, and thanks for all the fish!  
 ## Name and Background
 NEMO started a personal project to help me learn more about ESP32 development with the Arduino IDE. I decided to replicate a few common, trending pranks that were getting a lot of attention in the tech community, as a challenge to myself, and to also better understand these attacks.  
 NEMO is named after the small, clever and stubborn fish in Finding Nemo. This project stands in contrast to another high-tech gadget that's associated with certain sea-dwelling creatures. I did want to prove that there are a lot of things you can do with a small development kit and some curiosity. I have no delusions of superseding the capabilities of any similar device with this project. It's just for fun, and my own education.  
