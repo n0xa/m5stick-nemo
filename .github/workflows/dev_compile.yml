@@ -35,7 +35,7 @@ jobs:
               name: "M5Cardputer",
               fqbn: "m5stack:esp32:m5stack_cardputer",
               extra_flags: "-DCARDPUTER",
-              libraries: "M5Cardputer IRRemoteESP8266 M5Stack-SD-Updater M5Unified",
+              libraries: "M5Cardputer@1.1.0 IRremote M5Stack-SD-Updater M5Unified@0.2.8",
               partitions: {
                 bootloader_addr: "0x0000",
               },
@@ -44,7 +44,7 @@ jobs:
               name: "M5StickCPlus2",
               fqbn: "m5stack:esp32:m5stack_stickc_plus2",
               extra_flags: "-DSTICK_C_PLUS2",
-              libraries: "M5StickCPlus2 IRRemoteESP8266 M5Stack-SD-Updater M5Unified",
+              libraries: "M5StickCPlus2@1.0.1 IRremote M5Stack-SD-Updater M5Unified@0.2.8",
               partitions: {
                 bootloader_addr: "0x1000",
               },
@@ -53,7 +53,7 @@ jobs:
               name: "M5StickCPlus",
               fqbn: "m5stack:esp32:m5stack_stickc_plus",
               extra_flags: "-DSTICK_C_PLUS",
-              libraries: "M5StickCPlus IRRemoteESP8266 M5Stack-SD-Updater M5Unified",
+              libraries: "M5StickCPlus@0.1.1 IRremote M5Stack-SD-Updater M5Unified@0.2.8",
               partitions: {
                 bootloader_addr: "0x1000",
               },
@@ -62,8 +62,8 @@ jobs:
               name: "M5StickC",
               fqbn: "m5stack:esp32:m5stack_stickc",
               extra_flags: "-DSTICK_C",
-              # TODO: M5StickC's latest version has some dependency issues with M5Hat-JoyC library
-              libraries: "M5StickC@0.2.8 IRRemoteESP8266 M5Stack-SD-Updater M5Unified",
+              # Using latest M5StickC library version for ESP32 Core 3.2.2 compatibility
+              libraries: "M5StickC@0.3.0 IRremote M5Stack-SD-Updater M5Unified@0.2.8",
               partitions: {
                 bootloader_addr: "0x1000",
               },
@@ -92,8 +92,8 @@ jobs:
         run: |
           set -x
           
-          # arduino-cli core install esp32:esp32
-          arduino-cli core install m5stack:esp32 --additional-urls "file:///${PWD}/package_m5stack_index.json"
+          # Install the M5Stack ESP32 core 3.2.2 to match local development
+          arduino-cli core install m5stack:esp32@3.2.2 --additional-urls "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/arduino/package_m5stack_index.json"
 
           arduino-cli core search m5stack
           arduino-cli board listall

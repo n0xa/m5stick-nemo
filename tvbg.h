@@ -49,7 +49,8 @@ void quickflashLED( void );
 uint8_t read_bits(uint8_t count);
 uint16_t rawData[300];
 #define MAX_WAIT_TIME 65535 //tens of us (ie: 655.350ms)
-IRsend irsend(IRLED);  // Set the GPIO to be used to sending the message.
+
+// IR sender handled by new IRremote library
 extern const IrCode* const NApowerCodes[];
 extern const IrCode* const EUpowerCodes[];
 extern uint8_t num_NAcodes, num_EUcodes;
