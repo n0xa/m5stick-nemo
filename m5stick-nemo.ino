@@ -2,7 +2,7 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-// #define STICK_C_PLUS
+#define STICK_C_PLUS
 // #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
@@ -283,6 +283,7 @@ struct MENU {
   int command;
 };
 
+
 struct QRCODE {
   char name[19];
   String url;
@@ -302,7 +303,7 @@ void drawmenu(MENU thismenu[], int size) {
   DISP.setCursor(0, 0, 1);
   // scrolling menu
   if (cursor < 0) {
-    cursor = size - 1;  // rollover hack for up-arrow on cardputer
+    cursor = 0;  // Fixed: prevent jumping to end of menu
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
@@ -350,12 +351,16 @@ void number_drawmenu(int nums) {
 }
 
 void switcher_button_proc() {
-  if (rstOverride == false) {
+  // Disable switcher entirely for now - it conflicts with MenuController
+  // TODO: Find a better way to handle this
+  /*
+  if (rstOverride == false && !isSwitching) {
     if (check_next_press()) {
       isSwitching = true;
       current_proc = 1;
     }
   }
+  */
 }
 
 // Tap the power button from pretty much anywhere to get to the main menu
@@ -421,6 +426,84 @@ bool check_select_press(){
   return false;
 }
 
+// Unified Menu Controller
+class MenuController {
+private:
+  MENU* currentMenu;
+  int menuSize;
+  bool useRstOverride;
+  void (*onExit)();
+  void (*onSelect)();
+  
+public:
+  void setup(MENU* menu, int size, bool rstOverride = false, void (*exitCallback)() = nullptr, void (*selectCallback)() = nullptr) {
+    currentMenu = menu;
+    menuSize = size;
+    useRstOverride = rstOverride;
+    onExit = exitCallback;
+    onSelect = selectCallback;
+    cursor = 0;
+    rstOverride = useRstOverride;
+    drawmenu(currentMenu, menuSize);
+    delay(500); // Prevent switching after menu loads up
+  }
+  
+  // Special setup with initial screen display
+  void setupWithIntro(MENU* menu, int size, String introText, int introDelay = 1000) {
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.println(introText);
+    delay(introDelay);
+    setup(menu, size, true);
+  }
+  
+  void loop() {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % menuSize;
+      drawmenu(currentMenu, menuSize);
+      delay(250);
+    }
+    if (check_select_press()) {
+      if (onSelect) {
+        onSelect(); // Custom selection handler
+        // Custom callbacks often set rstOverride=false, but we need to stay in menu mode
+        if (useRstOverride && !isSwitching) {
+          rstOverride = true;
+        }
+      } else {
+        // Default selection behavior
+        if (!useRstOverride) {
+          rstOverride = false;
+        }
+        if (onExit) {
+          onExit();
+        }
+        isSwitching = true;
+        current_proc = currentMenu[cursor].command;
+      }
+    }
+  }
+  
+  // Special loop for number menus
+  void numberLoop(int maxNum) {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % maxNum;
+      number_drawmenu(maxNum);
+      delay(250);
+    }
+    if (check_select_press()) {
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 1; // Usually goes back to main menu
+    }
+  }
+};
+
+// Global menu controller instance
+MenuController menuController;
+
 /// MAIN MENU ///
 MENU mmenu[] = {
 #if defined(RTC)
@@ -435,24 +518,7 @@ MENU mmenu[] = {
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
 void mmenu_setup() {
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(mmenu, mmenu_size);
-  delay(500); // Prevent switching after menu loads up
-}
-
-void mmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % mmenu_size;
-    drawmenu(mmenu, mmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = mmenu[cursor].command;
-  }
+  menuController.setup(mmenu, mmenu_size, true);
 }
 
 bool screen_dim_dimmed = false;
@@ -507,54 +573,45 @@ MENU dmenu[] = {
 };
 int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
+// Custom callback for dmenu selection
+void dmenu_onSelect() {
+  screen_dim_time = dmenu[cursor].command;
+  #if defined(USE_EEPROM)
+    EEPROM.write(1, screen_dim_time);
+    EEPROM.commit();
+  #endif
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(String(TXT_SET_BRIGHT));
+  delay(1000);
+  cursor = brightness / 10;
+  number_drawmenu(11);
+  while( !check_select_press()) {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % 11 ;
+      number_drawmenu(11);
+      screenBrightness(10 * cursor);
+      delay(250);
+     }
+  }
+  screenBrightness(10 * cursor);
+  brightness = 10 * cursor;
+  #if defined(USE_EEPROM)
+    EEPROM.write(2, brightness);
+    EEPROM.commit();
+  #endif
+  rstOverride = false;
+  isSwitching = true;
+  current_proc = 2;
+}
+
 void dmenu_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
   DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(dmenu, dmenu_size);
-  delay(500); // Prevent switching after menu loads up
-}
-
-void dmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % dmenu_size;
-    drawmenu(dmenu, dmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    screen_dim_time = dmenu[cursor].command;
-    #if defined(USE_EEPROM)
-      EEPROM.write(1, screen_dim_time);
-      EEPROM.commit();
-    #endif
-    DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 0);
-    DISP.println(String(TXT_SET_BRIGHT));
-    delay(1000);
-    cursor = brightness / 10;
-    number_drawmenu(11);
-    while( !check_select_press()) {
-      if (check_next_press()) {
-        cursor++;
-        cursor = cursor % 11 ;
-        number_drawmenu(11);
-        screenBrightness(10 * cursor);
-        delay(250);
-       }
-    }
-    screenBrightness(10 * cursor);
-    #if defined(USE_EEPROM)
-      EEPROM.write(2, 10 * cursor);
-      EEPROM.commit();
-    #endif
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 2;
-  }
+  menuController.setup(dmenu, dmenu_size, true, nullptr, dmenu_onSelect);
 }
 
 /// SETTINGS MENU ///
@@ -588,11 +645,26 @@ MENU smenu[] = {
 
 int smenu_size = sizeof(smenu) / sizeof (MENU);
 
+// Custom callback for smenu selection
+void smenu_onSelect() {
+  if(smenu[cursor].command == 98){
+    rstOverride = false;
+    ESP.restart();
+  }
+  else if(smenu[cursor].command == 99){
+    rstOverride = false;
+    clearSettings();
+  }
+  else {
+    // Normal menu navigation - don't disable rstOverride
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = smenu[cursor].command;
+  }
+}
+
 void smenu_setup() {
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(smenu, smenu_size);
-  delay(500); // Prevent switching after menu loads up
+  menuController.setup(smenu, smenu_size, true);
 }
 
 void clearSettings(){
@@ -614,26 +686,6 @@ void clearSettings(){
   DISP.println(TXT_CLRING_SETTINGS);
   delay(5000);
   ESP.restart();
-}
-
-void smenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % smenu_size;
-    drawmenu(smenu, smenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    rstOverride = false;
-    isSwitching = true;
-    if(smenu[cursor].command == 98){
-      ESP.restart();
-    }
-    if(smenu[cursor].command == 99){
-      clearSettings();
-    }
-    current_proc = smenu[cursor].command;
-  }
 }
 
 MENU cmenu[] = {
@@ -911,31 +963,21 @@ int rotation = 1;
   };
   int rmenu_size = sizeof(rmenu) / sizeof (MENU);
 
-  void rmenu_setup() {
-    cursor = 0;
-    rstOverride = true;
-    drawmenu(rmenu, rmenu_size);
-    delay(500); // Prevent switching after menu loads up
+  // Custom callback for rmenu selection
+  void rmenu_onSelect() {
+    rstOverride = false;
+    isSwitching = true;
+    rotation = rmenu[cursor].command;
+    DISP.setRotation(rotation);
+    #if defined(USE_EEPROM)
+      EEPROM.write(0, rotation);
+      EEPROM.commit();
+    #endif
+    current_proc = 2;
   }
 
-  void rmenu_loop() {
-    if (check_next_press()) {
-      cursor++;
-      cursor = cursor % rmenu_size;
-      drawmenu(rmenu, rmenu_size);
-      delay(250);
-    }
-    if (check_select_press()) {
-      rstOverride = false;
-      isSwitching = true;
-      rotation = rmenu[cursor].command;
-      DISP.setRotation(rotation);
-      #if defined(USE_EEPROM)
-        EEPROM.write(0, rotation);
-        EEPROM.commit();
-      #endif
-      current_proc = 2;
-    }
+  void rmenu_setup() {
+    menuController.setup(rmenu, rmenu_size, true, nullptr, rmenu_onSelect);
   }
 #endif //ROTATION
 
@@ -1141,6 +1183,26 @@ MENU tvbgmenu[] = {
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
+// Custom callback for tvbgmenu selection
+void tvbgmenu_onSelect() {
+  region = tvbgmenu[cursor].command;
+
+  if (region == 3) {
+    current_proc = 1;
+    isSwitching = true;
+    rstOverride = false; 
+    return;
+  }
+
+  #if defined(USE_EEPROM)
+    EEPROM.write(3, region);
+    EEPROM.commit();
+  #endif
+  rstOverride = false;
+  isSwitching = true;
+  current_proc = 5;
+}
+
 void tvbgmenu_setup() {  
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
@@ -1148,37 +1210,14 @@ void tvbgmenu_setup() {
   DISP.println("TV-B-Gone");
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.println(TXT_REGION);
-  cursor = region % 2;
-  rstOverride = true;
-  delay(1000); 
+  delay(1000);
+  
+  // Set initial cursor based on current region
+  int initialCursor = region % 2;
+  menuController.setup(tvbgmenu, tvbgmenu_size, true, nullptr, tvbgmenu_onSelect);
+  // Override the cursor after setup
+  cursor = initialCursor;
   drawmenu(tvbgmenu, tvbgmenu_size);
-}
-
-void tvbgmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % tvbgmenu_size;
-    drawmenu(tvbgmenu, tvbgmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    region = tvbgmenu[cursor].command;
-
-    if (region == 3) {
-      current_proc = 1;
-      isSwitching = true;
-      rstOverride = false; 
-      return;
-    }
-
-    #if defined(USE_EEPROM)
-      EEPROM.write(3, region);
-      EEPROM.commit();
-    #endif
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 5;
-  }
 }
 
 void sendAllCodes() {
@@ -2561,10 +2600,10 @@ void loop() {
       break;
 #endif
     case 1:
-      mmenu_loop();
+      menuController.loop();
       break;
     case 2:
-      smenu_loop();
+      menuController.loop();
       break;
 #if defined(RTC)
     case 3:
@@ -2572,7 +2611,7 @@ void loop() {
       break;
 #endif
     case 4:
-      dmenu_loop();
+      menuController.loop();
       break;
     case 5:
       tvbgone_loop();
@@ -2589,7 +2628,7 @@ void loop() {
 #endif
 #if defined(ROTATION)
     case 7:
-      rmenu_loop();
+      menuController.loop();
       break;
 #endif
     case 8:
@@ -2608,7 +2647,7 @@ void loop() {
       wsmenu_loop();
       break;
     case 13:
-      tvbgmenu_loop();
+      menuController.loop();
       break;
     case 14:
       wscan_loop();
