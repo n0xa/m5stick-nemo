@@ -2,7 +2,7 @@
 // github.com/n0xa | IG: @4x0nn
 
 // -=-=-=-=-=-=- Uncomment the platform you're building for -=-=-=-=-=-=-
-#define STICK_C_PLUS
+// #define STICK_C_PLUS
 // #define STICK_C_PLUS2
 // #define STICK_C
 // #define CARDPUTER
@@ -351,16 +351,12 @@ void number_drawmenu(int nums) {
 }
 
 void switcher_button_proc() {
-  // Disable switcher entirely for now - it conflicts with MenuController
-  // TODO: Find a better way to handle this
-  /*
   if (rstOverride == false && !isSwitching) {
     if (check_next_press()) {
       isSwitching = true;
       current_proc = 1;
     }
   }
-  */
 }
 
 // Tap the power button from pretty much anywhere to get to the main menu
@@ -431,19 +427,17 @@ class MenuController {
 private:
   MENU* currentMenu;
   int menuSize;
-  bool useRstOverride;
   void (*onExit)();
   void (*onSelect)();
   
 public:
-  void setup(MENU* menu, int size, bool rstOverride = false, void (*exitCallback)() = nullptr, void (*selectCallback)() = nullptr) {
+  void setup(MENU* menu, int size, void (*exitCallback)() = nullptr, void (*selectCallback)() = nullptr) {
     currentMenu = menu;
     menuSize = size;
-    useRstOverride = rstOverride;
     onExit = exitCallback;
     onSelect = selectCallback;
     cursor = 0;
-    rstOverride = useRstOverride;
+    rstOverride = true;  // Always disable switcher when menu is active
     drawmenu(currentMenu, menuSize);
     delay(500); // Prevent switching after menu loads up
   }
@@ -454,7 +448,7 @@ public:
     DISP.setCursor(0, 0);
     DISP.println(introText);
     delay(introDelay);
-    setup(menu, size, true);
+    setup(menu, size);
   }
   
   void loop() {
@@ -467,15 +461,13 @@ public:
     if (check_select_press()) {
       if (onSelect) {
         onSelect(); // Custom selection handler
-        // Custom callbacks often set rstOverride=false, but we need to stay in menu mode
-        if (useRstOverride && !isSwitching) {
+        // Custom callbacks may set rstOverride=false to exit, but if still in menu, restore it
+        if (!isSwitching) {
           rstOverride = true;
         }
       } else {
-        // Default selection behavior
-        if (!useRstOverride) {
-          rstOverride = false;
-        }
+        // Default selection behavior - always allow exit
+        rstOverride = false;
         if (onExit) {
           onExit();
         }
@@ -518,7 +510,7 @@ MENU mmenu[] = {
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
 void mmenu_setup() {
-  menuController.setup(mmenu, mmenu_size, true);
+  menuController.setup(mmenu, mmenu_size);
 }
 
 bool screen_dim_dimmed = false;
@@ -611,7 +603,7 @@ void dmenu_setup() {
   DISP.setCursor(0, 0);
   DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
-  menuController.setup(dmenu, dmenu_size, true, nullptr, dmenu_onSelect);
+  menuController.setup(dmenu, dmenu_size, nullptr, dmenu_onSelect);
 }
 
 /// SETTINGS MENU ///
@@ -664,7 +656,7 @@ void smenu_onSelect() {
 }
 
 void smenu_setup() {
-  menuController.setup(smenu, smenu_size, true);
+  menuController.setup(smenu, smenu_size);
 }
 
 void clearSettings(){
@@ -977,7 +969,7 @@ int rotation = 1;
   }
 
   void rmenu_setup() {
-    menuController.setup(rmenu, rmenu_size, true, nullptr, rmenu_onSelect);
+    menuController.setup(rmenu, rmenu_size, nullptr, rmenu_onSelect);
   }
 #endif //ROTATION
 
@@ -1214,7 +1206,7 @@ void tvbgmenu_setup() {
   
   // Set initial cursor based on current region
   int initialCursor = region % 2;
-  menuController.setup(tvbgmenu, tvbgmenu_size, true, nullptr, tvbgmenu_onSelect);
+  menuController.setup(tvbgmenu, tvbgmenu_size, nullptr, tvbgmenu_onSelect);
   // Override the cursor after setup
   cursor = initialCursor;
   drawmenu(tvbgmenu, tvbgmenu_size);
@@ -1913,7 +1905,7 @@ void btmaelstrom_setup(){
   maelstrom = true;
 }
 
-void btmaelstrom_loop(){
+void btmaelstrom_loop(){  
   swiftPair = false;
   sourApple = true;
   aj_adv();
