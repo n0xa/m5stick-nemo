@@ -2483,6 +2483,88 @@ void setup() {
   bootScreen();
 }
 
+// Wrapper functions for menuController.loop() to avoid lambda issues
+void menu_controller_loop() {
+  menuController.loop();
+}
+
+// Process handler structure to replace dual switch statements
+struct ProcessHandler {
+  int id;
+  void (*setup_func)();
+  void (*loop_func)();
+  const char* name;
+};
+
+// Unified process table
+ProcessHandler processes[] = {
+#if defined(RTC)
+  {0, clock_setup, clock_loop, "Clock"},
+#endif
+  {1, mmenu_setup, menu_controller_loop, "Main Menu"},
+  {2, smenu_setup, menu_controller_loop, "Settings Menu"},
+#if defined(RTC)
+  {3, timeset_setup, timeset_loop, "Time Settings"},
+#endif
+  {4, dmenu_setup, menu_controller_loop, "Display Menu"},
+  {5, tvbgone_setup, tvbgone_loop, "TV-B-Gone"},
+#if defined(AXP) || defined(PWRMGMT)
+  {6, battery_setup, battery_loop, "Battery Info"},
+#endif
+#if defined(CARDPUTER)
+  {6, battery_setup, battery_loop, "Battery Info"},
+#endif
+#if defined(ROTATION)
+  {7, rmenu_setup, menu_controller_loop, "Rotation Menu"},
+#endif
+  {8, aj_setup, aj_loop, "Apple Juice"},
+  {9, aj_adv_setup, aj_adv, "Apple Juice Advanced"},
+  {10, credits_setup, credits_loop, "Credits"},
+  {11, wifispam_setup, wifispam_loop, "WiFi Spam"},
+  {12, wsmenu_setup, wsmenu_loop, "WiFi Scanner Menu"},
+  {13, tvbgmenu_setup, menu_controller_loop, "TV-B-Gone Menu"},
+  {14, wscan_setup, wscan_loop, "WiFi Scan"},
+  {15, wscan_result_setup, wscan_result_loop, "WiFi Scan Results"},
+  {16, btmenu_setup, btmenu_loop, "Bluetooth Menu"},
+  {17, btmaelstrom_setup, btmaelstrom_loop, "BLE Maelstrom"},
+  {18, qrmenu_setup, qrmenu_loop, "QR Menu"},
+  {19, portal_setup, portal_loop, "Captive Portal"},
+  {20, wsAmenu_setup, wsAmenu_loop, "WiFi Attack Menu"},
+#if defined(DEAUTHER)
+  {21, deauth_setup, deauth_loop, "Deauth Attack"},
+#endif
+  {22, color_setup, color_loop, "Color Settings"},
+  {23, theme_setup, theme_loop, "Theme Settings"},
+#if defined(SDCARD) && !defined(CARDPUTER)
+  {97, nullptr, ToggleSDCard, "SD Card"},
+#endif
+  {-1, nullptr, nullptr, nullptr} // Sentinel
+};
+
+// Run setup for current process
+void runCurrentSetup() {
+  for (int i = 0; processes[i].id != -1; i++) {
+    if (processes[i].id == current_proc) {
+      if (processes[i].setup_func) {
+        processes[i].setup_func();
+      }
+      return;
+    }
+  }
+}
+
+// Run loop for current process
+void runCurrentLoop() {
+  for (int i = 0; processes[i].id != -1; i++) {
+    if (processes[i].id == current_proc) {
+      if (processes[i].loop_func) {
+        processes[i].loop_func();
+      }
+      return;
+    }
+  }
+}
+
 void loop() {
   // This is the code to handle running the main loops
   // Background processes
@@ -2490,195 +2572,13 @@ void loop() {
   screen_dim_proc();
   check_menu_press();
   
-  // Switcher
+  // Switcher - unified process handler
   if (isSwitching) {
     isSwitching = false;
     Serial.printf("Switching To Task: %d\n", current_proc);
-    switch (current_proc) {
-#if defined(RTC)
-      case 0:
-        clock_setup();
-        break;
-#endif
-      case 1:
-        mmenu_setup();
-        break;
-      case 2:
-        smenu_setup();
-        break;
-#if defined(RTC)
-      case 3:
-        timeset_setup();
-        break;
-#endif
-      case 4:
-        dmenu_setup();
-        break;
-      case 5:
-        tvbgone_setup();
-        break;
-#if defined(AXP) || defined(PWRMGMT)
-      case 6:
-        battery_setup();
-        break;
-#endif
-#if defined(CARDPUTER)
-      case 6:
-        battery_setup();
-        break;
-#endif
-#if defined(ROTATION)
-      case 7:
-        rmenu_setup();
-        break;
-#endif
-      case 8:
-        aj_setup();
-        break;
-      case 9:
-        aj_adv_setup();
-        break;
-      case 10:
-        credits_setup();
-        break;
-      case 11:
-        wifispam_setup();
-        break;
-      case 12:
-        wsmenu_setup();
-        break;
-      case 13:
-        tvbgmenu_setup();
-        break;
-      case 14:
-        wscan_setup();
-        break;
-      case 15:
-        wscan_result_setup();
-        break;
-      case 16:
-        btmenu_setup();
-        break;
-      case 17:
-        btmaelstrom_setup();
-        break;
-      case 18:
-        qrmenu_setup();
-        break;
-      case 19:
-        portal_setup();
-        break;
-            case 20:
-        wsAmenu_setup();
-        break;
-      #if defined(DEAUTHER)
-        case 21:
-          deauth_setup();
-          break;
-      #endif
-        case 22:
-          color_setup();
-          break;
-        case 23:
-          theme_setup();
-          break;
-    }
+    runCurrentSetup();
   }
 
-  switch (current_proc) {
-#if defined(RTC)
-    case 0:
-      clock_loop();
-      break;
-#endif
-    case 1:
-      menuController.loop();
-      break;
-    case 2:
-      menuController.loop();
-      break;
-#if defined(RTC)
-    case 3:
-      timeset_loop();
-      break;
-#endif
-    case 4:
-      menuController.loop();
-      break;
-    case 5:
-      tvbgone_loop();
-      break;
-#if defined(AXP) || defined(PWRMGMT)
-    case 6:
-      battery_loop();
-      break;
-#endif
-#if defined(CARDPUTER)
-    case 6:
-      battery_loop();
-      break;
-#endif
-#if defined(ROTATION)
-    case 7:
-      menuController.loop();
-      break;
-#endif
-    case 8:
-      aj_loop();
-      break;
-    case 9:
-      aj_adv();
-      break;
-    case 10:
-      credits_loop();
-      break;
-    case 11:
-      wifispam_loop();
-      break;
-    case 12:
-      wsmenu_loop();
-      break;
-    case 13:
-      menuController.loop();
-      break;
-    case 14:
-      wscan_loop();
-      break;
-    case 15:
-      wscan_result_loop();
-      break;
-    case 16:
-      btmenu_loop();
-      break;
-    case 17:
-      btmaelstrom_loop();
-      break;
-    case 18:
-      qrmenu_loop();
-      break;
-    case 19:
-      portal_loop();
-      break;
-    case 20:
-      wsAmenu_loop();
-      break;
-    #if defined(DEAUTHER)                                             // DEAUTH
-      case 21:
-        deauth_loop();                                                // DEAUTH
-        break;                                                        // DEAUTH
-    #endif                                                            // DEAUTH
-      case 22:
-        color_loop();
-        break;
-      case 23:
-        theme_loop();
-        break;
-    #if defined(SDCARD)                                                // SDCARD M5Stick
-      #ifndef CARDPUTER                                                // SDCARD M5Stick
-        case 97:
-          ToggleSDCard();                                              // SDCARD M5Stick
-          break;                                                       // SDCARD M5Stick
-      #endif                                                           // SDCARD M5Stick
-    #endif                                                             // SDCARD M5Stick
-  }
+  // Main process loop - unified handler
+  runCurrentLoop();
 }
