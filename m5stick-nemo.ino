@@ -2508,10 +2508,7 @@ ProcessHandler processes[] = {
 #endif
   {4, dmenu_setup, menu_controller_loop, "Display Menu"},
   {5, tvbgone_setup, tvbgone_loop, "TV-B-Gone"},
-#if defined(AXP) || defined(PWRMGMT)
-  {6, battery_setup, battery_loop, "Battery Info"},
-#endif
-#if defined(CARDPUTER)
+#if defined(AXP) || defined(PWRMGMT) || defined(CARDPUTER)
   {6, battery_setup, battery_loop, "Battery Info"},
 #endif
 #if defined(ROTATION)
