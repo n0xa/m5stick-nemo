@@ -303,7 +303,7 @@ void drawmenu(MENU thismenu[], int size) {
   DISP.setCursor(0, 0, 1);
   // scrolling menu
   if (cursor < 0) {
-    cursor = 0;  // Fixed: prevent jumping to end of menu
+    cursor = size - 1;  // rollover hack for up-arrow on cardputer  
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
