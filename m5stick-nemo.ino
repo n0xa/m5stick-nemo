@@ -278,6 +278,8 @@ bool clone_flg = false;
   #include "esp_wifi.h"                                                             //DEAUTH
   wifi_ap_record_t ap_record;                                                       //DEAUTH
 #endif
+
+#include "deauth_hunter.h"                                                          //DEAUTH HUNTER
 struct MENU {
   char name[19];
   int command;
@@ -1938,6 +1940,7 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
+  { TXT_DEAUTH_HUNTER, 24},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1980,6 +1983,9 @@ void wsmenu_loop() {
         break;
       case 5:
         current_proc = 1;
+        break;
+      case 24:
+        current_proc = 24;
         break;
     }
   }
@@ -2532,6 +2538,7 @@ ProcessHandler processes[] = {
 #endif
   {22, color_setup, color_loop, "Color Settings"},
   {23, theme_setup, theme_loop, "Theme Settings"},
+  {24, deauth_hunter_setup, deauth_hunter_loop, "Deauth Hunter"},
 #if defined(SDCARD) && !defined(CARDPUTER)
   {97, nullptr, ToggleSDCard, "SD Card"},
 #endif
@@ -2578,4 +2585,199 @@ void loop() {
 
   // Main process loop - unified handler
   runCurrentLoop();
+}
+
+///////////////////////////////
+/// DEAUTH HUNTER IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for Deauth Hunter
+DeauthStats deauth_stats;
+uint8_t current_channel_idx = 0;
+uint32_t last_channel_change = 0;
+uint32_t scan_cycle_start = 0;
+bool deauth_hunter_active = false;
+std::vector<String> seen_ap_macs;
+
+// Extract MAC address from packet
+void extract_mac(char *addr, uint8_t* data, uint16_t offset) {
+  sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", 
+          data[offset+0], data[offset+1], data[offset+2], 
+          data[offset+3], data[offset+4], data[offset+5]);
+}
+
+// Add unique AP to tracking list
+void add_unique_ap(const char* mac) {
+  String mac_str = String(mac);
+  for(auto& seen_mac : seen_ap_macs) {
+    if(seen_mac == mac_str) return; // Already seen
+  }
+  seen_ap_macs.push_back(mac_str);
+  deauth_stats.unique_aps = seen_ap_macs.size();
+}
+
+// Calculate RSSI bars (0-10 scale, -10 to -90 dBm)
+int calculate_rssi_bars(int rssi) {
+  if(rssi >= -10) return 10;      // Super close
+  if(rssi <= -90) return 1;       // Very weak
+  return (10 - ((rssi + 10) / -8)); // Linear scale
+}
+
+// Draw RSSI bar visualization
+void draw_rssi_bar(int bars, int rssi) {
+  DISP.print(" ");
+  DISP.print(rssi);
+  DISP.println("dBm");
+  // Draw filled bars
+  for(int i = 0; i < bars && i < 10; i++) {
+    DISP.print("█");
+  }
+  // Draw empty bars
+  for(int i = bars; i < 10; i++) {
+    DISP.print("_");
+  }
+}
+
+// Channel hopping function
+void hop_channel() {
+  uint32_t now = millis();
+  if(now - last_channel_change > 1000) { // Change channel every second
+    current_channel_idx = (current_channel_idx + 1) % NUM_CHANNELS;
+    esp_wifi_set_channel(WIFI_CHANNELS[current_channel_idx], WIFI_SECOND_CHAN_NONE);
+    last_channel_change = now;
+  }
+}
+
+// Reset statistics if 10 seconds have passed
+void reset_stats_if_needed() {
+  uint32_t now = millis();
+  if(now - deauth_stats.last_reset_time > 10000) { // 10 second cycle
+    deauth_stats.rssi_sum = 0;
+    deauth_stats.rssi_count = 0;
+    deauth_stats.avg_rssi = -90;
+    seen_ap_macs.clear();
+    deauth_stats.unique_aps = 0;
+    deauth_stats.last_reset_time = now;
+    scan_cycle_start = now;
+  }
+}
+
+// Deauth packet sniffer callback (adapted from ESP32Marauder)
+static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  if(!deauth_hunter_active) return;
+  
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  
+  if (type == WIFI_PKT_MGMT) {
+    // Check for deauth (0xC0) or disassoc (0xA0) frames
+    if (snifferPacket->payload[0] == 0xC0 || snifferPacket->payload[0] == 0xA0) {
+      deauth_stats.total_deauths++;
+      
+      // Extract source MAC (AP sending deauth)
+      char source_mac[18];
+      extract_mac(source_mac, snifferPacket->payload, 10);
+      add_unique_ap(source_mac);
+      
+      // Track RSSI for averaging
+      int rssi = snifferPacket->rx_ctrl.rssi;
+      deauth_stats.rssi_sum += rssi;
+      deauth_stats.rssi_count++;
+      if(deauth_stats.rssi_count > 0) {
+        deauth_stats.avg_rssi = deauth_stats.rssi_sum / deauth_stats.rssi_count;
+      }
+    }
+  }
+}
+
+// Start deauth monitoring
+void start_deauth_monitoring() {
+  WiFi.mode(WIFI_MODE_NULL);
+  esp_wifi_start();
+  
+  wifi_promiscuous_filter_t filt;
+  filt.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT;
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+  esp_wifi_set_promiscuous_rx_cb(&deauth_sniffer_callback);
+  
+  deauth_hunter_active = true;
+  scan_cycle_start = millis();
+  deauth_stats.last_reset_time = scan_cycle_start;
+}
+
+// Stop deauth monitoring  
+void stop_deauth_monitoring() {
+  esp_wifi_set_promiscuous(false);
+  deauth_hunter_active = false;
+  WiFi.mode(WIFI_MODE_STA);
+}
+
+// Deauth Hunter setup function
+void deauth_hunter_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.setCursor(0, 0);
+  
+  // Initialize stats
+  memset(&deauth_stats, 0, sizeof(DeauthStats));
+  deauth_stats.avg_rssi = -90;
+  seen_ap_macs.clear();
+  current_channel_idx = 0;
+  
+  start_deauth_monitoring();
+}
+
+// Deauth Hunter main loop
+void deauth_hunter_loop() {
+  // Handle button input for exit
+  if (check_next_press()) {
+    stop_deauth_monitoring();
+    isSwitching = true;
+    current_proc = 12; // Return to WiFi menu
+    return;
+  }
+  
+  // Channel hopping
+  hop_channel();
+  
+  // Reset stats every 10 seconds
+  reset_stats_if_needed();
+  
+  // Update display
+  uint32_t now = millis();
+  uint32_t cycle_elapsed = (now - scan_cycle_start) / 1000; // seconds elapsed
+  uint32_t refresh_countdown = (10 - (cycle_elapsed % 10)); // countdown to reset
+  
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.setTextSize(SMALL_TEXT);
+  
+  // Line 1: Title
+  DISP.println(TXT_DEAUTH_HUNTER);
+  
+  // Line 2: Countdown and Channel
+  DISP.print(TXT_DH_REFRESH);
+  DISP.print(" ");
+  DISP.print(refresh_countdown);
+  DISP.print("s  ");
+  DISP.print(TXT_DH_CHANNEL);
+  DISP.print(" ");
+  DISP.println(WIFI_CHANNELS[current_channel_idx]);
+  
+  // Line 3: Total Deauths and APs
+  DISP.print(TXT_DH_TOTAL);
+  DISP.print(" ");
+  DISP.print(deauth_stats.total_deauths);
+  DISP.print("    ");
+  DISP.print(TXT_DH_APS);
+  DISP.print(" ");
+  DISP.println(deauth_stats.unique_aps);
+  
+  // Line 4: Average RSSI with bar chart
+  DISP.print(TXT_DH_AVG_RSSI);
+  int bars = calculate_rssi_bars(deauth_stats.avg_rssi);
+  draw_rssi_bar(bars, deauth_stats.avg_rssi);
+  
+  delay(100); // Refresh rate limiting
 }
