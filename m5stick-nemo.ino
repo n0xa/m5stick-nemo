@@ -1940,7 +1940,7 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
-  { TXT_DEAUTH_HUNTER, 24},
+  { "Deauth Hunter", 24},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -2598,6 +2598,17 @@ uint32_t last_channel_change = 0;
 uint32_t scan_cycle_start = 0;
 bool deauth_hunter_active = false;
 std::vector<String> seen_ap_macs;
+bool channel_hop_pause = false;
+
+uint16_t getRSSIColor(int battery) {
+  if(battery < 25) {
+    return BLUE;
+  } else if(battery < 60) {
+    return YELLOW;
+  } else {
+    return RED;
+  }
+}
 
 // Extract MAC address from packet
 void extract_mac(char *addr, uint8_t* data, uint16_t offset) {
@@ -2616,25 +2627,23 @@ void add_unique_ap(const char* mac) {
   deauth_stats.unique_aps = seen_ap_macs.size();
 }
 
-// Calculate RSSI bars (0-10 scale, -10 to -90 dBm)
-int calculate_rssi_bars(int rssi) {
-  if(rssi >= -10) return 10;      // Super close
-  if(rssi <= -90) return 1;       // Very weak
-  return (10 - ((rssi + 10) / -8)); // Linear scale
-}
-
 // Draw RSSI bar visualization
-void draw_rssi_bar(int bars, int rssi) {
+void draw_rssi_bar(int rssi) {
   DISP.print(" ");
   DISP.print(rssi);
   DISP.println("dBm");
-  // Draw filled bars
-  for(int i = 0; i < bars && i < 10; i++) {
-    DISP.print("█");
-  }
-  // Draw empty bars
-  for(int i = bars; i < 10; i++) {
-    DISP.print("_");
+  DISP.println("Sel: Pause/Scan\nNext: Exit");
+  float rssipct = 100 + rssi;
+  // Cap values stronger than -20 dBm to prevent bar overflow
+  if (rssipct > 80) rssipct = 80; // -20 dBm = 80%
+  uint16_t rssiColor=getRSSIColor(rssipct);
+  int barX = 10, barY = 120, barW = 220, barH = 10;
+  DISP.drawRect(barX, barY, barW, barH, rssiColor);
+  int fillW = (barW - 4) * (rssipct / 80.0); 
+  DISP.fillRect(barX + 2, barY + 2, fillW, barH - 4, rssiColor);
+  int remainingW = (barW - 4) - fillW;
+  if (remainingW > 0) {
+    DISP.fillRect(barX + 2 + fillW, barY + 2, remainingW, barH - 4, TFT_BLACK);
   }
 }
 
@@ -2651,14 +2660,17 @@ void hop_channel() {
 // Reset statistics if 10 seconds have passed
 void reset_stats_if_needed() {
   uint32_t now = millis();
-  if(now - deauth_stats.last_reset_time > 10000) { // 10 second cycle
+  if(now - deauth_stats.last_reset_time > 1000) { // 1 second cycle
+    Serial.println("Resetting stats after 1 second...");
+    deauth_stats.total_deauths = 0;  // Reset total counter
     deauth_stats.rssi_sum = 0;
     deauth_stats.rssi_count = 0;
-    deauth_stats.avg_rssi = -90;
+    deauth_stats.avg_rssi = -100;
     seen_ap_macs.clear();
     deauth_stats.unique_aps = 0;
     deauth_stats.last_reset_time = now;
     scan_cycle_start = now;
+    Serial.printf("Stats reset. Total: %d, RSSI: %d\n", deauth_stats.total_deauths, deauth_stats.avg_rssi);
   }
 }
 
@@ -2668,9 +2680,15 @@ static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type)
   
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   
+  // Debug: Show all management frames received
   if (type == WIFI_PKT_MGMT) {
+    uint8_t frame_type = snifferPacket->payload[0];
+    
     // Check for deauth (0xC0) or disassoc (0xA0) frames
-    if (snifferPacket->payload[0] == 0xC0 || snifferPacket->payload[0] == 0xA0) {
+    if (frame_type == 0xC0 || frame_type == 0xA0) {
+      Serial.printf("DEAUTH DETECTED! Frame type: 0x%02X, RSSI: %d, Channel: %d\n", 
+                   frame_type, snifferPacket->rx_ctrl.rssi, snifferPacket->rx_ctrl.channel);
+      
       deauth_stats.total_deauths++;
       
       // Extract source MAC (AP sending deauth)
@@ -2678,31 +2696,70 @@ static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type)
       extract_mac(source_mac, snifferPacket->payload, 10);
       add_unique_ap(source_mac);
       
-      // Track RSSI for averaging
+      Serial.printf("Source MAC: %s\n", source_mac);
+      
+      // Track RSSI for averaging (prevent overflow with rolling average)
       int rssi = snifferPacket->rx_ctrl.rssi;
-      deauth_stats.rssi_sum += rssi;
-      deauth_stats.rssi_count++;
-      if(deauth_stats.rssi_count > 0) {
-        deauth_stats.avg_rssi = deauth_stats.rssi_sum / deauth_stats.rssi_count;
+      
+      if(deauth_stats.rssi_count == 0) {
+        // First measurement
+        deauth_stats.avg_rssi = rssi;
+        deauth_stats.rssi_count = 1;
+        deauth_stats.rssi_sum = rssi;
+      } else {
+        // Rolling average to prevent overflow
+        deauth_stats.rssi_count++;
+        deauth_stats.rssi_sum += rssi;
+        deauth_stats.avg_rssi = rssi;
+        
+        // Prevent overflow by resetting sums when count gets high
+        if(deauth_stats.rssi_count > 1000) {
+          deauth_stats.rssi_sum = deauth_stats.avg_rssi;
+          deauth_stats.rssi_count = 1;
+        }
       }
+      
+      Serial.printf("RSSI: %d, Count: %d, Avg: %d\n", rssi, deauth_stats.rssi_count, deauth_stats.avg_rssi);
+    }
+    
+    // Debug: Periodically show we're getting packets
+    static uint32_t packet_count = 0;
+    packet_count++;
+    if (packet_count % 100 == 0) {
+      Serial.printf("Packets received: %d, Frame type: 0x%02X\n", packet_count, frame_type);
     }
   }
 }
 
 // Start deauth monitoring
 void start_deauth_monitoring() {
-  WiFi.mode(WIFI_MODE_NULL);
-  esp_wifi_start();
+  Serial.println("Starting Deauth Hunter monitoring...");
   
+  // Properly stop any existing WiFi operations
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  delay(100);
+  
+  // Initialize WiFi in promiscuous mode
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  
+  // Set up promiscuous mode
   wifi_promiscuous_filter_t filt;
-  filt.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT;
+  filt.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA;
+  
   esp_wifi_set_promiscuous(true);
   esp_wifi_set_promiscuous_filter(&filt);
   esp_wifi_set_promiscuous_rx_cb(&deauth_sniffer_callback);
   
+  // Set initial channel
+  esp_wifi_set_channel(WIFI_CHANNELS[current_channel_idx], WIFI_SECOND_CHAN_NONE);
+  
   deauth_hunter_active = true;
   scan_cycle_start = millis();
   deauth_stats.last_reset_time = scan_cycle_start;
+  
+  Serial.println("Deauth Hunter monitoring started!");
 }
 
 // Stop deauth monitoring  
@@ -2738,8 +2795,15 @@ void deauth_hunter_loop() {
     return;
   }
   
+  if (check_select_press()) {
+    channel_hop_pause = !channel_hop_pause;
+    delay(500);
+  }
+
   // Channel hopping
-  hop_channel();
+  if (!channel_hop_pause){
+    hop_channel();
+  }
   
   // Reset stats every 10 seconds
   reset_stats_if_needed();
@@ -2749,35 +2813,31 @@ void deauth_hunter_loop() {
   uint32_t cycle_elapsed = (now - scan_cycle_start) / 1000; // seconds elapsed
   uint32_t refresh_countdown = (10 - (cycle_elapsed % 10)); // countdown to reset
   
-  DISP.fillScreen(BGCOLOR);
+  //DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
   DISP.setTextSize(SMALL_TEXT);
+
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("Deauth Hunter");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+
   
-  // Line 1: Title
-  DISP.println(TXT_DEAUTH_HUNTER);
+  // Line 2: Channel & AP Count
+  DISP.printf("Ch: ");
+  DISP.printf("%-2d", WIFI_CHANNELS[current_channel_idx]);
+  DISP.print(" APs: ");
+  DISP.printf("%-2d\n", deauth_stats.unique_aps);
   
-  // Line 2: Countdown and Channel
-  DISP.print(TXT_DH_REFRESH);
-  DISP.print(" ");
-  DISP.print(refresh_countdown);
-  DISP.print("s  ");
-  DISP.print(TXT_DH_CHANNEL);
-  DISP.print(" ");
-  DISP.println(WIFI_CHANNELS[current_channel_idx]);
-  
-  // Line 3: Total Deauths and APs
-  DISP.print(TXT_DH_TOTAL);
-  DISP.print(" ");
-  DISP.print(deauth_stats.total_deauths);
-  DISP.print("    ");
-  DISP.print(TXT_DH_APS);
-  DISP.print(" ");
-  DISP.println(deauth_stats.unique_aps);
+  // Line 3: Total Deauths
+  DISP.print("Pkts/Sec: ");
+  DISP.printf("%-5d\n", deauth_stats.total_deauths);
   
   // Line 4: Average RSSI with bar chart
-  DISP.print(TXT_DH_AVG_RSSI);
-  int bars = calculate_rssi_bars(deauth_stats.avg_rssi);
-  draw_rssi_bar(bars, deauth_stats.avg_rssi);
+  DISP.print("RSSI:");
+  draw_rssi_bar(deauth_stats.avg_rssi);
   
   delay(100); // Refresh rate limiting
 }

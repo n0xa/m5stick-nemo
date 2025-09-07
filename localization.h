@@ -96,12 +96,6 @@
   #define TXT_SET_FGCOLOR "MAIN COLOR"
   #define TXT_SET_BGCOLOR "BACKGROUND COLOR"
   #define TXT_THEME "Color Theme"
-  #define TXT_DEAUTH_HUNTER "Deauth Hunter"
-  #define TXT_DH_REFRESH "Timer: "
-  #define TXT_DH_CHANNEL "Ch:"
-  #define TXT_DH_TOTAL "Total:"
-  #define TXT_DH_APS "APs:"
-  #define TXT_DH_AVG_RSSI "Avg RSSI:"
 #endif
 
 #if defined(LANGUAGE_IT_IT)
@@ -202,12 +196,6 @@
   #define TXT_SET_FGCOLOR "COLORE TESTO"
   #define TXT_SET_BGCOLOR "COLORE SFONDO"
   #define TXT_THEME "Tema Colori"
-  #define TXT_DEAUTH_HUNTER "Deauth Hunter"
-  #define TXT_DH_REFRESH "Aggiorna"
-  #define TXT_DH_CHANNEL "Ch:"
-  #define TXT_DH_TOTAL "Totali:"
-  #define TXT_DH_APS "APs:"
-  #define TXT_DH_AVG_RSSI "RSSI Medio:"
 #endif
 
 #if defined(LANGUAGE_PT_BR)
@@ -308,12 +296,6 @@
   #define TXT_SET_FGCOLOR "COR PRINCIPAL"
   #define TXT_SET_BGCOLOR "COR DE FUNDO"
   #define TXT_THEME "Tema De Cores"
-  #define TXT_DEAUTH_HUNTER "Cacador Deauth"
-  #define TXT_DH_REFRESH "Atualizar"
-  #define TXT_DH_CHANNEL "Ch:"
-  #define TXT_DH_TOTAL "Total:"
-  #define TXT_DH_APS "APs:"
-  #define TXT_DH_AVG_RSSI "RSSI Medio:"
 #endif
 
 #if defined(LANGUAGE_FR_FR)
@@ -414,10 +396,4 @@
   #define TXT_SET_FGCOLOR "COULEUR PRINCIPALE"
   #define TXT_SET_BGCOLOR "COULEUR SECONDAIRE"
   #define TXT_THEME "Theme"
-  #define TXT_DEAUTH_HUNTER "Chasseur Deauth"
-  #define TXT_DH_REFRESH "Actualiser"
-  #define TXT_DH_CHANNEL "Ch:"
-  #define TXT_DH_TOTAL "Total:"
-  #define TXT_DH_APS "APs:"
-  #define TXT_DH_AVG_RSSI "RSSI Moyen:"
 #endif

@@ -1,6 +1,6 @@
 // Deauth Hunter - WiFi Deauthentication Attack Detection
 // Based on ESP32Marauder's deauth sniffing implementation
-// Adapted for M5Stick-NEMO by Claude Code
+// Adapted for M5Stick-NEMO
 
 #ifndef DEAUTH_HUNTER_H
 #define DEAUTH_HUNTER_H
