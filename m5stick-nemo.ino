@@ -256,7 +256,7 @@ bool clone_flg = false;
 // DEAUTH end
 float bh_max_rssi = -40;
 int bh_pkts = 0;
-float dh_max_rssi = -70;
+float dh_max_rssi = -20;
 int dh_pkts = 0;
 
 
@@ -634,6 +634,10 @@ MENU smenu[] = {
     { TXT_SDCARD, 97},
   #endif
 #endif
+  { "BH RSSI", 29},
+  { "DH RSSI", 30},
+  { "BH Alert Pkts", 31},
+  { "DH Alert Pkts", 32},
   { TXT_THEME, 23},
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
@@ -2447,7 +2451,7 @@ Serial.begin();
     Serial.printf("EEPROM 8 - DH RSSI:    %d\n", EEPROM.read(8));
     Serial.printf("EEPROM 9 - DH Pkts:    %d\n", EEPROM.read(9));
     
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19 || EEPROM.read(6) > 100 || EEPROM.read(8) > 100 ) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
@@ -2462,7 +2466,7 @@ Serial.begin();
       EEPROM.write(5, 1);    // BGcolor Black
       EEPROM.write(6, 40);   // -40 RSSI Max for BLE Hunter
       EEPROM.write(7, 50);   // > 50 Pkts triggers BLE Hunter Alert 
-      EEPROM.write(8, 70);   // -70 RSSI Max for Deauth Hunter
+      EEPROM.write(8, 20);   // -20 RSSI Max for Deauth Hunter
       EEPROM.write(9, 50);   // > 50 Pkts triggers Deauth Hunter Alert
       EEPROM.commit();
     }
@@ -2566,6 +2570,10 @@ ProcessHandler processes[] = {
   {23, theme_setup, theme_loop, "Theme Settings"},
   {24, deauth_hunter_setup, deauth_hunter_loop, "Deauth Hunter"},
   {25, ble_hunter_setup, ble_hunter_loop, "BLE Hunter"},
+  {29, bh_rssi_setup, bh_rssi_loop, "BH RSSI Setting"},
+  {30, dh_rssi_setup, dh_rssi_loop, "DH RSSI Setting"}, 
+  {31, bh_alert_pkts_setup, bh_alert_pkts_loop, "BH Alert Pkts Setting"},
+  {32, dh_alert_pkts_setup, dh_alert_pkts_loop, "DH Alert Pkts Setting"},
 #if defined(SDCARD) && !defined(CARDPUTER)
   {97, nullptr, ToggleSDCard, "SD Card"},
 #endif
@@ -2628,8 +2636,6 @@ std::vector<String> seen_ap_macs;
 bool channel_hop_pause = false;
 
 uint16_t getRSSIColor(float rssi, float max) {
-  Serial.printf("rssibar: %f / %f\n", rssi, max);
-
   if(rssi < max * .5 ) {
     return BLUE;
   } else if(rssi < max * .8 ) {
@@ -2664,6 +2670,7 @@ void draw_rssi_bar(float rssi, float rssimax = -20) {
   DISP.println("Sel: Pause/Scan\nNext: Exit");
   float rssipct = 100 + rssi;
   float maxpct = 100 + rssimax;
+
   // Cap values stronger than -20 dBm to prevent bar overflow
   if (rssipct > maxpct) rssipct = maxpct; 
   uint16_t rssiColor=getRSSIColor(rssipct, maxpct);
@@ -2811,8 +2818,9 @@ void deauth_hunter_setup() {
   deauth_stats.avg_rssi = -90;
   seen_ap_macs.clear();
   current_channel_idx = 0;
-  
+  channel_hop_pause = false;
   start_deauth_monitoring();
+  delay(500);
 }
 
 // Deauth Hunter main loop
@@ -2862,9 +2870,16 @@ void deauth_hunter_loop() {
   DISP.printf("%-2d\n", deauth_stats.unique_aps);
   
   // Line 3: Total Deauths
-  DISP.print("Pkts/Sec: ");
-  DISP.printf("%-5d\n", deauth_stats.total_deauths);
-  
+  DISP.printf("Pkts: %-5d / %d\n", deauth_stats.total_deauths, dh_pkts);
+  if (dh_pkts && !channel_hop_pause && deauth_stats.total_deauths > dh_pkts){
+    #if defined(STICK_C_PLUS)
+      SPEAKER.tone(4000);
+      delay(50);
+      SPEAKER.mute();
+    #elif defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);   
+    #endif
+  }
   // Line 4: Average RSSI with bar chart
   DISP.print("RSSI:");
   draw_rssi_bar(deauth_stats.avg_rssi, dh_max_rssi);
@@ -3052,7 +3067,7 @@ void ble_hunter_loop() {
   static uint32_t last_scan = 0;
   uint32_t now = millis();
   
-  if (!ble_channel_hop_pause && ble_scanner && (now - last_scan > 1000)) {
+  if (ble_scanner && (now - last_scan > 1000)) {
     ble_scanner->start(BLE_SCAN_TIME, false); // Scan for BLE_SCAN_TIME seconds, don't restart
     last_scan = now;
   }
@@ -3078,7 +3093,16 @@ void ble_hunter_loop() {
   DISP.printf("Devices: %d\n", ble_stats.unique_devices);
   
   // Line 3: Total packets seen
-  DISP.printf("Pkts: %-5d\n", ble_stats.total_devices);
+  DISP.printf("Pkts: %-5d / %3d\n", ble_stats.total_devices, bh_pkts);
+    if (bh_pkts && !ble_channel_hop_pause && ble_stats.total_devices > bh_pkts){
+    #if defined(STICK_C_PLUS)
+      SPEAKER.tone(4000);
+      delay(50);
+      SPEAKER.mute();
+    #elif defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);   
+    #endif
+    }
   
   // Line 4: Average RSSI with bar chart
   if (ble_stats.rssi_count > 0) {
@@ -3093,4 +3117,207 @@ void ble_hunter_loop() {
 void ble_hunter_cleanup() {
   stop_ble_monitoring();
   seen_ble_devices.clear();
+}
+
+///////////////////////////////
+/// HUNTER SETTINGS IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for hunter settings
+int bh_rssi_threshold = -40;
+int dh_rssi_threshold = -20; 
+int bh_alert_pkts = 10;
+int dh_alert_pkts = 10;
+
+// BH RSSI Setting (-10 to -100 in increments of 5)
+void bh_rssi_setup() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH RSSI Threshold");
+  
+  #if defined(USE_EEPROM)
+    int stored_value = -(int8_t)EEPROM.read(6); // Cast to signed
+    if(stored_value >= -100 && stored_value <= -10 && stored_value % 5 == 0) {
+      bh_rssi_threshold = stored_value;
+    }
+  #endif
+  
+  cursor = (bh_rssi_threshold + 100) / 5; // Convert -100 to -10 range to 0-18
+  rstOverride = true;
+  delay(500);
+  DISP.fillScreen(BGCOLOR);
+}
+
+void bh_rssi_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH RSSI Threshold");
+  DISP.printf("Current: %d dBm\n", bh_rssi_threshold);
+  DISP.println("Range: -10 to -100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 19; // 0-18 for -100 to -10 in steps of 5
+    bh_rssi_threshold = -100 + (cursor * 5);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.printf("BH RSSI: %d dBm", bh_rssi_threshold);
+    delay(250);
+    DISP.fillScreen(BGCOLOR);
+
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      Serial.printf("Writing %d to EEPROM 6 - value %d\n", abs(bh_rssi_threshold), bh_rssi_threshold);
+      EEPROM.write(6, abs(bh_rssi_threshold)); // Store as signed byte
+      EEPROM.commit();
+      bh_max_rssi = bh_rssi_threshold;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// DH RSSI Setting (-10 to -100 in increments of 5)  
+void dh_rssi_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("DH RSSI Threshold");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = -(int8_t)EEPROM.read(8); // Cast to signed
+    if(stored_value >= -100 && stored_value <= -10 && stored_value % 5 == 0) {
+      dh_rssi_threshold = stored_value;
+    }
+  #endif
+  
+  cursor = (dh_rssi_threshold + 100) / 5; // Convert -100 to -10 range to 0-18
+  rstOverride = true;
+  
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.printf("DH RSSI: %d dBm\n", dh_rssi_threshold);
+  delay(500);
+}
+
+void dh_rssi_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("DH RSSI Threshold");
+  DISP.printf("Current: %d dBm\n", dh_rssi_threshold);
+  DISP.println("Range: -10 to -100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 19; // 0-18 for -100 to -10 in steps of 5
+    dh_rssi_threshold = -100 + (cursor * 5);
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      Serial.printf("Writing %d to EEPROM 8 - value %d\n", abs(dh_rssi_threshold), dh_rssi_threshold);
+      EEPROM.write(8, abs(dh_rssi_threshold)); // Store as signed byte
+      EEPROM.commit();
+      dh_max_rssi = dh_rssi_threshold;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// BH Alert Pkts Setting (0-100)
+void bh_alert_pkts_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("BH Alert Packets");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = EEPROM.read(7);
+    if(stored_value <= 100) {
+      bh_alert_pkts = stored_value;
+    }
+  #endif
+  
+  cursor = bh_alert_pkts;
+  rstOverride = true;
+}
+
+void bh_alert_pkts_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH Alert Packets");
+  DISP.printf("Current: %3d\n", bh_alert_pkts);
+  DISP.println("Range: 0-100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 101; // 0-100
+        if (cursor < 0) {
+      cursor = 99;
+    }
+    bh_alert_pkts = cursor;
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(7, bh_alert_pkts);
+      EEPROM.commit();
+      bh_pkts=bh_alert_pkts;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// DH Alert Pkts Setting (0-100)
+void dh_alert_pkts_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("DH Alert Packets");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = EEPROM.read(9);
+    if(stored_value <= 100) {
+      dh_alert_pkts = stored_value;
+    }
+  #endif
+  cursor = dh_alert_pkts;
+  rstOverride = true;
+}
+
+void dh_alert_pkts_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("DH Alert Packets");
+  DISP.printf("Current: %3d\n", dh_alert_pkts);
+  DISP.println("Range: 0-100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 101; // 0-100  
+    if (cursor < 0) {
+      cursor = 99;
+    }
+    dh_alert_pkts = cursor;
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(9, dh_alert_pkts);
+      EEPROM.commit();
+      dh_pkts=dh_alert_pkts;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
 }
