@@ -254,6 +254,10 @@ bool target_deauth = false;
 int deauth_tick = 0;        // used to delay the deauth packets when combined to Nemo Portal
 bool clone_flg = false;
 // DEAUTH end
+float bh_max_rssi = -40;
+int bh_pkts = 0;
+float dh_max_rssi = -70;
+int dh_pkts = 0;
 
 
 #if defined(USE_EEPROM)
@@ -659,13 +663,14 @@ void smenu_onSelect() {
 }
 
 void smenu_setup() {
-  menuController.setup(smenu, smenu_size);
+  menuController.setup(smenu, smenu_size, nullptr, smenu_onSelect);
 }
 
 void clearSettings(){
   #if defined(USE_EEPROM)
   for(int i = 0; i < EEPROM_SIZE; i++) {
     EEPROM.write(i, 255);
+    Serial.printf("clearing byte %d\n", i);
   }
   EEPROM.commit();
   #endif
@@ -2416,6 +2421,7 @@ void portal_loop(){
 
 /// ENTRY ///
 void setup() {
+Serial.begin();
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
@@ -2436,6 +2442,11 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
+    Serial.printf("EEPROM 6 - BLE RSSI:   %d\n", EEPROM.read(6));
+    Serial.printf("EEPROM 7 - BLE Pkts:   %d\n", EEPROM.read(7));
+    Serial.printf("EEPROM 8 - DH RSSI:    %d\n", EEPROM.read(8));
+    Serial.printf("EEPROM 9 - DH Pkts:    %d\n", EEPROM.read(9));
+    
     if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
@@ -2449,6 +2460,10 @@ void setup() {
       EEPROM.write(3, 0);    // TVBG NA Region
       EEPROM.write(4, 11);   // FGColor Green
       EEPROM.write(5, 1);    // BGcolor Black
+      EEPROM.write(6, 40);   // -40 RSSI Max for BLE Hunter
+      EEPROM.write(7, 50);   // > 50 Pkts triggers BLE Hunter Alert 
+      EEPROM.write(8, 70);   // -70 RSSI Max for Deauth Hunter
+      EEPROM.write(9, 50);   // > 50 Pkts triggers Deauth Hunter Alert
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
@@ -2457,6 +2472,10 @@ void setup() {
     region = EEPROM.read(3);
     setcolor(true, EEPROM.read(4));
     setcolor(false, EEPROM.read(5));
+    bh_max_rssi = -(EEPROM.read(6));
+    bh_pkts = EEPROM.read(7);
+    dh_max_rssi = -(EEPROM.read(8));
+    dh_pkts = EEPROM.read(9);
   #endif
   getSSID();
   
@@ -2608,10 +2627,12 @@ bool deauth_hunter_active = false;
 std::vector<String> seen_ap_macs;
 bool channel_hop_pause = false;
 
-uint16_t getRSSIColor(int battery) {
-  if(battery < 25) {
+uint16_t getRSSIColor(float rssi, float max) {
+  Serial.printf("rssibar: %f / %f\n", rssi, max);
+
+  if(rssi < max * .5 ) {
     return BLUE;
-  } else if(battery < 60) {
+  } else if(rssi < max * .8 ) {
     return YELLOW;
   } else {
     return RED;
@@ -2636,18 +2657,19 @@ void add_unique_ap(const char* mac) {
 }
 
 // Draw RSSI bar visualization
-void draw_rssi_bar(int rssi) {
+void draw_rssi_bar(float rssi, float rssimax = -20) {
   DISP.print(" ");
   DISP.print(rssi);
   DISP.println("dBm");
   DISP.println("Sel: Pause/Scan\nNext: Exit");
   float rssipct = 100 + rssi;
+  float maxpct = 100 + rssimax;
   // Cap values stronger than -20 dBm to prevent bar overflow
-  if (rssipct > 80) rssipct = 80; // -20 dBm = 80%
-  uint16_t rssiColor=getRSSIColor(rssipct);
+  if (rssipct > maxpct) rssipct = maxpct; 
+  uint16_t rssiColor=getRSSIColor(rssipct, maxpct);
   int barX = 10, barY = 120, barW = 220, barH = 10;
   DISP.drawRect(barX, barY, barW, barH, rssiColor);
-  int fillW = (barW - 4) * (rssipct / 80.0); 
+  int fillW = (barW - 4) * (rssipct / maxpct); 
   DISP.fillRect(barX + 2, barY + 2, fillW, barH - 4, rssiColor);
   int remainingW = (barW - 4) - fillW;
   if (remainingW > 0) {
@@ -2707,7 +2729,7 @@ static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type)
       Serial.printf("Source MAC: %s\n", source_mac);
       
       // Track RSSI for averaging (prevent overflow with rolling average)
-      int rssi = snifferPacket->rx_ctrl.rssi;
+      float rssi = snifferPacket->rx_ctrl.rssi;
       
       if(deauth_stats.rssi_count == 0) {
         // First measurement
@@ -2845,7 +2867,7 @@ void deauth_hunter_loop() {
   
   // Line 4: Average RSSI with bar chart
   DISP.print("RSSI:");
-  draw_rssi_bar(deauth_stats.avg_rssi);
+  draw_rssi_bar(deauth_stats.avg_rssi, dh_max_rssi);
   
   delay(100); // Refresh rate limiting
 }
@@ -3061,7 +3083,7 @@ void ble_hunter_loop() {
   // Line 4: Average RSSI with bar chart
   if (ble_stats.rssi_count > 0) {
     DISP.print("RSSI:");
-    draw_rssi_bar(ble_stats.avg_rssi); // Using existing RSSI bar function
+    draw_rssi_bar(ble_stats.avg_rssi, bh_max_rssi); // Using existing RSSI bar function
   }
   
   delay(100); // Refresh rate limiting
