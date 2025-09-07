@@ -280,6 +280,7 @@ bool clone_flg = false;
 #endif
 
 #include "deauth_hunter.h"                                                          //DEAUTH HUNTER
+#include "ble_hunter.h"                                                             //BLE HUNTER
 struct MENU {
   char name[19];
   int command;
@@ -1387,6 +1388,7 @@ MENU btmenu[] = {
   { "Android Spam", 4},
   { TXT_SA_CRASH, 2},
   { "BT Maelstrom", 3},
+  { "BLE Hunter", 25},
 };
 int btmenu_size = sizeof(btmenu) / sizeof (MENU);
 
@@ -1464,6 +1466,11 @@ void btmenu_loop() {
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
+        break;
+      case 25:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 25; // BLE Hunter
         break;
     }
   }
@@ -2539,6 +2546,7 @@ ProcessHandler processes[] = {
   {22, color_setup, color_loop, "Color Settings"},
   {23, theme_setup, theme_loop, "Theme Settings"},
   {24, deauth_hunter_setup, deauth_hunter_loop, "Deauth Hunter"},
+  {25, ble_hunter_setup, ble_hunter_loop, "BLE Hunter"},
 #if defined(SDCARD) && !defined(CARDPUTER)
   {97, nullptr, ToggleSDCard, "SD Card"},
 #endif
@@ -2840,4 +2848,227 @@ void deauth_hunter_loop() {
   draw_rssi_bar(deauth_stats.avg_rssi);
   
   delay(100); // Refresh rate limiting
+}
+
+///////////////////////////////
+/// BLE HUNTER IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for BLE Hunter
+BLEStats ble_stats;
+BLEScan* ble_scanner = nullptr;
+bool ble_hunter_active = false;
+bool ble_channel_hop_pause = false;
+std::vector<BLEDeviceInfo> seen_ble_devices;
+
+// BLE scan callback implementation
+void BLEHunterCallback::onResult(BLEAdvertisedDevice advertisedDevice) {
+  if (!ble_hunter_active) return;
+  
+  // Rate limiting to prevent memory overflow
+  static uint32_t last_process = 0;
+  uint32_t now = millis();
+  if (now - last_process < 50) { // Limit to 20 devices per second
+    return;
+  }
+  last_process = now;
+  
+  String mac = advertisedDevice.getAddress().toString().c_str();
+  String name = advertisedDevice.getName().c_str();
+  int32_t rssi = advertisedDevice.getRSSI();
+  
+  // Update statistics
+  ble_stats.total_devices++;
+  ble_stats.rssi_sum += rssi;
+  ble_stats.rssi_count++;
+  ble_stats.avg_rssi = rssi;
+  
+  // Add unique device
+  add_unique_ble_device(mac, name, rssi);
+}
+
+// Add unique BLE device to seen list
+void add_unique_ble_device(const String& mac, const String& name, int32_t rssi) {
+  // Check if device already exists
+  for (auto& device : seen_ble_devices) {
+    if (device.mac == mac) {
+      device.rssi = rssi; // Update RSSI
+      device.last_seen = millis();
+      return;
+    }
+  }
+  
+  // Check if we've hit the device limit
+  if (seen_ble_devices.size() >= MAX_BLE_DEVICES) {
+    return; // Don't add more devices to prevent memory overflow
+  }
+  
+  // Add new device
+  BLEDeviceInfo newDevice;
+  newDevice.mac = mac;
+  newDevice.name = name.length() > 0 ? name : "Unknown";
+  newDevice.rssi = rssi;
+  newDevice.last_seen = millis();
+  newDevice.device_type = detect_device_type(mac, name);
+  
+  seen_ble_devices.push_back(newDevice);
+  ble_stats.unique_devices = seen_ble_devices.size();
+}
+
+// Detect device type based on MAC and name
+String detect_device_type(const String& mac, const String& name) {
+  // Apple devices
+  if (name.indexOf("AirPods") != -1 || name.indexOf("iPhone") != -1 || 
+      name.indexOf("iPad") != -1 || name.indexOf("Apple") != -1) {
+    return "Apple";
+  }
+  
+  // Android devices
+  if (name.indexOf("Android") != -1 || name.indexOf("Galaxy") != -1 || 
+      name.indexOf("Pixel") != -1) {
+    return "Android";
+  }
+  
+  // Check MAC prefix for known vendors
+  String macPrefix = mac.substring(0, 8);
+  macPrefix.toUpperCase();
+  
+  if (macPrefix.startsWith("FC:58:FA") || macPrefix.startsWith("3C:7C:3F")) {
+    return "Apple";
+  }
+  
+  return "Unknown";
+}
+
+// Start BLE monitoring
+void start_ble_monitoring() {
+  if (ble_hunter_active) return;
+  
+  // Initialize BLE
+  BLEDevice::init("");
+  ble_scanner = BLEDevice::getScan();
+  ble_scanner->setAdvertisedDeviceCallbacks(new BLEHunterCallback());
+  ble_scanner->setActiveScan(true);
+  ble_scanner->setInterval(BLE_SCAN_INTERVAL);
+  ble_scanner->setWindow(BLE_SCAN_WINDOW);
+  ble_hunter_active = true;
+}
+
+// Stop BLE monitoring
+void stop_ble_monitoring() {
+  if (!ble_hunter_active) return;
+  
+  if (ble_scanner) {
+    ble_scanner->stop();
+    ble_scanner->clearResults();
+  }
+  BLEDevice::deinit();
+  
+  ble_hunter_active = false;
+}
+
+// Reset BLE statistics if needed
+void reset_ble_stats_if_needed() {
+  uint32_t now = millis();
+  if (now - ble_stats.last_reset_time > 10000) { // Reset every 10 seconds
+    ble_stats.total_devices = 0;
+    ble_stats.rssi_sum = 0;
+    ble_stats.rssi_count = 0;
+    ble_stats.avg_rssi = -70;
+    ble_stats.last_reset_time = now;
+    
+    // Clean up old devices (older than 15 seconds) or if we have too many
+    seen_ble_devices.erase(
+      std::remove_if(seen_ble_devices.begin(), seen_ble_devices.end(),
+        [now](const BLEDeviceInfo& device) {
+          return (now - device.last_seen) > 15000;
+        }),
+      seen_ble_devices.end()
+    );
+    
+    // If still too many devices, remove oldest ones
+    while (seen_ble_devices.size() > MAX_BLE_DEVICES) {
+      seen_ble_devices.erase(seen_ble_devices.begin());
+    }
+    
+    ble_stats.unique_devices = seen_ble_devices.size();
+  }
+}
+
+// BLE Hunter setup
+void ble_hunter_setup() {
+  // Reset statistics
+  ble_stats = BLEStats();
+  seen_ble_devices.clear();
+  ble_channel_hop_pause = false;
+  ble_stats.last_reset_time = millis();
+  
+  // Setup display
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);  
+  start_ble_monitoring();
+}
+
+// BLE Hunter main loop
+void ble_hunter_loop() {
+  // Handle button input for exit
+  if (check_next_press()) {
+    stop_ble_monitoring();
+    isSwitching = true;
+    current_proc = 16; // Return to Bluetooth menu
+    return;
+  }
+  
+  if (check_select_press()) {
+    ble_channel_hop_pause = !ble_channel_hop_pause;
+    delay(500);
+  }
+
+  // Periodic BLE scanning (unless paused)
+  static uint32_t last_scan = 0;
+  uint32_t now = millis();
+  
+  if (!ble_channel_hop_pause && ble_scanner && (now - last_scan > 1000)) {
+    ble_scanner->start(BLE_SCAN_TIME, false); // Scan for BLE_SCAN_TIME seconds, don't restart
+    last_scan = now;
+  }
+  
+  // Reset stats every 10 seconds
+  reset_ble_stats_if_needed();
+  
+  // Update display
+  uint32_t cycle_elapsed = (now - ble_stats.last_reset_time) / 1000;
+  uint32_t refresh_countdown = (10 - (cycle_elapsed % 10));
+  
+  DISP.setCursor(0, 0);
+  DISP.setTextSize(SMALL_TEXT);
+
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(" BLE Hunter  ");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  
+  // Line 2: Status and Device Count
+  DISP.printf("Devices: %d\n", ble_stats.unique_devices);
+  
+  // Line 3: Total packets seen
+  DISP.printf("Pkts: %-5d\n", ble_stats.total_devices);
+  
+  // Line 4: Average RSSI with bar chart
+  if (ble_stats.rssi_count > 0) {
+    DISP.print("RSSI:");
+    draw_rssi_bar(ble_stats.avg_rssi); // Using existing RSSI bar function
+  }
+  
+  delay(100); // Refresh rate limiting
+}
+
+// BLE Hunter cleanup
+void ble_hunter_cleanup() {
+  stop_ble_monitoring();
+  seen_ble_devices.clear();
 }
