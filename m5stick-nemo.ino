@@ -2425,7 +2425,7 @@ void portal_loop(){
 
 /// ENTRY ///
 void setup() {
-Serial.begin();
+Serial.begin(115200);
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
@@ -2698,7 +2698,6 @@ void hop_channel() {
 void reset_stats_if_needed() {
   uint32_t now = millis();
   if(now - deauth_stats.last_reset_time > 1000) { // 1 second cycle
-    Serial.println("Resetting stats after 1 second...");
     deauth_stats.total_deauths = 0;  // Reset total counter
     deauth_stats.rssi_sum = 0;
     deauth_stats.rssi_count = 0;
@@ -2707,7 +2706,6 @@ void reset_stats_if_needed() {
     deauth_stats.unique_aps = 0;
     deauth_stats.last_reset_time = now;
     scan_cycle_start = now;
-    Serial.printf("Stats reset. Total: %d, RSSI: %d\n", deauth_stats.total_deauths, deauth_stats.avg_rssi);
   }
 }
 
@@ -2723,17 +2721,12 @@ static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type)
     
     // Check for deauth (0xC0) or disassoc (0xA0) frames
     if (frame_type == 0xC0 || frame_type == 0xA0) {
-      Serial.printf("DEAUTH DETECTED! Frame type: 0x%02X, RSSI: %d, Channel: %d\n", 
-                   frame_type, snifferPacket->rx_ctrl.rssi, snifferPacket->rx_ctrl.channel);
-      
       deauth_stats.total_deauths++;
       
       // Extract source MAC (AP sending deauth)
       char source_mac[18];
       extract_mac(source_mac, snifferPacket->payload, 10);
       add_unique_ap(source_mac);
-      
-      Serial.printf("Source MAC: %s\n", source_mac);
       
       // Track RSSI for averaging (prevent overflow with rolling average)
       float rssi = snifferPacket->rx_ctrl.rssi;
@@ -2755,23 +2748,16 @@ static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type)
           deauth_stats.rssi_count = 1;
         }
       }
-      
-      Serial.printf("RSSI: %d, Count: %d, Avg: %d\n", rssi, deauth_stats.rssi_count, deauth_stats.avg_rssi);
     }
     
     // Debug: Periodically show we're getting packets
     static uint32_t packet_count = 0;
     packet_count++;
-    if (packet_count % 100 == 0) {
-      Serial.printf("Packets received: %d, Frame type: 0x%02X\n", packet_count, frame_type);
-    }
   }
 }
 
 // Start deauth monitoring
 void start_deauth_monitoring() {
-  Serial.println("Starting Deauth Hunter monitoring...");
-  
   // Properly stop any existing WiFi operations
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
@@ -2795,8 +2781,6 @@ void start_deauth_monitoring() {
   deauth_hunter_active = true;
   scan_cycle_start = millis();
   deauth_stats.last_reset_time = scan_cycle_start;
-  
-  Serial.println("Deauth Hunter monitoring started!");
 }
 
 // Stop deauth monitoring  
@@ -2872,12 +2856,10 @@ void deauth_hunter_loop() {
   // Line 3: Total Deauths
   DISP.printf("Pkts: %-5d / %d\n", deauth_stats.total_deauths, dh_pkts);
   if (dh_pkts && !channel_hop_pause && deauth_stats.total_deauths > dh_pkts){
-    #if defined(STICK_C_PLUS)
-      SPEAKER.tone(4000);
-      delay(50);
-      SPEAKER.mute();
-    #elif defined(CARDPUTER)
-      SPEAKER.tone(4000, 50);   
+    #if defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);
+    #elif defined(STICK_C_PLUS2)
+      SPEAKER.tone(4000, 50);
     #endif
   }
   // Line 4: Average RSSI with bar chart
@@ -3095,12 +3077,10 @@ void ble_hunter_loop() {
   // Line 3: Total packets seen
   DISP.printf("Pkts: %-5d / %3d\n", ble_stats.total_devices, bh_pkts);
     if (bh_pkts && !ble_channel_hop_pause && ble_stats.total_devices > bh_pkts){
-    #if defined(STICK_C_PLUS)
-      SPEAKER.tone(4000);
-      delay(50);
-      SPEAKER.mute();
-    #elif defined(CARDPUTER)
-      SPEAKER.tone(4000, 50);   
+    #if defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);
+    #elif defined(STICK_C_PLUS2)
+      SPEAKER.tone(4000, 50);
     #endif
     }
   
@@ -3268,6 +3248,7 @@ void bh_alert_pkts_loop() {
       EEPROM.write(7, bh_alert_pkts);
       EEPROM.commit();
       bh_pkts=bh_alert_pkts;
+      Serial.printf("Writing %d to EEPROM 7\n", bh_alert_pkts);
     #endif
     rstOverride = false;
     isSwitching = true;
@@ -3314,6 +3295,7 @@ void dh_alert_pkts_loop() {
       EEPROM.write(9, dh_alert_pkts);
       EEPROM.commit();
       dh_pkts=dh_alert_pkts;
+      Serial.printf("Writing %d to EEPROM 9\n", dh_alert_pkts);
     #endif
     rstOverride = false;
     isSwitching = true;
