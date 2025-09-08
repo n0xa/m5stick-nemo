@@ -254,6 +254,10 @@ bool target_deauth = false;
 int deauth_tick = 0;        // used to delay the deauth packets when combined to Nemo Portal
 bool clone_flg = false;
 // DEAUTH end
+float bh_max_rssi = -40;
+int bh_pkts = 0;
+float dh_max_rssi = -20;
+int dh_pkts = 0;
 
 
 #if defined(USE_EEPROM)
@@ -278,10 +282,14 @@ bool clone_flg = false;
   #include "esp_wifi.h"                                                             //DEAUTH
   wifi_ap_record_t ap_record;                                                       //DEAUTH
 #endif
+
+#include "deauth_hunter.h"                                                          //DEAUTH HUNTER
+#include "ble_hunter.h"                                                             //BLE HUNTER
 struct MENU {
   char name[19];
   int command;
 };
+
 
 struct QRCODE {
   char name[19];
@@ -302,7 +310,7 @@ void drawmenu(MENU thismenu[], int size) {
   DISP.setCursor(0, 0, 1);
   // scrolling menu
   if (cursor < 0) {
-    cursor = size - 1;  // rollover hack for up-arrow on cardputer
+    cursor = size - 1;  // rollover hack for up-arrow on cardputer  
   }
   if (cursor > 5) {
     for ( int i = 0 + (cursor - 5) ; i < size ; i++ ) {
@@ -350,7 +358,7 @@ void number_drawmenu(int nums) {
 }
 
 void switcher_button_proc() {
-  if (rstOverride == false) {
+  if (rstOverride == false && !isSwitching) {
     if (check_next_press()) {
       isSwitching = true;
       current_proc = 1;
@@ -421,6 +429,80 @@ bool check_select_press(){
   return false;
 }
 
+// Unified Menu Controller
+class MenuController {
+private:
+  MENU* currentMenu;
+  int menuSize;
+  void (*onExit)();
+  void (*onSelect)();
+  
+public:
+  void setup(MENU* menu, int size, void (*exitCallback)() = nullptr, void (*selectCallback)() = nullptr) {
+    currentMenu = menu;
+    menuSize = size;
+    onExit = exitCallback;
+    onSelect = selectCallback;
+    cursor = 0;
+    rstOverride = true;  // Always disable switcher when menu is active
+    drawmenu(currentMenu, menuSize);
+    delay(500); // Prevent switching after menu loads up
+  }
+  
+  // Special setup with initial screen display
+  void setupWithIntro(MENU* menu, int size, String introText, int introDelay = 1000) {
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.println(introText);
+    delay(introDelay);
+    setup(menu, size);
+  }
+  
+  void loop() {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % menuSize;
+      drawmenu(currentMenu, menuSize);
+      delay(250);
+    }
+    if (check_select_press()) {
+      if (onSelect) {
+        onSelect(); // Custom selection handler
+        // Custom callbacks may set rstOverride=false to exit, but if still in menu, restore it
+        if (!isSwitching) {
+          rstOverride = true;
+        }
+      } else {
+        // Default selection behavior - always allow exit
+        rstOverride = false;
+        if (onExit) {
+          onExit();
+        }
+        isSwitching = true;
+        current_proc = currentMenu[cursor].command;
+      }
+    }
+  }
+  
+  // Special loop for number menus
+  void numberLoop(int maxNum) {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % maxNum;
+      number_drawmenu(maxNum);
+      delay(250);
+    }
+    if (check_select_press()) {
+      rstOverride = false;
+      isSwitching = true;
+      current_proc = 1; // Usually goes back to main menu
+    }
+  }
+};
+
+// Global menu controller instance
+MenuController menuController;
+
 /// MAIN MENU ///
 MENU mmenu[] = {
 #if defined(RTC)
@@ -435,24 +517,7 @@ MENU mmenu[] = {
 int mmenu_size = sizeof(mmenu) / sizeof(MENU);
 
 void mmenu_setup() {
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(mmenu, mmenu_size);
-  delay(500); // Prevent switching after menu loads up
-}
-
-void mmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % mmenu_size;
-    drawmenu(mmenu, mmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = mmenu[cursor].command;
-  }
+  menuController.setup(mmenu, mmenu_size);
 }
 
 bool screen_dim_dimmed = false;
@@ -507,54 +572,45 @@ MENU dmenu[] = {
 };
 int dmenu_size = sizeof(dmenu) / sizeof(MENU);
 
+// Custom callback for dmenu selection
+void dmenu_onSelect() {
+  screen_dim_time = dmenu[cursor].command;
+  #if defined(USE_EEPROM)
+    EEPROM.write(1, screen_dim_time);
+    EEPROM.commit();
+  #endif
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(String(TXT_SET_BRIGHT));
+  delay(1000);
+  cursor = brightness / 10;
+  number_drawmenu(11);
+  while( !check_select_press()) {
+    if (check_next_press()) {
+      cursor++;
+      cursor = cursor % 11 ;
+      number_drawmenu(11);
+      screenBrightness(10 * cursor);
+      delay(250);
+     }
+  }
+  screenBrightness(10 * cursor);
+  brightness = 10 * cursor;
+  #if defined(USE_EEPROM)
+    EEPROM.write(2, brightness);
+    EEPROM.commit();
+  #endif
+  rstOverride = false;
+  isSwitching = true;
+  current_proc = 2;
+}
+
 void dmenu_setup() {
   DISP.fillScreen(BGCOLOR);
   DISP.setCursor(0, 0);
   DISP.println(String(TXT_AUTO_DIM));
   delay(1000);
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(dmenu, dmenu_size);
-  delay(500); // Prevent switching after menu loads up
-}
-
-void dmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % dmenu_size;
-    drawmenu(dmenu, dmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    screen_dim_time = dmenu[cursor].command;
-    #if defined(USE_EEPROM)
-      EEPROM.write(1, screen_dim_time);
-      EEPROM.commit();
-    #endif
-    DISP.fillScreen(BGCOLOR);
-    DISP.setCursor(0, 0);
-    DISP.println(String(TXT_SET_BRIGHT));
-    delay(1000);
-    cursor = brightness / 10;
-    number_drawmenu(11);
-    while( !check_select_press()) {
-      if (check_next_press()) {
-        cursor++;
-        cursor = cursor % 11 ;
-        number_drawmenu(11);
-        screenBrightness(10 * cursor);
-        delay(250);
-       }
-    }
-    screenBrightness(10 * cursor);
-    #if defined(USE_EEPROM)
-      EEPROM.write(2, 10 * cursor);
-      EEPROM.commit();
-    #endif
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 2;
-  }
+  menuController.setup(dmenu, dmenu_size, nullptr, dmenu_onSelect);
 }
 
 /// SETTINGS MENU ///
@@ -578,6 +634,10 @@ MENU smenu[] = {
     { TXT_SDCARD, 97},
   #endif
 #endif
+  { "BH RSSI", 29},
+  { "DH RSSI", 30},
+  { "BH Alert Pkts", 31},
+  { "DH Alert Pkts", 32},
   { TXT_THEME, 23},
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
@@ -588,17 +648,33 @@ MENU smenu[] = {
 
 int smenu_size = sizeof(smenu) / sizeof (MENU);
 
+// Custom callback for smenu selection
+void smenu_onSelect() {
+  if(smenu[cursor].command == 98){
+    rstOverride = false;
+    ESP.restart();
+  }
+  else if(smenu[cursor].command == 99){
+    rstOverride = false;
+    clearSettings();
+  }
+  else {
+    // Normal menu navigation - don't disable rstOverride
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = smenu[cursor].command;
+  }
+}
+
 void smenu_setup() {
-  cursor = 0;
-  rstOverride = true;
-  drawmenu(smenu, smenu_size);
-  delay(500); // Prevent switching after menu loads up
+  menuController.setup(smenu, smenu_size, nullptr, smenu_onSelect);
 }
 
 void clearSettings(){
   #if defined(USE_EEPROM)
   for(int i = 0; i < EEPROM_SIZE; i++) {
     EEPROM.write(i, 255);
+    Serial.printf("clearing byte %d\n", i);
   }
   EEPROM.commit();
   #endif
@@ -614,26 +690,6 @@ void clearSettings(){
   DISP.println(TXT_CLRING_SETTINGS);
   delay(5000);
   ESP.restart();
-}
-
-void smenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % smenu_size;
-    drawmenu(smenu, smenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    rstOverride = false;
-    isSwitching = true;
-    if(smenu[cursor].command == 98){
-      ESP.restart();
-    }
-    if(smenu[cursor].command == 99){
-      clearSettings();
-    }
-    current_proc = smenu[cursor].command;
-  }
 }
 
 MENU cmenu[] = {
@@ -911,31 +967,21 @@ int rotation = 1;
   };
   int rmenu_size = sizeof(rmenu) / sizeof (MENU);
 
-  void rmenu_setup() {
-    cursor = 0;
-    rstOverride = true;
-    drawmenu(rmenu, rmenu_size);
-    delay(500); // Prevent switching after menu loads up
+  // Custom callback for rmenu selection
+  void rmenu_onSelect() {
+    rstOverride = false;
+    isSwitching = true;
+    rotation = rmenu[cursor].command;
+    DISP.setRotation(rotation);
+    #if defined(USE_EEPROM)
+      EEPROM.write(0, rotation);
+      EEPROM.commit();
+    #endif
+    current_proc = 2;
   }
 
-  void rmenu_loop() {
-    if (check_next_press()) {
-      cursor++;
-      cursor = cursor % rmenu_size;
-      drawmenu(rmenu, rmenu_size);
-      delay(250);
-    }
-    if (check_select_press()) {
-      rstOverride = false;
-      isSwitching = true;
-      rotation = rmenu[cursor].command;
-      DISP.setRotation(rotation);
-      #if defined(USE_EEPROM)
-        EEPROM.write(0, rotation);
-        EEPROM.commit();
-      #endif
-      current_proc = 2;
-    }
+  void rmenu_setup() {
+    menuController.setup(rmenu, rmenu_size, nullptr, rmenu_onSelect);
   }
 #endif //ROTATION
 
@@ -1141,6 +1187,26 @@ MENU tvbgmenu[] = {
 };
 int tvbgmenu_size = sizeof(tvbgmenu) / sizeof (MENU);
 
+// Custom callback for tvbgmenu selection
+void tvbgmenu_onSelect() {
+  region = tvbgmenu[cursor].command;
+
+  if (region == 3) {
+    current_proc = 1;
+    isSwitching = true;
+    rstOverride = false; 
+    return;
+  }
+
+  #if defined(USE_EEPROM)
+    EEPROM.write(3, region);
+    EEPROM.commit();
+  #endif
+  rstOverride = false;
+  isSwitching = true;
+  current_proc = 5;
+}
+
 void tvbgmenu_setup() {  
   DISP.fillScreen(BGCOLOR);
   DISP.setTextSize(BIG_TEXT);
@@ -1148,37 +1214,14 @@ void tvbgmenu_setup() {
   DISP.println("TV-B-Gone");
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.println(TXT_REGION);
-  cursor = region % 2;
-  rstOverride = true;
-  delay(1000); 
+  delay(1000);
+  
+  // Set initial cursor based on current region
+  int initialCursor = region % 2;
+  menuController.setup(tvbgmenu, tvbgmenu_size, nullptr, tvbgmenu_onSelect);
+  // Override the cursor after setup
+  cursor = initialCursor;
   drawmenu(tvbgmenu, tvbgmenu_size);
-}
-
-void tvbgmenu_loop() {
-  if (check_next_press()) {
-    cursor++;
-    cursor = cursor % tvbgmenu_size;
-    drawmenu(tvbgmenu, tvbgmenu_size);
-    delay(250);
-  }
-  if (check_select_press()) {
-    region = tvbgmenu[cursor].command;
-
-    if (region == 3) {
-      current_proc = 1;
-      isSwitching = true;
-      rstOverride = false; 
-      return;
-    }
-
-    #if defined(USE_EEPROM)
-      EEPROM.write(3, region);
-      EEPROM.commit();
-    #endif
-    rstOverride = false;
-    isSwitching = true;
-    current_proc = 5;
-  }
 }
 
 void sendAllCodes() {
@@ -1354,6 +1397,7 @@ MENU btmenu[] = {
   { "Android Spam", 4},
   { TXT_SA_CRASH, 2},
   { "BT Maelstrom", 3},
+  { "BLE Hunter", 25},
 };
 int btmenu_size = sizeof(btmenu) / sizeof (MENU);
 
@@ -1431,6 +1475,11 @@ void btmenu_loop() {
         rstOverride = false;
         isSwitching = true;
         current_proc = 1;
+        break;
+      case 25:
+        rstOverride = false;
+        isSwitching = true;
+        current_proc = 25; // BLE Hunter
         break;
     }
   }
@@ -1874,7 +1923,7 @@ void btmaelstrom_setup(){
   maelstrom = true;
 }
 
-void btmaelstrom_loop(){
+void btmaelstrom_loop(){  
   swiftPair = false;
   sourApple = true;
   aj_adv();
@@ -1907,6 +1956,7 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RR, 2},
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
+  { "Deauth Hunter", 24},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -1949,6 +1999,9 @@ void wsmenu_loop() {
         break;
       case 5:
         current_proc = 1;
+        break;
+      case 24:
+        current_proc = 24;
         break;
     }
   }
@@ -2372,6 +2425,7 @@ void portal_loop(){
 
 /// ENTRY ///
 void setup() {
+Serial.begin(115200);
 #if defined(CARDPUTER)
   auto cfg = M5.config();
   M5Cardputer.begin(cfg, true);
@@ -2392,7 +2446,12 @@ void setup() {
     Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
     Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
     Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19) {
+    Serial.printf("EEPROM 6 - BLE RSSI:   %d\n", EEPROM.read(6));
+    Serial.printf("EEPROM 7 - BLE Pkts:   %d\n", EEPROM.read(7));
+    Serial.printf("EEPROM 8 - DH RSSI:    %d\n", EEPROM.read(8));
+    Serial.printf("EEPROM 9 - DH Pkts:    %d\n", EEPROM.read(9));
+    
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19 || EEPROM.read(6) > 100 || EEPROM.read(8) > 100 ) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
@@ -2405,6 +2464,10 @@ void setup() {
       EEPROM.write(3, 0);    // TVBG NA Region
       EEPROM.write(4, 11);   // FGColor Green
       EEPROM.write(5, 1);    // BGcolor Black
+      EEPROM.write(6, 40);   // -40 RSSI Max for BLE Hunter
+      EEPROM.write(7, 50);   // > 50 Pkts triggers BLE Hunter Alert 
+      EEPROM.write(8, 20);   // -20 RSSI Max for Deauth Hunter
+      EEPROM.write(9, 50);   // > 50 Pkts triggers Deauth Hunter Alert
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
@@ -2413,6 +2476,10 @@ void setup() {
     region = EEPROM.read(3);
     setcolor(true, EEPROM.read(4));
     setcolor(false, EEPROM.read(5));
+    bh_max_rssi = -(EEPROM.read(6));
+    bh_pkts = EEPROM.read(7);
+    dh_max_rssi = -(EEPROM.read(8));
+    dh_pkts = EEPROM.read(9);
   #endif
   getSSID();
   
@@ -2452,6 +2519,91 @@ void setup() {
   bootScreen();
 }
 
+// Wrapper functions for menuController.loop() to avoid lambda issues
+void menu_controller_loop() {
+  menuController.loop();
+}
+
+// Process handler structure to replace dual switch statements
+struct ProcessHandler {
+  int id;
+  void (*setup_func)();
+  void (*loop_func)();
+  const char* name;
+};
+
+// Unified process table
+ProcessHandler processes[] = {
+#if defined(RTC)
+  {0, clock_setup, clock_loop, "Clock"},
+#endif
+  {1, mmenu_setup, menu_controller_loop, "Main Menu"},
+  {2, smenu_setup, menu_controller_loop, "Settings Menu"},
+#if defined(RTC)
+  {3, timeset_setup, timeset_loop, "Time Settings"},
+#endif
+  {4, dmenu_setup, menu_controller_loop, "Display Menu"},
+  {5, tvbgone_setup, tvbgone_loop, "TV-B-Gone"},
+#if defined(AXP) || defined(PWRMGMT) || defined(CARDPUTER)
+  {6, battery_setup, battery_loop, "Battery Info"},
+#endif
+#if defined(ROTATION)
+  {7, rmenu_setup, menu_controller_loop, "Rotation Menu"},
+#endif
+  {8, aj_setup, aj_loop, "Apple Juice"},
+  {9, aj_adv_setup, aj_adv, "Apple Juice Advanced"},
+  {10, credits_setup, credits_loop, "Credits"},
+  {11, wifispam_setup, wifispam_loop, "WiFi Spam"},
+  {12, wsmenu_setup, wsmenu_loop, "WiFi Scanner Menu"},
+  {13, tvbgmenu_setup, menu_controller_loop, "TV-B-Gone Menu"},
+  {14, wscan_setup, wscan_loop, "WiFi Scan"},
+  {15, wscan_result_setup, wscan_result_loop, "WiFi Scan Results"},
+  {16, btmenu_setup, btmenu_loop, "Bluetooth Menu"},
+  {17, btmaelstrom_setup, btmaelstrom_loop, "BLE Maelstrom"},
+  {18, qrmenu_setup, qrmenu_loop, "QR Menu"},
+  {19, portal_setup, portal_loop, "Captive Portal"},
+  {20, wsAmenu_setup, wsAmenu_loop, "WiFi Attack Menu"},
+#if defined(DEAUTHER)
+  {21, deauth_setup, deauth_loop, "Deauth Attack"},
+#endif
+  {22, color_setup, color_loop, "Color Settings"},
+  {23, theme_setup, theme_loop, "Theme Settings"},
+  {24, deauth_hunter_setup, deauth_hunter_loop, "Deauth Hunter"},
+  {25, ble_hunter_setup, ble_hunter_loop, "BLE Hunter"},
+  {29, bh_rssi_setup, bh_rssi_loop, "BH RSSI Setting"},
+  {30, dh_rssi_setup, dh_rssi_loop, "DH RSSI Setting"}, 
+  {31, bh_alert_pkts_setup, bh_alert_pkts_loop, "BH Alert Pkts Setting"},
+  {32, dh_alert_pkts_setup, dh_alert_pkts_loop, "DH Alert Pkts Setting"},
+#if defined(SDCARD) && !defined(CARDPUTER)
+  {97, nullptr, ToggleSDCard, "SD Card"},
+#endif
+  {-1, nullptr, nullptr, nullptr} // Sentinel
+};
+
+// Run setup for current process
+void runCurrentSetup() {
+  for (int i = 0; processes[i].id != -1; i++) {
+    if (processes[i].id == current_proc) {
+      if (processes[i].setup_func) {
+        processes[i].setup_func();
+      }
+      return;
+    }
+  }
+}
+
+// Run loop for current process
+void runCurrentLoop() {
+  for (int i = 0; processes[i].id != -1; i++) {
+    if (processes[i].id == current_proc) {
+      if (processes[i].loop_func) {
+        processes[i].loop_func();
+      }
+      return;
+    }
+  }
+}
+
 void loop() {
   // This is the code to handle running the main loops
   // Background processes
@@ -2459,195 +2611,695 @@ void loop() {
   screen_dim_proc();
   check_menu_press();
   
-  // Switcher
+  // Switcher - unified process handler
   if (isSwitching) {
     isSwitching = false;
     Serial.printf("Switching To Task: %d\n", current_proc);
-    switch (current_proc) {
-#if defined(RTC)
-      case 0:
-        clock_setup();
-        break;
-#endif
-      case 1:
-        mmenu_setup();
-        break;
-      case 2:
-        smenu_setup();
-        break;
-#if defined(RTC)
-      case 3:
-        timeset_setup();
-        break;
-#endif
-      case 4:
-        dmenu_setup();
-        break;
-      case 5:
-        tvbgone_setup();
-        break;
-#if defined(AXP) || defined(PWRMGMT)
-      case 6:
-        battery_setup();
-        break;
-#endif
-#if defined(CARDPUTER)
-      case 6:
-        battery_setup();
-        break;
-#endif
-#if defined(ROTATION)
-      case 7:
-        rmenu_setup();
-        break;
-#endif
-      case 8:
-        aj_setup();
-        break;
-      case 9:
-        aj_adv_setup();
-        break;
-      case 10:
-        credits_setup();
-        break;
-      case 11:
-        wifispam_setup();
-        break;
-      case 12:
-        wsmenu_setup();
-        break;
-      case 13:
-        tvbgmenu_setup();
-        break;
-      case 14:
-        wscan_setup();
-        break;
-      case 15:
-        wscan_result_setup();
-        break;
-      case 16:
-        btmenu_setup();
-        break;
-      case 17:
-        btmaelstrom_setup();
-        break;
-      case 18:
-        qrmenu_setup();
-        break;
-      case 19:
-        portal_setup();
-        break;
-            case 20:
-        wsAmenu_setup();
-        break;
-      #if defined(DEAUTHER)
-        case 21:
-          deauth_setup();
-          break;
-      #endif
-        case 22:
-          color_setup();
-          break;
-        case 23:
-          theme_setup();
-          break;
-    }
+    runCurrentSetup();
   }
 
-  switch (current_proc) {
-#if defined(RTC)
-    case 0:
-      clock_loop();
-      break;
-#endif
-    case 1:
-      mmenu_loop();
-      break;
-    case 2:
-      smenu_loop();
-      break;
-#if defined(RTC)
-    case 3:
-      timeset_loop();
-      break;
-#endif
-    case 4:
-      dmenu_loop();
-      break;
-    case 5:
-      tvbgone_loop();
-      break;
-#if defined(AXP) || defined(PWRMGMT)
-    case 6:
-      battery_loop();
-      break;
-#endif
-#if defined(CARDPUTER)
-    case 6:
-      battery_loop();
-      break;
-#endif
-#if defined(ROTATION)
-    case 7:
-      rmenu_loop();
-      break;
-#endif
-    case 8:
-      aj_loop();
-      break;
-    case 9:
-      aj_adv();
-      break;
-    case 10:
-      credits_loop();
-      break;
-    case 11:
-      wifispam_loop();
-      break;
-    case 12:
-      wsmenu_loop();
-      break;
-    case 13:
-      tvbgmenu_loop();
-      break;
-    case 14:
-      wscan_loop();
-      break;
-    case 15:
-      wscan_result_loop();
-      break;
-    case 16:
-      btmenu_loop();
-      break;
-    case 17:
-      btmaelstrom_loop();
-      break;
-    case 18:
-      qrmenu_loop();
-      break;
-    case 19:
-      portal_loop();
-      break;
-    case 20:
-      wsAmenu_loop();
-      break;
-    #if defined(DEAUTHER)                                             // DEAUTH
-      case 21:
-        deauth_loop();                                                // DEAUTH
-        break;                                                        // DEAUTH
-    #endif                                                            // DEAUTH
-      case 22:
-        color_loop();
-        break;
-      case 23:
-        theme_loop();
-        break;
-    #if defined(SDCARD)                                                // SDCARD M5Stick
-      #ifndef CARDPUTER                                                // SDCARD M5Stick
-        case 97:
-          ToggleSDCard();                                              // SDCARD M5Stick
-          break;                                                       // SDCARD M5Stick
-      #endif                                                           // SDCARD M5Stick
-    #endif                                                             // SDCARD M5Stick
+  // Main process loop - unified handler
+  runCurrentLoop();
+}
+
+///////////////////////////////
+/// DEAUTH HUNTER IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for Deauth Hunter
+DeauthStats deauth_stats;
+uint8_t current_channel_idx = 0;
+uint32_t last_channel_change = 0;
+uint32_t scan_cycle_start = 0;
+bool deauth_hunter_active = false;
+std::vector<String> seen_ap_macs;
+bool channel_hop_pause = false;
+
+uint16_t getRSSIColor(float rssi, float max) {
+  if(rssi < max * .5 ) {
+    return BLUE;
+  } else if(rssi < max * .8 ) {
+    return YELLOW;
+  } else {
+    return RED;
+  }
+}
+
+// Extract MAC address from packet
+void extract_mac(char *addr, uint8_t* data, uint16_t offset) {
+  sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", 
+          data[offset+0], data[offset+1], data[offset+2], 
+          data[offset+3], data[offset+4], data[offset+5]);
+}
+
+// Add unique AP to tracking list
+void add_unique_ap(const char* mac) {
+  String mac_str = String(mac);
+  for(auto& seen_mac : seen_ap_macs) {
+    if(seen_mac == mac_str) return; // Already seen
+  }
+  seen_ap_macs.push_back(mac_str);
+  deauth_stats.unique_aps = seen_ap_macs.size();
+}
+
+// Draw RSSI bar visualization
+void draw_rssi_bar(float rssi, float rssimax = -20) {
+  DISP.print(" ");
+  DISP.print(rssi);
+  DISP.println("dBm");
+  DISP.println("Sel: Pause/Scan\nNext: Exit");
+  float rssipct = 100 + rssi;
+  float maxpct = 100 + rssimax;
+
+  // Cap values stronger than -20 dBm to prevent bar overflow
+  if (rssipct > maxpct) rssipct = maxpct; 
+  uint16_t rssiColor=getRSSIColor(rssipct, maxpct);
+  int barX = 10, barY = 120, barW = 220, barH = 10;
+  DISP.drawRect(barX, barY, barW, barH, rssiColor);
+  int fillW = (barW - 4) * (rssipct / maxpct); 
+  DISP.fillRect(barX + 2, barY + 2, fillW, barH - 4, rssiColor);
+  int remainingW = (barW - 4) - fillW;
+  if (remainingW > 0) {
+    DISP.fillRect(barX + 2 + fillW, barY + 2, remainingW, barH - 4, TFT_BLACK);
+  }
+}
+
+// Channel hopping function
+void hop_channel() {
+  uint32_t now = millis();
+  if(now - last_channel_change > 1000) { // Change channel every second
+    current_channel_idx = (current_channel_idx + 1) % NUM_CHANNELS;
+    esp_wifi_set_channel(WIFI_CHANNELS[current_channel_idx], WIFI_SECOND_CHAN_NONE);
+    last_channel_change = now;
+  }
+}
+
+// Reset statistics if 10 seconds have passed
+void reset_stats_if_needed() {
+  uint32_t now = millis();
+  if(now - deauth_stats.last_reset_time > 1000) { // 1 second cycle
+    deauth_stats.total_deauths = 0;  // Reset total counter
+    deauth_stats.rssi_sum = 0;
+    deauth_stats.rssi_count = 0;
+    deauth_stats.avg_rssi = -100;
+    seen_ap_macs.clear();
+    deauth_stats.unique_aps = 0;
+    deauth_stats.last_reset_time = now;
+    scan_cycle_start = now;
+  }
+}
+
+// Deauth packet sniffer callback (adapted from ESP32Marauder)
+static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  if(!deauth_hunter_active) return;
+  
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  
+  // Debug: Show all management frames received
+  if (type == WIFI_PKT_MGMT) {
+    uint8_t frame_type = snifferPacket->payload[0];
+    
+    // Check for deauth (0xC0) or disassoc (0xA0) frames
+    if (frame_type == 0xC0 || frame_type == 0xA0) {
+      deauth_stats.total_deauths++;
+      
+      // Extract source MAC (AP sending deauth)
+      char source_mac[18];
+      extract_mac(source_mac, snifferPacket->payload, 10);
+      add_unique_ap(source_mac);
+      
+      // Track RSSI for averaging (prevent overflow with rolling average)
+      float rssi = snifferPacket->rx_ctrl.rssi;
+      
+      if(deauth_stats.rssi_count == 0) {
+        // First measurement
+        deauth_stats.avg_rssi = rssi;
+        deauth_stats.rssi_count = 1;
+        deauth_stats.rssi_sum = rssi;
+      } else {
+        // Rolling average to prevent overflow
+        deauth_stats.rssi_count++;
+        deauth_stats.rssi_sum += rssi;
+        deauth_stats.avg_rssi = rssi;
+        
+        // Prevent overflow by resetting sums when count gets high
+        if(deauth_stats.rssi_count > 1000) {
+          deauth_stats.rssi_sum = deauth_stats.avg_rssi;
+          deauth_stats.rssi_count = 1;
+        }
+      }
+    }
+    
+    // Debug: Periodically show we're getting packets
+    static uint32_t packet_count = 0;
+    packet_count++;
+  }
+}
+
+// Start deauth monitoring
+void start_deauth_monitoring() {
+  // Properly stop any existing WiFi operations
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  delay(100);
+  
+  // Initialize WiFi in promiscuous mode
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  
+  // Set up promiscuous mode
+  wifi_promiscuous_filter_t filt;
+  filt.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA;
+  
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+  esp_wifi_set_promiscuous_rx_cb(&deauth_sniffer_callback);
+  
+  // Set initial channel
+  esp_wifi_set_channel(WIFI_CHANNELS[current_channel_idx], WIFI_SECOND_CHAN_NONE);
+  
+  deauth_hunter_active = true;
+  scan_cycle_start = millis();
+  deauth_stats.last_reset_time = scan_cycle_start;
+}
+
+// Stop deauth monitoring  
+void stop_deauth_monitoring() {
+  esp_wifi_set_promiscuous(false);
+  deauth_hunter_active = false;
+  WiFi.mode(WIFI_MODE_STA);
+}
+
+// Deauth Hunter setup function
+void deauth_hunter_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.setCursor(0, 0);
+  
+  // Initialize stats
+  memset(&deauth_stats, 0, sizeof(DeauthStats));
+  deauth_stats.avg_rssi = -90;
+  seen_ap_macs.clear();
+  current_channel_idx = 0;
+  channel_hop_pause = false;
+  start_deauth_monitoring();
+  delay(500);
+}
+
+// Deauth Hunter main loop
+void deauth_hunter_loop() {
+  // Handle button input for exit
+  if (check_next_press()) {
+    stop_deauth_monitoring();
+    isSwitching = true;
+    current_proc = 12; // Return to WiFi menu
+    return;
+  }
+  
+  if (check_select_press()) {
+    channel_hop_pause = !channel_hop_pause;
+    delay(500);
+  }
+
+  // Channel hopping
+  if (!channel_hop_pause){
+    hop_channel();
+  }
+  
+  // Reset stats every 10 seconds
+  reset_stats_if_needed();
+  
+  // Update display
+  uint32_t now = millis();
+  uint32_t cycle_elapsed = (now - scan_cycle_start) / 1000; // seconds elapsed
+  uint32_t refresh_countdown = (10 - (cycle_elapsed % 10)); // countdown to reset
+  
+  //DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.setTextSize(SMALL_TEXT);
+
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("Deauth Hunter");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+
+  
+  // Line 2: Channel & AP Count
+  DISP.printf("Ch: ");
+  DISP.printf("%-2d", WIFI_CHANNELS[current_channel_idx]);
+  DISP.print(" APs: ");
+  DISP.printf("%-2d\n", deauth_stats.unique_aps);
+  
+  // Line 3: Total Deauths
+  DISP.printf("Pkts: %-5d / %d\n", deauth_stats.total_deauths, dh_pkts);
+  if (dh_pkts && !channel_hop_pause && deauth_stats.total_deauths > dh_pkts){
+    #if defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);
+    #elif defined(STICK_C_PLUS2)
+      SPEAKER.tone(4000, 50);
+    #endif
+  }
+  // Line 4: Average RSSI with bar chart
+  DISP.print("RSSI:");
+  draw_rssi_bar(deauth_stats.avg_rssi, dh_max_rssi);
+  
+  delay(100); // Refresh rate limiting
+}
+
+///////////////////////////////
+/// BLE HUNTER IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for BLE Hunter
+BLEStats ble_stats;
+BLEScan* ble_scanner = nullptr;
+bool ble_hunter_active = false;
+bool ble_channel_hop_pause = false;
+std::vector<BLEDeviceInfo> seen_ble_devices;
+
+// BLE scan callback implementation
+void BLEHunterCallback::onResult(BLEAdvertisedDevice advertisedDevice) {
+  if (!ble_hunter_active) return;
+  
+  // Rate limiting to prevent memory overflow
+  static uint32_t last_process = 0;
+  uint32_t now = millis();
+  if (now - last_process < 50) { // Limit to 20 devices per second
+    return;
+  }
+  last_process = now;
+  
+  String mac = advertisedDevice.getAddress().toString().c_str();
+  String name = advertisedDevice.getName().c_str();
+  int32_t rssi = advertisedDevice.getRSSI();
+  
+  // Update statistics
+  ble_stats.total_devices++;
+  ble_stats.rssi_sum += rssi;
+  ble_stats.rssi_count++;
+  ble_stats.avg_rssi = rssi;
+  
+  // Add unique device
+  add_unique_ble_device(mac, name, rssi);
+}
+
+// Add unique BLE device to seen list
+void add_unique_ble_device(const String& mac, const String& name, int32_t rssi) {
+  // Check if device already exists
+  for (auto& device : seen_ble_devices) {
+    if (device.mac == mac) {
+      device.rssi = rssi; // Update RSSI
+      device.last_seen = millis();
+      return;
+    }
+  }
+  
+  // Check if we've hit the device limit
+  if (seen_ble_devices.size() >= MAX_BLE_DEVICES) {
+    return; // Don't add more devices to prevent memory overflow
+  }
+  
+  // Add new device
+  BLEDeviceInfo newDevice;
+  newDevice.mac = mac;
+  newDevice.name = name.length() > 0 ? name : "Unknown";
+  newDevice.rssi = rssi;
+  newDevice.last_seen = millis();
+  newDevice.device_type = detect_device_type(mac, name);
+  
+  seen_ble_devices.push_back(newDevice);
+  ble_stats.unique_devices = seen_ble_devices.size();
+}
+
+// Detect device type based on MAC and name
+String detect_device_type(const String& mac, const String& name) {
+  // Apple devices
+  if (name.indexOf("AirPods") != -1 || name.indexOf("iPhone") != -1 || 
+      name.indexOf("iPad") != -1 || name.indexOf("Apple") != -1) {
+    return "Apple";
+  }
+  
+  // Android devices
+  if (name.indexOf("Android") != -1 || name.indexOf("Galaxy") != -1 || 
+      name.indexOf("Pixel") != -1) {
+    return "Android";
+  }
+  
+  // Check MAC prefix for known vendors
+  String macPrefix = mac.substring(0, 8);
+  macPrefix.toUpperCase();
+  
+  if (macPrefix.startsWith("FC:58:FA") || macPrefix.startsWith("3C:7C:3F")) {
+    return "Apple";
+  }
+  
+  return "Unknown";
+}
+
+// Start BLE monitoring
+void start_ble_monitoring() {
+  if (ble_hunter_active) return;
+  
+  // Initialize BLE
+  BLEDevice::init("");
+  ble_scanner = BLEDevice::getScan();
+  ble_scanner->setAdvertisedDeviceCallbacks(new BLEHunterCallback());
+  ble_scanner->setActiveScan(true);
+  ble_scanner->setInterval(BLE_SCAN_INTERVAL);
+  ble_scanner->setWindow(BLE_SCAN_WINDOW);
+  ble_hunter_active = true;
+}
+
+// Stop BLE monitoring
+void stop_ble_monitoring() {
+  if (!ble_hunter_active) return;
+  
+  if (ble_scanner) {
+    ble_scanner->stop();
+    ble_scanner->clearResults();
+  }
+  BLEDevice::deinit();
+  
+  ble_hunter_active = false;
+}
+
+// Reset BLE statistics if needed
+void reset_ble_stats_if_needed() {
+  uint32_t now = millis();
+  if (now - ble_stats.last_reset_time > 10000) { // Reset every 10 seconds
+    ble_stats.total_devices = 0;
+    ble_stats.rssi_sum = 0;
+    ble_stats.rssi_count = 0;
+    ble_stats.avg_rssi = -70;
+    ble_stats.last_reset_time = now;
+    
+    // Clean up old devices (older than 15 seconds) or if we have too many
+    seen_ble_devices.erase(
+      std::remove_if(seen_ble_devices.begin(), seen_ble_devices.end(),
+        [now](const BLEDeviceInfo& device) {
+          return (now - device.last_seen) > 15000;
+        }),
+      seen_ble_devices.end()
+    );
+    
+    // If still too many devices, remove oldest ones
+    while (seen_ble_devices.size() > MAX_BLE_DEVICES) {
+      seen_ble_devices.erase(seen_ble_devices.begin());
+    }
+    
+    ble_stats.unique_devices = seen_ble_devices.size();
+  }
+}
+
+// BLE Hunter setup
+void ble_hunter_setup() {
+  // Reset statistics
+  ble_stats = BLEStats();
+  seen_ble_devices.clear();
+  ble_channel_hop_pause = false;
+  ble_stats.last_reset_time = millis();
+  
+  // Setup display
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);  
+  start_ble_monitoring();
+}
+
+// BLE Hunter main loop
+void ble_hunter_loop() {
+  // Handle button input for exit
+  if (check_next_press()) {
+    stop_ble_monitoring();
+    isSwitching = true;
+    current_proc = 16; // Return to Bluetooth menu
+    return;
+  }
+  
+  if (check_select_press()) {
+    ble_channel_hop_pause = !ble_channel_hop_pause;
+    delay(500);
+  }
+
+  // Periodic BLE scanning (unless paused)
+  static uint32_t last_scan = 0;
+  uint32_t now = millis();
+  
+  if (ble_scanner && (now - last_scan > 1000)) {
+    ble_scanner->start(BLE_SCAN_TIME, false); // Scan for BLE_SCAN_TIME seconds, don't restart
+    last_scan = now;
+  }
+  
+  // Reset stats every 10 seconds
+  reset_ble_stats_if_needed();
+  
+  // Update display
+  uint32_t cycle_elapsed = (now - ble_stats.last_reset_time) / 1000;
+  uint32_t refresh_countdown = (10 - (cycle_elapsed % 10));
+  
+  DISP.setCursor(0, 0);
+  DISP.setTextSize(SMALL_TEXT);
+
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(" BLE Hunter  ");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  
+  // Line 2: Status and Device Count
+  DISP.printf("Devices: %d\n", ble_stats.unique_devices);
+  
+  // Line 3: Total packets seen
+  DISP.printf("Pkts: %-5d / %3d\n", ble_stats.total_devices, bh_pkts);
+    if (bh_pkts && !ble_channel_hop_pause && ble_stats.total_devices > bh_pkts){
+    #if defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);
+    #elif defined(STICK_C_PLUS2)
+      SPEAKER.tone(4000, 50);
+    #endif
+    }
+  
+  // Line 4: Average RSSI with bar chart
+  if (ble_stats.rssi_count > 0) {
+    DISP.print("RSSI:");
+    draw_rssi_bar(ble_stats.avg_rssi, bh_max_rssi); // Using existing RSSI bar function
+  }
+  
+  delay(100); // Refresh rate limiting
+}
+
+// BLE Hunter cleanup
+void ble_hunter_cleanup() {
+  stop_ble_monitoring();
+  seen_ble_devices.clear();
+}
+
+///////////////////////////////
+/// HUNTER SETTINGS IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables for hunter settings
+int bh_rssi_threshold = -40;
+int dh_rssi_threshold = -20; 
+int bh_alert_pkts = 10;
+int dh_alert_pkts = 10;
+
+// BH RSSI Setting (-10 to -100 in increments of 5)
+void bh_rssi_setup() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH RSSI Threshold");
+  
+  #if defined(USE_EEPROM)
+    int stored_value = -(int8_t)EEPROM.read(6); // Cast to signed
+    if(stored_value >= -100 && stored_value <= -10 && stored_value % 5 == 0) {
+      bh_rssi_threshold = stored_value;
+    }
+  #endif
+  
+  cursor = (bh_rssi_threshold + 100) / 5; // Convert -100 to -10 range to 0-18
+  rstOverride = true;
+  delay(500);
+  DISP.fillScreen(BGCOLOR);
+}
+
+void bh_rssi_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH RSSI Threshold");
+  DISP.printf("Current: %d dBm\n", bh_rssi_threshold);
+  DISP.println("Range: -10 to -100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 19; // 0-18 for -100 to -10 in steps of 5
+    bh_rssi_threshold = -100 + (cursor * 5);
+    DISP.fillScreen(BGCOLOR);
+    DISP.setCursor(0, 0);
+    DISP.printf("BH RSSI: %d dBm", bh_rssi_threshold);
+    delay(250);
+    DISP.fillScreen(BGCOLOR);
+
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      Serial.printf("Writing %d to EEPROM 6 - value %d\n", abs(bh_rssi_threshold), bh_rssi_threshold);
+      EEPROM.write(6, abs(bh_rssi_threshold)); // Store as signed byte
+      EEPROM.commit();
+      bh_max_rssi = bh_rssi_threshold;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// DH RSSI Setting (-10 to -100 in increments of 5)  
+void dh_rssi_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("DH RSSI Threshold");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = -(int8_t)EEPROM.read(8); // Cast to signed
+    if(stored_value >= -100 && stored_value <= -10 && stored_value % 5 == 0) {
+      dh_rssi_threshold = stored_value;
+    }
+  #endif
+  
+  cursor = (dh_rssi_threshold + 100) / 5; // Convert -100 to -10 range to 0-18
+  rstOverride = true;
+  
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.printf("DH RSSI: %d dBm\n", dh_rssi_threshold);
+  delay(500);
+}
+
+void dh_rssi_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("DH RSSI Threshold");
+  DISP.printf("Current: %d dBm\n", dh_rssi_threshold);
+  DISP.println("Range: -10 to -100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 19; // 0-18 for -100 to -10 in steps of 5
+    dh_rssi_threshold = -100 + (cursor * 5);
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      Serial.printf("Writing %d to EEPROM 8 - value %d\n", abs(dh_rssi_threshold), dh_rssi_threshold);
+      EEPROM.write(8, abs(dh_rssi_threshold)); // Store as signed byte
+      EEPROM.commit();
+      dh_max_rssi = dh_rssi_threshold;
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// BH Alert Pkts Setting (0-100)
+void bh_alert_pkts_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("BH Alert Packets");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = EEPROM.read(7);
+    if(stored_value <= 100) {
+      bh_alert_pkts = stored_value;
+    }
+  #endif
+  
+  cursor = bh_alert_pkts;
+  rstOverride = true;
+}
+
+void bh_alert_pkts_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("BH Alert Packets");
+  DISP.printf("Current: %3d\n", bh_alert_pkts);
+  DISP.println("Range: 0-100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 101; // 0-100
+        if (cursor < 0) {
+      cursor = 99;
+    }
+    bh_alert_pkts = cursor;
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(7, bh_alert_pkts);
+      EEPROM.commit();
+      bh_pkts=bh_alert_pkts;
+      Serial.printf("Writing %d to EEPROM 7\n", bh_alert_pkts);
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// DH Alert Pkts Setting (0-100)
+void dh_alert_pkts_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println("DH Alert Packets");
+  delay(500);
+  
+  #if defined(USE_EEPROM)
+    int stored_value = EEPROM.read(9);
+    if(stored_value <= 100) {
+      dh_alert_pkts = stored_value;
+    }
+  #endif
+  cursor = dh_alert_pkts;
+  rstOverride = true;
+}
+
+void dh_alert_pkts_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println("DH Alert Packets");
+  DISP.printf("Current: %3d\n", dh_alert_pkts);
+  DISP.println("Range: 0-100");
+  
+  if (check_next_press()) {
+    cursor++;
+    cursor = cursor % 101; // 0-100  
+    if (cursor < 0) {
+      cursor = 99;
+    }
+    dh_alert_pkts = cursor;
+    delay(250);
+  }
+  
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(9, dh_alert_pkts);
+      EEPROM.commit();
+      dh_pkts=dh_alert_pkts;
+      Serial.printf("Writing %d to EEPROM 9\n", dh_alert_pkts);
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
   }
 }
