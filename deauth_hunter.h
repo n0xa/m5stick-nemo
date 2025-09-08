@@ -57,7 +57,6 @@ void hop_channel();
 void reset_stats_if_needed();
 void add_unique_ap(const char* mac);
 int calculate_rssi_bars(int rssi);
-void draw_rssi_bar(int bars, int rssi);
 static void deauth_sniffer_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 static void extract_mac(char *addr, uint8_t* data, uint16_t offset);
 
