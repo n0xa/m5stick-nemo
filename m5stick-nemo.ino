@@ -1428,7 +1428,6 @@ void btmenu_loop() {
     DISP.printf(" %-12s\n", TXT_BT_SPAM);
     DISP.setTextColor(FGCOLOR, BGCOLOR);
     DISP.setTextSize(SMALL_TEXT);
-    DISP.print(TXT_ADV);
 
     switch(option) {
       case 0:
@@ -3023,10 +3022,14 @@ void ble_hunter_setup() {
   ble_stats.last_reset_time = millis();
   
   // Setup display
-  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setTextColor(BGCOLOR, FGCOLOR);
-  DISP.setCursor(0, 0);  
+  DISP.setCursor(0, 0);
+  DISP.println(" BLE Hunter  ");
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+  DISP.println("Initializing...");
   start_ble_monitoring();
 }
 
@@ -3058,12 +3061,11 @@ void ble_hunter_loop() {
   reset_ble_stats_if_needed();
   
   // Update display
+  delay(100); // Refresh rate limiting
   uint32_t cycle_elapsed = (now - ble_stats.last_reset_time) / 1000;
   uint32_t refresh_countdown = (10 - (cycle_elapsed % 10));
   
   DISP.setCursor(0, 0);
-  DISP.setTextSize(SMALL_TEXT);
-
   DISP.setTextSize(MEDIUM_TEXT);
   DISP.setTextColor(BGCOLOR, FGCOLOR);
   DISP.setCursor(0, 0);
@@ -3072,7 +3074,7 @@ void ble_hunter_loop() {
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   
   // Line 2: Status and Device Count
-  DISP.printf("Devices: %d\n", ble_stats.unique_devices);
+  DISP.printf("Devices: %-6d\n", ble_stats.unique_devices);
   
   // Line 3: Total packets seen
   DISP.printf("Pkts: %-5d / %3d\n", ble_stats.total_devices, bh_pkts);
@@ -3090,7 +3092,6 @@ void ble_hunter_loop() {
     draw_rssi_bar(ble_stats.avg_rssi, bh_max_rssi); // Using existing RSSI bar function
   }
   
-  delay(100); // Refresh rate limiting
 }
 
 // BLE Hunter cleanup
