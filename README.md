@@ -12,21 +12,11 @@ NEMO is named after the small, clever and stubborn fish in Finding Nemo. This pr
 
 ![M5-Nemo on M5StickC family and M5Cardputer](https://github.com/n0xa/m5stick-nemo/blob/main/M5-Nemo.jpg)
 
-## My Changelog
-* Adjusted .github/workflow/compile.yml to compile with the DEAUTH function.
-* Added support to SONG on StickC Plus and Plus2
-* Added an "Attack Menu" when seeing details of an Access Point
-  - Clone Portal (Creates an Evil portal with the same SSID of the target)
-  - Deauth attack (broadcasts deauthentication frames to devices connected to this Access Point)
-  - Deauth+Clone (Creates the evil portal with the same SSID and sends deauthentication frames to that AP)
-* Added option in Settings to Mount/Unmount SDCard when using M5StickC devices
-* Created new file to handle SPI/SD if not using CARDPUTER
-* SDCARD is now working on M5StickC Plus2
-
 ## My ToDo list
 * ideas?
 
 ## Features
+* NEW: Wireless Attack Detection: BLE Hunter, Deauth Hunter and PineAP Hunter modes provide situational awareness of ongoing attacks in your area.
 * [TV B-Gone](http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html) port (thanks to MrArm's [HAKRWATCH](https://github.com/MrARM/hakrwatch)) to shut off many infrared-controlled TVs, projectors and other devices
 * [AppleJuice](https://github.com/ECTO-1A/AppleJuice) iOS Bluetooth device pairing spam
 * Bluetooth device notification spamming for SwiftPair (Windows) and Android
@@ -65,6 +55,56 @@ In NEMO Portal mode, NEMO activates an open WiFi Hotspot named "Nemo Free WiFi" 
 * If your device has an SD Card reader with a FAT filesystem formatted card inserted, the usernames and passwords will be logged to nemo-portal-creds.txt on the SD Card for you to peruse later. 
 * SD Card support is only enabled by default on the M5Stack Cardputer platform. It can be enabled on M5Stick devices but an SD Card reader must be built and attached to the front panel pin header.
 * NEMO Portal is only for use on professional engagements with a valid scope of work, educational or demonstration purposes. Storage, sale, or use of personal information without consent is against the law. 🤓
+
+## BLE Hunter
+Identifies presence of excessive BLE Device Advertisements
+* Usage
+  * Each session executes 10 consecutive scans and then the counter is reset
+  * Buttons are briefly unresponsive during BLE scanning
+  * If the number of BLE Advertisements exceeds the threshold during a, BLE Hunter will beep
+  * Press the SELECT button to disable the alerts temporarily
+  * The signal strength meter uses the RSSI of the most recently received device advertisement. When you are near a heavy BLE Spam attack, this is likely to be related to the offending signal.
+  * Use signal strength meter to help you determine the source of the signal. Lower strength is further away. Stronger, you're closer.
+  * Keep hands away from the USB Port of M5Stack devices. The BLE antenna is near the USB port and your body will block some of the signal.
+  * Adjust the RSSI Sensitivity and Alert Packet count for your environment. Busy places may have a lot of BLE Advertisements that are not BLE Spam.
+* Configuration
+  * Adjust `BH Alert Pkts` in settings to modify the threshold for alerts.
+  * Adjust "BH RSSI` in settings to adjust the sensitivity of the signal strength meter (smaller negative numbers are less sensitive, -20dBm is less sensitive than -50dBm) 
+
+## Deauth Hunter
+Identifies the presence of WiFi Deauthentication Attacks
+* Usage
+  * Each session executes for 10 seconds and then the counter is reset
+  * Deauth Hunter will scan 2.4 GHz channels and sniff for WiFi Management Frames with the Deauthentication Flag set
+  * Occasional Deauthentication frames are completely normal, but more than a few per second usually indicates a WiFi Denial Of Service or Handshake Capture attack
+  * Press the SELECT button to disable the alerts temporarily and pause the channel scanning. This will allow you to freeze on the channel being used by the Deauthentication Attack.
+  * The signal strength meter uses the RSSI of the most recently received deauthentication frame.
+  * Use signal strength meter to help you determine the source of the signal. Lower strength is further away. Stronger, you're closer.
+  * Keep hands away from the USB Port of M5Stack devices. The WiFi antenna is near the USB port and your body will block some of the signal.
+  * Adjust the RSSI Sensitivity and Alert Packet count for your environment.
+* Configuration
+  * Adjust `DH Alert Pkts` in settings to modify the threshold for alerts.
+  * Adjust "DH RSSI` in settings to adjust the sensitivity of the signal strength meter (smaller negative numbers are less sensitive, -20dBm is less sensitive than -50dBm) 
+
+* PineAP Hunter
+Identifies the presence of rogue access points that are broascasting many different SSIDs. This is a characteristic of the "PineAP" feature of the Hak5 WiFi Pineapple, and similar KARMA attacks.  
+* Usage
+  * PineAP Hunter performs WiFi Scans and builds a list of all identified BSSID/SSID pairs (up to a total of 50) in memory
+  * Buttons are briefly unresponsive during WiFi Scans in PineAP Hunter mode
+  * Any BSSID advertising a number of SSIDs above the alert threshold is added to the PineAP List and the alert is triggered.
+  * Move the cursor to the desired PineAP in the list and press the SELECT button to view the SSID List. This also stops the alerts.
+  * Keep hands away from the USB Port of M5Stack devices. The WiFi antenna is near the USB port and your body will block some of the signal.
+  * Adjust the Alert SSID count for your environment if you receive false positives.
+  * The SSID list will continue to update, with the most recently seen SSID at the top of the list, with RSSI to the left of each entry
+  * Use the most recently-reported RSSI to help you determine the source of the signal.  (smaller negative numbers are stronger, -20dBm is closer to you than -50dBm)
+* Configuration
+  * Adjust `PH Alert SSIDs` in settings to modify the threshold for alerts. 
+* Notes
+  * Some professional access points may trigger the default value of 5. My home network, for example, broadcasts 3 different SSIDs on each access point.
+  * Due to how ESP32 WiFi Scanning works, only one SSID per BSSID (MAC Address of an access point) can be identified at a time.
+  * PineAP Hunter will have to perform no fewer than `PH Alert SSIDs` scans before it will positively identify a rogue access point. Consider keeping this value at or below 5 unless you receive false positives.
+  * For very busy areas with a PineAP advertising dozens of SSIDs, it may take several minutes to build the entire list of SSIDs used.
+  * These are all side-effects of the WiFi API for ESP32. Despite these limitations, it seems to work great, but it is not as quick to detect malicious activity as the other tools.
 
 ## Install from M5Burner
 This is the absolute easiest way to get NEMO

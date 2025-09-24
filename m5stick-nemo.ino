@@ -224,13 +224,14 @@ const String contributors[] PROGMEM = {
   "@vs4vijay"
 };
 
-int advtime = 0; 
+int advtime = 0;
 int cursor = 0;
 int wifict = 0;
 int brightness = 100;
 int ajDelay = 1000;
 int apSsidOffset = 16;
 int apSsidMaxLen = 32;
+int ph_alert_ssids = 5;
 bool rstOverride = false;   // Reset Button Override. Set to true when navigating menus.
 bool sourApple = false;     // Internal flag to place AppleJuice into SourApple iOS17 Exploit Mode
 bool swiftPair = false;     // Internal flag to place AppleJuice into Swift Pair random packet Mode
@@ -285,6 +286,7 @@ int dh_pkts = 0;
 
 #include "deauth_hunter.h"                                                          //DEAUTH HUNTER
 #include "ble_hunter.h"                                                             //BLE HUNTER
+#include "pineap_hunter.h"                                                         //PINEAP HUNTER
 struct MENU {
   char name[19];
   int command;
@@ -638,6 +640,7 @@ MENU smenu[] = {
   { "DH RSSI", 30},
   { "BH Alert Pkts", 31},
   { "DH Alert Pkts", 32},
+  { TXT_PH_ALERT_SSIDS, 33},
   { TXT_THEME, 23},
   { TXT_ABOUT, 10},
   { TXT_REBOOT, 98},
@@ -1956,6 +1959,7 @@ MENU wsmenu[] = {
   { TXT_WF_SPAM_RND, 3},
   { "NEMO Portal", 4},
   { "Deauth Hunter", 24},
+  { TXT_PINEAP_HUNTER, 26},
 };
 int wsmenu_size = sizeof(wsmenu) / sizeof (MENU);
 
@@ -2001,6 +2005,9 @@ void wsmenu_loop() {
         break;
       case 24:
         current_proc = 24;
+        break;
+      case 26:
+        current_proc = 26;
         break;
     }
   }
@@ -2439,18 +2446,19 @@ Serial.begin(115200);
   }
   #if defined(USE_EEPROM)
     EEPROM.begin(EEPROM_SIZE);
-    Serial.printf("EEPROM 0 - Rotation:   %d\n", EEPROM.read(0));
-    Serial.printf("EEPROM 1 - Dim Time:   %d\n", EEPROM.read(1));
-    Serial.printf("EEPROM 2 - Brightness: %d\n", EEPROM.read(2));
-    Serial.printf("EEPROM 3 - TVBG Reg:   %d\n", EEPROM.read(3));
-    Serial.printf("EEPROM 4 - FGColor:    %d\n", EEPROM.read(4));
-    Serial.printf("EEPROM 5 - BGColor:    %d\n", EEPROM.read(5));
-    Serial.printf("EEPROM 6 - BLE RSSI:   %d\n", EEPROM.read(6));
-    Serial.printf("EEPROM 7 - BLE Pkts:   %d\n", EEPROM.read(7));
-    Serial.printf("EEPROM 8 - DH RSSI:    %d\n", EEPROM.read(8));
-    Serial.printf("EEPROM 9 - DH Pkts:    %d\n", EEPROM.read(9));
+    Serial.printf("EEPROM  0 - Rotation:   %d\n", EEPROM.read(0));
+    Serial.printf("EEPROM  1 - Dim Time:   %d\n", EEPROM.read(1));
+    Serial.printf("EEPROM  2 - Brightness: %d\n", EEPROM.read(2));
+    Serial.printf("EEPROM  3 - TVBG Reg:   %d\n", EEPROM.read(3));
+    Serial.printf("EEPROM  4 - FGColor:    %d\n", EEPROM.read(4));
+    Serial.printf("EEPROM  5 - BGColor:    %d\n", EEPROM.read(5));
+    Serial.printf("EEPROM  6 - BLE RSSI:   %d\n", EEPROM.read(6));
+    Serial.printf("EEPROM  7 - BLE Pkts:   %d\n", EEPROM.read(7));
+    Serial.printf("EEPROM  8 - DH RSSI:    %d\n", EEPROM.read(8));
+    Serial.printf("EEPROM  9 - DH Pkts:    %d\n", EEPROM.read(9));
+    Serial.printf("EEPROM 10 - PH SSIDs:   %d\n", EEPROM.read(9));
     
-    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19 || EEPROM.read(6) > 100 || EEPROM.read(8) > 100 ) {
+    if(EEPROM.read(0) > 3 || EEPROM.read(1) > 240 || EEPROM.read(2) > 100 || EEPROM.read(3) > 1 || EEPROM.read(4) > 19 || EEPROM.read(5) > 19 || EEPROM.read(6) > 100 || EEPROM.read(8) > 100 || EEPROM.read(9) > 100 || EEPROM.read(10) > 100 ) {
       // Assume out-of-bounds settings are a fresh/corrupt EEPROM and write defaults for everything
       Serial.println("EEPROM likely not properly configured. Writing defaults.");
       #if defined(CARDPUTER)
@@ -2467,6 +2475,7 @@ Serial.begin(115200);
       EEPROM.write(7, 50);   // > 50 Pkts triggers BLE Hunter Alert 
       EEPROM.write(8, 20);   // -20 RSSI Max for Deauth Hunter
       EEPROM.write(9, 50);   // > 50 Pkts triggers Deauth Hunter Alert
+      EEPROM.write(10, 5);   // >= 5 SSIDs per BSSID Triggers PineAP Hunter Alert
       EEPROM.commit();
     }
     rotation = EEPROM.read(0);
@@ -2569,10 +2578,12 @@ ProcessHandler processes[] = {
   {23, theme_setup, theme_loop, "Theme Settings"},
   {24, deauth_hunter_setup, deauth_hunter_loop, "Deauth Hunter"},
   {25, ble_hunter_setup, ble_hunter_loop, "BLE Hunter"},
+  {26, pineap_hunter_setup, pineap_hunter_loop, "PineAP Hunter"},
   {29, bh_rssi_setup, bh_rssi_loop, "BH RSSI Setting"},
   {30, dh_rssi_setup, dh_rssi_loop, "DH RSSI Setting"}, 
   {31, bh_alert_pkts_setup, bh_alert_pkts_loop, "BH Alert Pkts Setting"},
   {32, dh_alert_pkts_setup, dh_alert_pkts_loop, "DH Alert Pkts Setting"},
+  {33, ph_alert_ssids_setup, ph_alert_ssids_loop, TXT_PH_ALERT_SSIDS},
 #if defined(SDCARD) && !defined(CARDPUTER)
   {97, nullptr, ToggleSDCard, "SD Card"},
 #endif
@@ -2855,11 +2866,7 @@ void deauth_hunter_loop() {
   // Line 3: Total Deauths
   DISP.printf("Pkts: %-5d / %d\n", deauth_stats.total_deauths, dh_pkts);
   if (dh_pkts && !channel_hop_pause && deauth_stats.total_deauths > dh_pkts){
-    #if defined(CARDPUTER)
-      SPEAKER.tone(4000, 50);
-    #elif defined(STICK_C_PLUS2)
-      SPEAKER.tone(4000, 50);
-    #endif
+    play_alert_beep();
   }
   // Line 4: Average RSSI with bar chart
   DISP.print("RSSI:");
@@ -3079,11 +3086,7 @@ void ble_hunter_loop() {
   // Line 3: Total packets seen
   DISP.printf("Pkts: %-5d / %3d\n", ble_stats.total_devices, bh_pkts);
     if (bh_pkts && !ble_channel_hop_pause && ble_stats.total_devices > bh_pkts){
-    #if defined(CARDPUTER)
-      SPEAKER.tone(4000, 50);
-    #elif defined(STICK_C_PLUS2)
-      SPEAKER.tone(4000, 50);
-    #endif
+      play_alert_beep();
     }
   
   // Line 4: Average RSSI with bar chart
@@ -3101,12 +3104,424 @@ void ble_hunter_cleanup() {
 }
 
 ///////////////////////////////
+/// PINEAP HUNTER IMPLEMENTATION ///
+///////////////////////////////
+
+// Global variables
+PineAPHunterStats pineap_hunter_stats;
+bool pineap_hunter_active = false;
+uint32_t last_beep_time = 0;
+
+void pineap_hunter_setup() {
+  pineap_hunter_active = true;
+  pineap_hunter_stats = PineAPHunterStats();
+  pineap_hunter_stats.scan_cycle_start = millis();
+  pineap_hunter_stats.view_mode = 0;
+  cursor = 0; // Use global cursor instead of local cursor variables
+
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);  // Inverse colors for header
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setCursor(0, 0);
+  DISP.println(TXT_PINEAP_HUNTER);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);  // Normal colors
+  DISP.setTextSize(SMALL_TEXT);
+
+  rstOverride = true;
+  delay(500);
+}
+
+void pineap_hunter_loop() {
+  // Handle input based on current view mode
+  switch (pineap_hunter_stats.view_mode) {
+    case 0: handle_main_list_input(); break;
+    case 1: handle_bssid_details_input(); break;
+    case 2: handle_ssid_list_input(); break;
+  }
+
+  // Continuous scanning and analysis
+  if (pineap_hunter_active) {
+    scan_and_analyze();
+    update_pineapple_list();
+
+    // Update display more frequently to show current RSSI values
+    static uint32_t last_display_update = 0;
+    if (pineap_hunter_stats.list_changed || (millis() - last_display_update > 1000)) {
+      update_display();
+      last_display_update = millis();
+      pineap_hunter_stats.list_changed = false;
+    }
+  }
+}
+
+void handle_main_list_input() {
+  // Beep alert if pineaps detected
+  if (!pineap_hunter_stats.detected_pineaps.empty() &&
+    (millis() - last_beep_time > 5000)) { // Beep every 5 seconds max
+    play_alert_beep();
+    last_beep_time = millis();
+  }
+
+  if (check_next_press()) {
+    // Always allow cursor navigation - total items = detected pineaps + 1 ("Back")
+    int total_items = pineap_hunter_stats.detected_pineaps.size() + 1;
+    cursor++;
+
+    // Handle negative cursor values by jumping to end of list
+    if (cursor < 0) {
+      cursor = total_items - 1;
+    } else {
+      cursor %= total_items;
+    }
+    update_display();
+    delay(250);
+  }
+
+  if (check_select_press()) {
+    if (cursor >= pineap_hunter_stats.detected_pineaps.size()) {
+      // "Back" selected - return to WiFi menu
+      pineap_hunter_cleanup();
+      isSwitching = true;
+      current_proc = 12; // WiFi menu
+    } else if (!pineap_hunter_stats.detected_pineaps.empty()) {
+      // BSSID selected - show SSID list
+      pineap_hunter_stats.selected_bssid_index = cursor; // Store which BSSID was selected
+      pineap_hunter_stats.view_mode = 2; // Jump directly to SSID list
+      cursor = 0; // Reset cursor for SSID list navigation
+      update_display();
+    }
+    delay(250);
+  }
+}
+
+void handle_bssid_details_input() {
+  // Future enhancement - for now unused
+  if (check_next_press() || check_select_press()) {
+    pineap_hunter_stats.view_mode = 2; // Go to SSID list
+    cursor = 0; // Reset cursor for SSID list
+    update_display();
+    delay(250);
+  }
+}
+
+void handle_ssid_list_input() {
+  if (check_next_press()) {
+    if (pineap_hunter_stats.selected_bssid_index < pineap_hunter_stats.detected_pineaps.size()) {
+      const auto& pine = pineap_hunter_stats.detected_pineaps[pineap_hunter_stats.selected_bssid_index];
+      int total_items = pine.essids.size() + 1; // +1 for "Back"
+      cursor++;
+
+      // Handle negative cursor values by jumping to end of list
+      if (cursor < 0) {
+        cursor = total_items - 1;
+      } else {
+        cursor %= total_items;
+      }
+    }
+    update_display();
+    delay(250);
+  }
+
+  if (check_select_press()) {
+    // Always return to main list (whether Back is selected or an SSID is selected)
+    pineap_hunter_stats.view_mode = 0;
+    cursor = pineap_hunter_stats.selected_bssid_index; // Restore cursor to selected BSSID
+    update_display();
+    delay(250);
+  }
+}
+
+void scan_and_analyze() {
+  static uint32_t last_wifi_scan = 0;
+
+  // Scan every 2 seconds for faster Pineapple detection
+  if (millis() - last_wifi_scan > 2000) {
+    // Use passive scan with longer dwell time to better catch Pineapple SSID rotation
+    //int n = WiFi.scanNetworks(false, false, true, 1000); // passive=true, 1000ms per channel
+    int n = WiFi.scanNetworks(); // passive=true, 1000ms per channel
+    if (n > 0) {
+      Serial.printf("\n=== WiFi Scan Results: %d networks found ===\n", n);
+      for (int i = 0; i < n; i++) {
+        String bssid_str = WiFi.BSSIDstr(i);
+        String essid = WiFi.SSID(i);
+        int32_t rssi = WiFi.RSSI(i);
+
+        Serial.printf("[%d] BSSID: %s, SSID: '%s', RSSI: %d dBm\n",
+                      i, bssid_str.c_str(), essid.c_str(), rssi);
+
+        // Only process networks with valid ESSIDs
+        if (essid.length() > 0 && bssid_str.length() > 0) {
+          add_scan_result(bssid_str, essid, rssi);
+        }
+      }
+
+      pineap_hunter_stats.total_scans++;
+      process_scan_results();
+      maintain_buffer_size();
+
+      // Debug: Show scan buffer state
+      Serial.printf("\n=== Scan Buffer State ===\n");
+      Serial.printf("Total BSSIDs in buffer: %d\n", pineap_hunter_stats.scan_buffer.size());
+      for (const auto& entry : pineap_hunter_stats.scan_buffer) {
+        const String& bssid = entry.first;
+        const std::vector<SSIDRecord>& ssids = entry.second;
+        Serial.printf("BSSID %s: %d SSIDs\n", bssid.c_str(), ssids.size());
+        for (size_t i = 0; i < ssids.size(); i++) {
+          Serial.printf("  [%d] '%s' (RSSI: %d, last_seen: %u)\n",
+                        i, ssids[i].essid.c_str(), ssids[i].rssi, ssids[i].last_seen);
+        }
+      }
+
+      Serial.printf("\n=== Detected PineAPs: %d ===\n", pineap_hunter_stats.detected_pineaps.size());
+      for (size_t i = 0; i < pineap_hunter_stats.detected_pineaps.size(); i++) {
+        const auto& pine = pineap_hunter_stats.detected_pineaps[i];
+        String bssid_str = bssid_to_string(pine.bssid);
+        Serial.printf("PineAP %d: %s (%d SSIDs)\n", i, bssid_str.c_str(), pine.essids.size());
+      }
+    }
+
+    WiFi.scanDelete(); // Free memory
+    last_wifi_scan = millis();
+  }
+}
+
+void add_scan_result(const String& bssid_str, const String& essid, int32_t rssi) {
+  // Add to scan buffer
+  if (pineap_hunter_stats.scan_buffer.find(bssid_str) == pineap_hunter_stats.scan_buffer.end()) {
+    pineap_hunter_stats.scan_buffer[bssid_str] = std::vector<SSIDRecord>();
+  }
+
+  // Check if this ESSID is already recorded for this BSSID
+  auto& essid_list = pineap_hunter_stats.scan_buffer[bssid_str];
+  bool found = false;
+  for (auto& existing_record : essid_list) {
+    if (existing_record.essid == essid) {
+      // Update RSSI and timestamp when this SSID is seen again
+      existing_record.rssi = rssi;
+      existing_record.last_seen = millis();
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    essid_list.push_back(SSIDRecord(essid, rssi));
+  }
+}
+
+void process_scan_results() {
+  std::vector<PineRecord> new_pineaps;
+
+  // Check each BSSID in scan buffer for pineapple behavior
+  for (const auto& entry : pineap_hunter_stats.scan_buffer) {
+    const String& bssid_str = entry.first;
+    const std::vector<SSIDRecord>& ssid_records = entry.second;
+
+    if (ssid_records.size() >= ph_alert_ssids) {  // Use SSIDRecord vector size
+      PineRecord pine;
+      string_to_bssid(bssid_str, pine.bssid);
+      pine.essids = ssid_records;  // Copy SSIDRecord vector with RSSI
+      pine.last_seen = millis();
+
+      // Sort SSIDs by most recent seen first (most recent timestamp = highest value)
+      std::sort(pine.essids.begin(), pine.essids.end(),
+        [](const SSIDRecord& a, const SSIDRecord& b) {
+          return a.last_seen > b.last_seen;
+        });
+
+      new_pineaps.push_back(pine);
+    }
+  }
+
+  // Update detected pineaps list if changed (smarter detection)
+  if (new_pineaps.size() != pineap_hunter_stats.detected_pineaps.size()) {
+    pineap_hunter_stats.list_changed = true;
+  } else {
+    // Same count, check if any pineap has different SSID count or new SSIDs
+    for (size_t i = 0; i < new_pineaps.size(); i++) {
+      const auto& old_pine = pineap_hunter_stats.detected_pineaps[i];
+      const auto& new_pine = new_pineaps[i];
+
+      // Compare BSSID and SSID count (avoid RSSI comparison due to sorting)
+      if (memcmp(old_pine.bssid, new_pine.bssid, 6) != 0 ||
+          old_pine.essids.size() != new_pine.essids.size()) {
+        pineap_hunter_stats.list_changed = true;
+        break;
+      }
+    }
+  }
+
+  pineap_hunter_stats.detected_pineaps = new_pineaps;
+}
+
+void maintain_buffer_size() {
+  // Keep only the most recent 50 BSSID entries
+  if (pineap_hunter_stats.scan_buffer.size() > 50) {
+    // Simple approach: clear oldest entries (in practice, would use timestamps)
+    auto it = pineap_hunter_stats.scan_buffer.begin();
+    std::advance(it, pineap_hunter_stats.scan_buffer.size() - 50);
+    pineap_hunter_stats.scan_buffer.erase(pineap_hunter_stats.scan_buffer.begin(), it);
+  }
+}
+
+bool is_pineapple_detected(const std::vector<String>& essids) {
+  return essids.size() >= ph_alert_ssids; // Use global threshold setting
+}
+
+void update_pineapple_list() {
+  // This function processes scan results to update the detected pineaps list
+  process_scan_results();
+}
+
+void update_display() {
+  switch (pineap_hunter_stats.view_mode) {
+    case 0: draw_main_list(); break;
+    case 1: draw_bssid_details(); break;
+    case 2: draw_ssid_list(); break;
+  }
+}
+
+void draw_main_list() {
+  DISP.fillScreen(BGCOLOR);
+  int total_pineaps = pineap_hunter_stats.detected_pineaps.size();
+  int total_items = total_pineaps + 1; // +1 for "Back"
+
+  // Header
+  DISP.setCursor(0, 0);
+  DISP.setTextSize(MEDIUM_TEXT);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);  // Normal colors
+  DISP.println(TXT_PINEAP_HUNTER);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);  // Normal colors
+  DISP.setTextSize(SMALL_TEXT);
+
+  if (total_pineaps == 0) {
+    // No pineaps detected
+    DISP.println("No PineAPs detected");
+  } else {
+    // Scrolling list logic similar to wscan_drawmenu()
+    if (cursor > 4) {
+      // Scrolling mode - show items starting from cursor-4
+      for (int i = cursor - 4; i < total_pineaps && i < cursor + 5; i++) {
+        if (cursor == i) {
+          DISP.setTextColor(BGCOLOR, FGCOLOR);
+        }
+        const auto& pine = pineap_hunter_stats.detected_pineaps[i];
+        String bssid_str = bssid_to_string(pine.bssid);
+        DISP.printf("%s %d", bssid_str.c_str(), pine.essids.size());
+        DISP.println();
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+      }
+    } else {
+      // Normal mode - show from beginning
+      for (int i = 0; i < total_pineaps && i < 8; i++) {
+        if (cursor == i) {
+          DISP.setTextColor(BGCOLOR, FGCOLOR);
+        }
+        const auto& pine = pineap_hunter_stats.detected_pineaps[i];
+        String bssid_str = bssid_to_string(pine.bssid);
+        DISP.printf("%s %d", bssid_str.c_str(), pine.essids.size());
+        DISP.println();
+        DISP.setTextColor(FGCOLOR, BGCOLOR);
+      }
+    }
+  }
+
+  // Always show "Back" option
+  if (cursor >= total_pineaps) {
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
+  DISP.println(TXT_BACK);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+}
+
+void draw_bssid_details() {
+  // Future enhancement - currently unused
+  draw_ssid_list(); // For now, go directly to SSID list
+}
+
+void draw_ssid_list() {
+  if (pineap_hunter_stats.selected_bssid_index >= pineap_hunter_stats.detected_pineaps.size()) {
+    draw_main_list();
+    return;
+  }
+
+  const auto& pine = pineap_hunter_stats.detected_pineaps[pineap_hunter_stats.selected_bssid_index];
+
+  DISP.fillScreen(BGCOLOR);
+  DISP.setTextSize(SMALL_TEXT);
+  DISP.setCursor(0, 0);
+  int total_ssids = pine.essids.size();
+  int total_items = total_ssids + 1; // +1 for "Back"
+
+  // Header with BSSID
+  String bssid_str = bssid_to_string(pine.bssid);
+  DISP.setTextColor(BGCOLOR, FGCOLOR);
+  DISP.println(bssid_str); // Show last 6 chars
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+
+  // Scrolling list logic similar to WiFi scan
+  if (cursor > 4) {
+    // Scrolling mode - show items starting from cursor-4
+    for (int i = cursor - 4; i < total_ssids && i < cursor + 5; i++) {
+      if (cursor == i) {
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf("[%d] %s\n", pine.essids[i].rssi, pine.essids[i].essid.substring(0, 14).c_str());
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  } else {
+    // Normal mode - show from beginning
+    for (int i = 0; i < total_ssids && i < 7; i++) {
+      if (cursor == i) {
+        DISP.setTextColor(BGCOLOR, FGCOLOR);
+      }
+      DISP.printf("[%d] %s\n", pine.essids[i].rssi, pine.essids[i].essid.substring(0, 14).c_str());
+      DISP.setTextColor(FGCOLOR, BGCOLOR);
+    }
+  }
+
+  // Always show "Back" option
+  if (cursor >= total_ssids) {
+    DISP.setTextColor(BGCOLOR, FGCOLOR);
+  }
+  DISP.println(TXT_BACK);
+  DISP.setTextColor(FGCOLOR, BGCOLOR);
+}
+
+void pineap_hunter_cleanup() {
+  pineap_hunter_active = false;
+  pineap_hunter_stats.scan_buffer.clear();
+  pineap_hunter_stats.detected_pineaps.clear();
+  rstOverride = false;
+}
+
+String bssid_to_string(const uint8_t* bssid) {
+  char bssid_str[18];
+  sprintf(bssid_str, "%02x:%02x:%02x:%02x:%02x:%02x",
+          bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
+  return String(bssid_str);
+}
+
+void string_to_bssid(const String& bssid_str, uint8_t* bssid) {
+  sscanf(bssid_str.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+         &bssid[0], &bssid[1], &bssid[2], &bssid[3], &bssid[4], &bssid[5]);
+}
+
+void play_alert_beep() {
+    #if defined(CARDPUTER)
+      SPEAKER.tone(4000, 50);
+    #elif defined(STICK_C_PLUS2)
+      SPEAKER.tone(4000, 50);
+    #endif
+}
+
+///////////////////////////////
 /// HUNTER SETTINGS IMPLEMENTATION ///
 ///////////////////////////////
 
 // Global variables for hunter settings
 int bh_rssi_threshold = -40;
-int dh_rssi_threshold = -20; 
+int dh_rssi_threshold = -20;
 int bh_alert_pkts = 10;
 int dh_alert_pkts = 10;
 
@@ -3297,6 +3712,52 @@ void dh_alert_pkts_loop() {
       EEPROM.commit();
       dh_pkts=dh_alert_pkts;
       Serial.printf("Writing %d to EEPROM 9\n", dh_alert_pkts);
+    #endif
+    rstOverride = false;
+    isSwitching = true;
+    current_proc = 2; // Return to settings menu
+    delay(250);
+  }
+}
+
+// PH Alert SSIDs Setting (2-100 in increments of 1)
+void ph_alert_ssids_setup() {
+  DISP.fillScreen(BGCOLOR);
+  DISP.setCursor(0, 0);
+  DISP.println(TXT_PH_ALERT_SSIDS);
+  delay(500);
+
+  #if defined(USE_EEPROM)
+    int stored_value = EEPROM.read(10);
+    if(stored_value >= 2 && stored_value <= 100) {
+      ph_alert_ssids = stored_value;
+    }
+  #endif
+  cursor = ph_alert_ssids;
+  rstOverride = true;
+  delay(500);
+}
+
+void ph_alert_ssids_loop() {
+  DISP.setCursor(0, 0);
+  DISP.println(TXT_PH_ALERT_SSIDS);
+  DISP.printf("Current: %3d\n", ph_alert_ssids);
+  DISP.println("Range: 2-100");
+
+  if (check_next_press()) {
+    cursor++;
+    if (cursor > 100) {
+      cursor = 2; // Wrap to minimum
+    }
+    ph_alert_ssids = cursor;
+    delay(250);
+  }
+
+  if (check_select_press()) {
+    #if defined(USE_EEPROM)
+      EEPROM.write(10, ph_alert_ssids);
+      EEPROM.commit();
+      Serial.printf("Writing %d to EEPROM 10\n", ph_alert_ssids);
     #endif
     rstOverride = false;
     isSwitching = true;
