@@ -86,7 +86,7 @@ Identifies the presence of WiFi Deauthentication Attacks
   * Adjust `DH Alert Pkts` in settings to modify the threshold for alerts.
   * Adjust "DH RSSI` in settings to adjust the sensitivity of the signal strength meter (smaller negative numbers are less sensitive, -20dBm is less sensitive than -50dBm) 
 
-* PineAP Hunter
+## PineAP Hunter
 Identifies the presence of rogue access points that are broascasting many different SSIDs. This is a characteristic of the "PineAP" feature of the Hak5 WiFi Pineapple, and similar KARMA attacks.  
 * Usage
   * PineAP Hunter performs WiFi Scans and builds a list of all identified BSSID/SSID pairs (up to a total of 50) in memory
