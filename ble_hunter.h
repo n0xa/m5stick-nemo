@@ -31,8 +31,8 @@ struct BLEDeviceInfo {
 
 // Scan configuration
 const uint32_t BLE_SCAN_TIME = 1; // Scan for 1 second intervals
-const uint32_t BLE_SCAN_WINDOW = 99;
-const uint32_t BLE_SCAN_INTERVAL = 100;
+const uint32_t BLE_SCAN_WINDOW = 25;
+const uint32_t BLE_SCAN_INTERVAL = 25;
 const uint32_t MAX_BLE_DEVICES = 50; // Limit to prevent memory overflow
 
 // Global state
