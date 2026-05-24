@@ -1783,6 +1783,7 @@ void aj_adv(){
       uint8_t display_name_len = strlen(display_name);
       uint8_t size = 7 + display_name_len;
       uint8_t* packet = (uint8_t*)malloc(size);
+      if (!packet) { free((void*)display_name); return; }
       uint8_t i = 0;
       packet[i++] = size - 1; // Size
       packet[i++] = 0xFF; // AD Type (Manufacturer Specific)
@@ -1794,12 +1795,10 @@ void aj_adv(){
       for (int j = 0; j < display_name_len; j++) {
         packet[i + j] = display_name[j];
       }
-      for (int i = 0; i < size; i ++) {
-        Serial.printf("%02x", packet[i]);
+      for (int k = 0; k < size; k++) {
+        Serial.printf("%02x", packet[k]);
       }
       Serial.println("");
-
-      i += display_name_len;  
       oAdvertisementData.addData(String((char *)packet, size));
       free(packet);
       free((void*)display_name);
