@@ -1,7 +1,7 @@
 // ===== Settings ===== //
-#if defined(LANGUAGE_FR_FR) || defined (LANGUAGE_PT_BR) // please check your country’s restrictions and choose only the Wi-Fi channels allowed there
-const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}; // used Wi-Fi channels (available: 1-14)
-#else 
+#if defined(LANGUAGE_FR_FR) || defined(LANGUAGE_PT_BR) || defined(LANGUAGE_EN_GB) // please check your country’s restrictions and choose only the Wi-Fi channels allowed there
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}; // used Wi-Fi channels (available: 1-14); ch 12-13 legal in UK/EU
+#else
 const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // default for LANGUAGE_EN_US
 #endif
 const bool wpa2 = true; // WPA2 networks
