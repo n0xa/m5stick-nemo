@@ -326,6 +326,7 @@ int dh_pkts = 0;
 #include "pineap_hunter.h"                                                          //PINEAP HUNTER
 #if defined(CARDPUTER)
 #include "badusb_hunter.h"                                                          //BADUSB HUNTER
+#include "glass2.h"                                                                 //GLASS2 OLED (Grove GPIO1/2)
 #endif
 struct MENU {
   char name[19];
@@ -1953,6 +1954,9 @@ void wifispam_setup() {
       break;
   }
   DISP.setTextSize(SMALL_TEXT);
+#if defined(CARDPUTER)
+  glass2Show("MODE: SPAM", "Beaconing...", "", "");
+#endif
   current_proc = 11;
 }
 
@@ -2314,6 +2318,9 @@ void portal_setup(){
   portal_active = true;
   cursor = 0;
   rstOverride = true;
+#if defined(CARDPUTER)
+  glass2Show("MODE: PORTAL", "Listening...", "", "");
+#endif
   printHomeToScreen();
   delay(500); // Prevent switching after menu loads up
 }
@@ -2437,6 +2444,10 @@ Serial.begin(115200);
   dimtimer();
   DISP.setRotation(rotation);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
+#if defined(CARDPUTER)
+  glass2Init();
+  glass2Show("NEMO", "Ready", "", "");
+#endif
   bootScreen();
 }
 
@@ -2718,7 +2729,7 @@ void deauth_hunter_setup() {
   DISP.setTextSize(SMALL_TEXT);
   DISP.setTextColor(FGCOLOR, BGCOLOR);
   DISP.setCursor(0, 0);
-  
+
   // Initialize stats
   memset(&deauth_stats, 0, sizeof(DeauthStats));
   deauth_stats.avg_rssi = -90;
@@ -2726,6 +2737,9 @@ void deauth_hunter_setup() {
   current_channel_idx = 0;
   channel_hop_pause = false;
   start_deauth_monitoring();
+#if defined(CARDPUTER)
+  glass2Show("MODE: DEAUTH", "Hunting...", "", "");
+#endif
   delay(500);
 }
 
