@@ -1992,6 +1992,18 @@ void wifispam_loop() {
       beaconSpamList(randoms);
       break;
   }
+#if defined(CARDPUTER)
+  {
+    static uint32_t _g2spam_t = 0;
+    uint32_t _now = millis();
+    if (_now - _g2spam_t >= 500) {
+      _g2spam_t = _now;
+      char l2[22];
+      snprintf(l2, sizeof(l2), "CH:%-2u PKT:%lu", (unsigned)wifi_channel, (unsigned long)packetCounter);
+      glass2Show("MODE: SPAM", l2, "", "");
+    }
+  }
+#endif
 }
 
 void btmaelstrom_setup(){
@@ -2799,6 +2811,14 @@ void deauth_hunter_loop() {
   draw_rssi_bar(deauth_stats.avg_rssi, dh_max_rssi);
   
   delay(100); // Refresh rate limiting
+#if defined(CARDPUTER)
+  {
+    char dl2[22], dl3[22];
+    snprintf(dl2, sizeof(dl2), "CH:%-2u APs:%-2u", (unsigned)WIFI_CHANNELS[current_channel_idx], (unsigned)deauth_stats.unique_aps);
+    snprintf(dl3, sizeof(dl3), "DEAUTH:%lu", (unsigned long)deauth_stats.total_deauths);
+    glass2Show("MODE: DEAUTH", dl2, dl3, "");
+  }
+#endif
 }
 
 ///////////////////////////////
