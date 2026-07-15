@@ -62,6 +62,9 @@ DNSServer dnsServer;
 WebServer webServer(80);
 
 void setSSID(String ssid){
+  if ((int)ssid.length() > apSsidMaxLen) {
+    ssid = ssid.substring(0, apSsidMaxLen);
+  }
   #if defined USE_EEPROM
   Serial.printf("Writing %d bytes of SSID to EEPROM\n", ssid.length());
   for(int i = 0; i < ssid.length(); i++) {

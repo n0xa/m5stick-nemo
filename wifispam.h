@@ -192,7 +192,7 @@ void nextChannel() {
   if (sizeof(channels) > 1) {
     uint8_t ch = channels[channelIndex];
     channelIndex++;
-    if (channelIndex > sizeof(channels)) channelIndex = 0;
+    if (channelIndex >= sizeof(channels)) channelIndex = 0;
 
     if (ch != wifi_channel && ch >= 1 && ch <= 14) {
       wifi_channel = ch;
