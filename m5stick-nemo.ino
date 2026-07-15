@@ -10,10 +10,12 @@
 // -=-=- Uncommenting more than one at a time will result in errors -=-=-
 
 // -=-=- NEMO Language for Menu and Portal -=- Thanks, @marivaaldo and @Mmatuda! -=-=-
-// #define LANGUAGE_EN_US
-// #define LANGUAGE_PT_BR
-// #define LANGUAGE_IT_IT
-// #define LANGUAGE_FR_FR
+// Affects Wi-Fi channel range: EN_US uses ch 1-11 (FCC). All other locales use ch 1-13 (ETSI/most regions).
+// #define LANGUAGE_EN_US  // US/Canada (FCC) — ch 1-11; default if nothing is defined
+// #define LANGUAGE_EN_GB  // UK/EU — ch 1-13 (Ofcom/WTA 2006)
+// #define LANGUAGE_PT_BR  // Brazil — ch 1-13 (Anatel)
+// #define LANGUAGE_IT_IT  // Italy/EU — ch 1-13 (ETSI)
+// #define LANGUAGE_FR_FR  // France/EU — ch 1-13 (ETSI)
 
 // -- DEPRECATED - THESE ARE NOW EEPROM DEFINED -- //
 uint16_t BGCOLOR=0x0001; // placeholder
@@ -27,7 +29,7 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define CARDPUTER
 #endif
 
-#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT) && !defined(LANGUAGE_FR_FR)
+#if !defined(LANGUAGE_EN_US) && !defined(LANGUAGE_EN_GB) && !defined(LANGUAGE_PT_BR) && !defined(LANGUAGE_IT_IT) && !defined(LANGUAGE_FR_FR)
   #define LANGUAGE_EN_US
 #endif
 

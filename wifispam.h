@@ -1,8 +1,10 @@
 // ===== Settings ===== //
-#if defined(LANGUAGE_FR_FR) || defined (LANGUAGE_PT_BR) // please check your country’s restrictions and choose only the Wi-Fi channels allowed there
-const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}; // used Wi-Fi channels (available: 1-14)
-#else 
-const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // default for LANGUAGE_EN_US
+// FCC (US/Canada) restricts to ch 1-11. ETSI (EU/UK), TELEC (Japan), and most other
+// regulatory domains permit ch 1-13. Ch 14 is Japan 802.11b legacy only — not used here.
+#if defined(LANGUAGE_EN_US) // FCC regulatory domain
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+#else // ETSI, TELEC, and most other regulatory domains
+const uint8_t channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
 #endif
 const bool wpa2 = true; // WPA2 networks
 int spamtype = 1; // 1 = funny, 2 = rickroll, maybe more later
