@@ -122,8 +122,6 @@ bool setupSdCard() {
     {
       rstOverride = true;
       isSwitching = true;
-      uint8_t cardType = NULL;
-      uint64_t cardSize = NULL;
       current_proc=1;
       DISP.fillScreen(BGCOLOR);
       DISP.setCursor(5, 1);

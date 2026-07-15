@@ -180,7 +180,7 @@ String getInputValue(String argName) {
   String a = webServer.arg(argName);
   a.replace("<", "&lt;");
   a.replace(">", "&gt;");
-  a.substring(0, 200);
+  a = a.substring(0, 200);
   return a;
 }
 
