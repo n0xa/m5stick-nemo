@@ -195,7 +195,6 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
-  #define VBAT_PIN 10
   #define M5LED_ON LOW
   #define M5LED_OFF HIGH
 #endif
@@ -1165,7 +1164,6 @@ void battery_drawmenu(int battery, float voltage_b = 0, float voltage_c = 0) {
 
   void battery_setup() {
     rstOverride = false;
-    pinMode(VBAT_PIN, INPUT);
     int battery = M5.Power.getBatteryLevel();
     battery_drawmenu(battery);
     delay(500); // Prevent switching after menu loads up
