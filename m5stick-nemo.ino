@@ -197,7 +197,6 @@ uint16_t FGCOLOR=0xFFF1; // placeholder
   #define SD_MISO_PIN 39
   #define SD_MOSI_PIN 14
   #define SD_CS_PIN 12
-  #define VBAT_PIN 10
   #define M5LED_ON LOW
   #define M5LED_OFF HIGH
 #endif
@@ -1168,8 +1167,7 @@ void battery_drawmenu(int battery, float voltage_b = 0, float voltage_c = 0) {
 
   void battery_setup() {
     rstOverride = false;
-    pinMode(VBAT_PIN, INPUT);
-    uint8_t battery = ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
+    int battery = M5.Power.getBatteryLevel();
     battery_drawmenu(battery);
     delay(500); // Prevent switching after menu loads up
     /*
@@ -1181,10 +1179,10 @@ void battery_drawmenu(int battery, float voltage_b = 0, float voltage_c = 0) {
 
   void battery_loop() {
     // Read 30 battery values to calculate the average (avoiding unprecise and close values)
-    uint16_t batteryValues = 0;
+    uint32_t batteryValues = 0;
     for(uint8_t i = 0; i < 30; i++) { // 30 iterations X 100ms = 3 seconds for each refresh
       delay(100);
-      batteryValues += ((((analogRead(VBAT_PIN)) - 1842) * 100) / 738);
+      batteryValues += M5.Power.getBatteryLevel();
       M5Cardputer.update();
       if(M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) { // If any key is pressed
         rstOverride = false;
