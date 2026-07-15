@@ -583,10 +583,10 @@ int screen_dim_current = 0;
 void screenBrightness(int bright){
   Serial.printf("Brightness: %d\n", bright);
   #if defined(AXP)
-    M5.Display.setBrightness(MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)));
+    M5.Display.setBrightness(MINBRIGHT + round((float)((255 - MINBRIGHT) * bright / 100)));
   #endif
   #if defined(BACKLIGHT)
-    int bl = MINBRIGHT + round(((255 - MINBRIGHT) * bright / 100)); 
+    int bl = MINBRIGHT + round((float)((255 - MINBRIGHT) * bright / 100));
     analogWrite(BACKLIGHT, bl);
   #endif
 }
